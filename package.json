@@ -1,0 +1,199 @@
+{
+  "name": "asi1-code",
+  "displayName": "ASI1 Code",
+  "description": "Sidebar AI chat for VS Code powered by ASI1 — streaming replies, markdown, and workspace file hints.",
+  "version": "0.1.0",
+  "publisher": "GautamManak",
+  "license": "MIT",
+  "author": "Gautam Manak",
+  "homepage": "https://github.com/gautammanak1/asi1-vs-code#readme",
+  "bugs": {
+    "url": "https://github.com/gautammanak1/asi1-vs-code/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gautammanak1/asi1-vs-code.git"
+  },
+  "keywords": [
+    "asi1",
+    "asi",
+    "ai",
+    "chat",
+    "assistant",
+    "copilot",
+    "fetch"
+  ],
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Machine Learning"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:asiAssistant.chatView"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "asiAssistant.openChat",
+        "title": "ASI: Open Assistant Chat"
+      },
+      {
+        "command": "asiAssistant.askAboutSelection",
+        "title": "ASI: Ask About Selection"
+      },
+      {
+        "command": "asiAssistant.insertApiKey",
+        "title": "ASI: Set API Key"
+      },
+      {
+        "command": "asiAssistant.installFromVsix",
+        "title": "ASI: Install Extension from .vsix"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "asiAssistant",
+          "title": "ASI1 Code",
+          "icon": "resources/icon.png"
+        }
+      ]
+    },
+    "views": {
+      "asiAssistant": [
+        {
+          "type": "webview",
+          "id": "asiAssistant.chatView",
+          "name": "Chat"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "ASI1 Code",
+      "properties": {
+        "asiAssistant.apiKey": {
+          "type": "string",
+          "default": "",
+          "description": "ASI1 API key (optional if ASI_ONE_API_KEY is set in the environment)",
+          "order": 1
+        },
+        "asiAssistant.baseUrl": {
+          "type": "string",
+          "default": "https://api.asi1.ai/v1/chat/completions",
+          "description": "Chat completions endpoint URL",
+          "order": 2
+        },
+        "asiAssistant.model": {
+          "type": "string",
+          "default": "asi1",
+          "description": "Model id",
+          "order": 3
+        },
+        "asiAssistant.systemPrompt": {
+          "type": "string",
+          "default": "You are a coding assistant in VS Code/Cursor. Use ONLY standard GitHub-flavored markdown: real triple-backtick fences with a language tag (e.g. ```markdown, ```sql, ```bash). Never output the words MARKDOWN or CODE as fake fences. For a full .md document, put it inside a ```markdown fence, then on a new line after the closing fence write: Save as `filename.md`. For code files use ```ts / ```py etc. and Save as `path/file.ext`. Tables, lists, and headings are welcome.",
+          "description": "System message prepended to every conversation",
+          "order": 4
+        },
+        "asiAssistant.streamResponse": {
+          "type": "boolean",
+          "default": true,
+          "description": "Stream the model reply (SSE). Turn off if your API returns JSON only.",
+          "order": 5
+        },
+        "asiAssistant.autoApplyFiles": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically write detected files to the open workspace after each reply (requires a folder open). Set false to only use “Create files”.",
+          "order": 6
+        },
+        "asiAssistant.bannerTitle": {
+          "type": "string",
+          "default": "",
+          "description": "Optional title next to the banner logo (leave empty to show logo only)",
+          "order": 10
+        },
+        "asiAssistant.bannerSubtitle": {
+          "type": "string",
+          "default": "ASI1 · VS Code & Cursor",
+          "description": "Short line under the banner title (leave empty to hide)",
+          "order": 11
+        },
+        "asiAssistant.bannerLogoUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Optional https URL for the banner logo. Empty uses the bundled ASI1 Code logo.",
+          "order": 12
+        },
+        "asiAssistant.linkWebsite": {
+          "type": "string",
+          "default": "https://fetch.ai",
+          "description": "Banner link: Website (https://…)",
+          "order": 20
+        },
+        "asiAssistant.linkDocs": {
+          "type": "string",
+          "default": "https://docs.fetch.ai",
+          "description": "Banner link: Docs",
+          "order": 21
+        },
+        "asiAssistant.linkX": {
+          "type": "string",
+          "default": "",
+          "description": "Banner link: X (Twitter)",
+          "order": 22
+        },
+        "asiAssistant.linkCommunity": {
+          "type": "string",
+          "default": "",
+          "description": "Banner link: Community",
+          "order": 23
+        },
+        "asiAssistant.linkResources": {
+          "type": "string",
+          "default": "",
+          "description": "Banner link: Resources",
+          "order": 24
+        },
+        "asiAssistant.linkSupport": {
+          "type": "string",
+          "default": "",
+          "description": "Banner link: Support",
+          "order": 25
+        },
+        "asiAssistant.linkContact": {
+          "type": "string",
+          "default": "",
+          "description": "Banner link: Contact us",
+          "order": 26
+        }
+      }
+    },
+    "keybindings": [
+      {
+        "command": "asiAssistant.openChat",
+        "key": "ctrl+shift+;",
+        "mac": "cmd+shift+;"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package --readme-path README.vsix.md"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.7.1",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1"
+  }
+}

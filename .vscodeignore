@@ -1,0 +1,13 @@
+.vscode/**
+.vscode-test/**
+.github/**
+# Packaged readme comes from README.vsix.md via vsce; keep README.md for GitHub only
+README.md
+docs/**
+src/**
+.gitignore
+tsconfig.json
+**/*.map
+node_modules/**
+.api-key
+**/.api-key

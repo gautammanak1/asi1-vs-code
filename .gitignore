@@ -1,0 +1,8 @@
+.DS_Store
+node_modules
+out
+*.vsix
+# Local API key (see .vscode/settings.json) — do not commit
+.vscode/settings.json
+# One-line API key for local dev (extension folder)
+.api-key
