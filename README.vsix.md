@@ -1,96 +1,78 @@
-<p align="center">
-  <strong>ASI1 Code</strong><br/>
-  <span>Sidebar AI chat for VS Code — powered by ASI1 · Vector banner: <code>resources/readme-banner.svg</code></span>
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://github.com/gautammanak1/asi1-vs-code/actions/workflows/ci.yml"><img src="https://github.com/gautammanak1/asi1-vs-code/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
-  <a href="https://code.visualstudio.com/"><img src="https://img.shields.io/badge/VS%20Code-1.85+-007ACC?logo=visualstudiocode&logoColor=white" alt="VS Code" /></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code"><img src="https://img.shields.io/badge/VS%20Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white" alt="Install on VS Marketplace" /></a>
-</p>
+![ASI1 Code — sidebar AI chat for VS Code](./resources/readme-banner.png)
 
-# ASI1 Code
+<br/>
 
-**ASI1 Code** is a **Visual Studio Code** extension (works in **Cursor** too) that adds a **sidebar AI chat** wired to the **ASI1** API ([api.asi1.ai](https://api.asi1.ai)). It streams replies, renders **Markdown** and syntax-highlighted code, and can turn hints in answers into files in your open workspace. Banner chips link to **Website**, **Docs**, **X**, **Community**, **Resources**, **Support**, and **Contact** — tailored for **ASI1** and the **Fetch.ai** ecosystem.
+[![CI](https://github.com/gautammanak1/asi1-vs-code/actions/workflows/ci.yml/badge.svg)](https://github.com/gautammanak1/asi1-vs-code/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![VS Code](https://img.shields.io/badge/VS%20Code-1.85+-007ACC?logo=visualstudiocode&logoColor=white)](https://code.visualstudio.com/)
+[![Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code)
 
-**Extension id:** `gautammanak2.asi1-code`  
-**Engine:** VS Code `^1.85.0`.
+**Sidebar AI chat powered by [ASI1](https://api.asi1.ai)** · Works in **VS Code** and **Cursor**
 
----
+`gautammanak2.asi1-code` · Engine **^1.85.0**
 
-## What ASI1 Code does
+</div>
 
-ASI1 Code is built for developers who want a **fast, focused coding assistant** inside the editor: one panel for chat, your repo context, and optional **auto-apply** of generated paths.
+<br/>
 
-**ASI1 Code can:**
+## Overview
 
-- Stream **natural-language** answers with **GitHub-flavored Markdown** and real fenced code blocks  
-- Highlight code with **Highlight.js** in the chat webview  
-- Parse **file hints** (`Save as`, paths) and optionally **write files** into the open folder  
-- Surface **links** from the banner (website, docs, community, support, contact — all configurable in settings)
+**ASI1 Code** adds an activity-bar **Chat** panel that talks to the ASI1 API: **streaming** replies, **Markdown** + syntax-highlighted code, and optional **file writes** into your open folder. The in-chat banner can link to **Website**, **Docs**, **X**, **Community**, **Resources**, **Support**, and **Contact** (all configurable).
 
----
+| | |
+| :--- | :--- |
+| **Use case** | Plan features, debug errors, generate code, apply “Save as …” hints in the workspace |
+| **API** | [ASI1 chat completions](https://api.asi1.ai) — set key via command, settings, or `ASI_ONE_API_KEY` |
 
-## Key features
+<br/>
 
-| Area | Details |
-|------|---------|
-| **Editor-native chat** | Activity bar view **ASI1 Code → Chat**; dark UI with logo and configurable subtitle |
-| **Streaming** | Server-sent events (SSE) by default; turn off if your network returns JSON only |
-| **Markdown & code** | Tables, lists, headings; language-tagged fences for copy/paste |
-| **Workspace-aware** | With a folder open, optional **auto-apply** after each reply (or use explicit create actions) |
-| **API key** | **ASI: Set API Key**, setting `asiAssistant.apiKey`, or env `ASI_ONE_API_KEY` |
-| **Configurable** | Base URL, model, system prompt, stream toggle, banner text and every link |
+## Features
 
----
+- **Streaming** responses (SSE); turn off in settings if your network returns JSON only  
+- **GFM Markdown** in replies, **Highlight.js** for fenced code blocks  
+- **Workspace hints** — parse paths / “Save as” and optionally **auto-apply** files  
+- **Banner links** — Fetch.ai / docs / community URLs from settings (`asiAssistant.link*`)
 
-## Get started
+<br/>
 
-1. **Install** from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code), or install a local `.vsix` (see below).  
-2. **Set your API key** — Command Palette → **ASI: Set API Key**, or settings / environment as in [Configuration](#configuration).  
-3. Open **ASI1 Code** in the activity bar → **Chat**, or press **`Ctrl+Shift+;`** (**`Cmd+Shift+;`** on macOS) for **ASI: Open Assistant Chat**.  
-4. Open a **folder** if you want generated files written into the project.
+## Quick start
 
----
+1. **Install** — [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code) or a local `.vsix` (see below).  
+2. **API key** — Command Palette → **ASI: Set API Key**, or `asiAssistant.apiKey`, or env `ASI_ONE_API_KEY`.  
+3. **Open chat** — Activity bar → **ASI1 Code** → **Chat**, or **ASI: Open Assistant Chat** (`Ctrl+Shift+;` / `Cmd+Shift+;` on Mac).  
+4. **Open a folder** if you want files written into the project.
+
+<br/>
 
 ## Commands
 
-Command IDs match `package.json` (`contributes.commands`).
-
-| Command ID | Title | Keyboard shortcut |
-|------------|--------|-------------------|
+| ID | Title | Shortcut |
+|----|--------|----------|
 | `asiAssistant.openChat` | ASI: Open Assistant Chat | `Ctrl+Shift+;` / `Cmd+Shift+;` |
 | `asiAssistant.askAboutSelection` | ASI: Ask About Selection | — |
 | `asiAssistant.insertApiKey` | ASI: Set API Key | — |
 | `asiAssistant.installFromVsix` | ASI: Install Extension from .vsix | — |
 
----
+<br/>
 
-## Configuration
+## Settings
 
-All settings are under **ASI1 Code**, prefix **`asiAssistant.*`**. Highlights:
+Prefix **`asiAssistant.*`** (see **Settings → ASI1 Code**).
 
 | Setting | Purpose |
 |---------|---------|
-| `asiAssistant.apiKey` | ASI1 API key |
-| `asiAssistant.baseUrl` / `asiAssistant.model` | Endpoint and model id |
-| `asiAssistant.streamResponse` | Enable SSE streaming |
-| `asiAssistant.autoApplyFiles` | Auto-write detected files after replies |
-| `asiAssistant.bannerTitle` / `bannerSubtitle` | Banner text |
-| `asiAssistant.linkWebsite` … `linkContact` | Banner link URLs (website, docs, X, community, resources, support, contact) |
+| `apiKey` | ASI1 API key |
+| `baseUrl` / `model` | Endpoint and model id |
+| `streamResponse` | Enable SSE streaming |
+| `autoApplyFiles` | Auto-write detected files after replies |
+| `bannerTitle` / `bannerSubtitle` | Banner text |
+| `linkWebsite` … `linkContact` | Banner URL chips |
 
----
+<br/>
 
-## Changelog
-
-Release history lives in [CHANGELOG.md](./CHANGELOG.md). After the repo is public, you can also point users to release notes on GitHub:
-
-`https://github.com/gautammanak1/asi1-vs-code/releases`
-
----
-
-## Install from `.vsix` (testing or offline)
+## Build & install from `.vsix`
 
 ```bash
 npm install
@@ -98,26 +80,22 @@ npm run compile
 npm run package
 ```
 
-Then in VS Code: **Extensions: Install from VSIX…** and pick `asi1-code-<version>.vsix`, or:
+Then **Extensions: Install from VSIX…** and select `asi1-code-<version>.vsix`, or:
 
 ```bash
-code --install-extension ./asi1-code-0.1.0.vsix
+code --install-extension ./asi1-code-0.0.2.vsix
 ```
 
----
+<br/>
 
-## Contributing
+## Changelog
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
+See [CHANGELOG.md](./CHANGELOG.md) and [GitHub Releases](https://github.com/gautammanak1/asi1-vs-code/releases).
 
----
+<br/>
 
-## Security
+## Contributing · Security · License
 
-See [SECURITY.md](./SECURITY.md).
-
----
-
-## License
-
-[MIT](./LICENSE) — Copyright (c) 2026 Gautam Manak and contributors.
+- [CONTRIBUTING.md](./CONTRIBUTING.md)  
+- [SECURITY.md](./SECURITY.md)  
+- [MIT License](./LICENSE) — © 2026 Gautam Manak and contributors
