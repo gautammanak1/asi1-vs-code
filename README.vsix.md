@@ -4,7 +4,7 @@
 
 # ASI1 Code
 
-### AI Coding Assistant for VS Code & Cursor
+### AI Coding Assistant for VS Code & Cursor · **v0.1.2**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code">
@@ -24,6 +24,9 @@
   </a>
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
+  </a>
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.2">
+    <img src="https://img.shields.io/badge/release-v0.1.2-22c55e?style=flat" alt="Version 0.1.2" />
   </a>
 </p>
 
@@ -79,6 +82,7 @@ Building with **ASI1** and **Agentverse-style** workflows should not mean juggli
 | **Web** | `web_search` via ASI1 (when enabled) |
 | **Files** | Fenced code + “Save as” hints; optional auto-apply |
 | **Agents** | **ASI: Create Agentverse uAgent Project** — `main.py`, `agent.py`, Docker, Makefile, `.env`, etc. |
+| **Image** | **Run…** in chat — chat or image endpoint (`/v1/image/generate`); optional `imageBaseUrl`, `imageModel`, `imageSize` |
 
 ### AI chat inside VS Code
 
@@ -111,9 +115,9 @@ Generated files can be written into your workspace (manual **Create files** or o
 
 Optional: automatically create files detected from the assistant reply (requires an open folder).
 
-### Custom links & branding
+### Chat UI & optional branding
 
-Banner title, subtitle, and link chips (website, docs, community, support, etc.) are configurable under `asiAssistant.*`.
+The sidebar uses a **minimal black** theme with an **ASI1 Code** label, session id, and turn count. Optional `asiAssistant.banner*` and link settings remain in configuration (compatibility / future use).
 
 ### Tools & web search (ASI1)
 
@@ -158,7 +162,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./asi1-code-0.1.1.vsix
+code --install-extension ./asi1-code-0.1.2.vsix
 ```
 
 Or:
@@ -235,6 +239,9 @@ All settings use the `asiAssistant.*` prefix.
 | `asiAssistant.apiKey` | ASI1 API key |
 | `asiAssistant.baseUrl` | Chat completions endpoint URL |
 | `asiAssistant.model` | Model id (e.g. `asi1`) |
+| `asiAssistant.imageBaseUrl` | Optional image API base URL (empty = derive from chat URL) |
+| `asiAssistant.imageModel` | Image model id (empty = fallback to chat model) |
+| `asiAssistant.imageSize` | Default image size (e.g. `1024x1024`) |
 | `asiAssistant.systemPrompt` | System message for every request |
 | `asiAssistant.streamResponse` | Stream SSE (off while built-in tools resolve a turn) |
 | `asiAssistant.webSearch` | Enable ASI1 `web_search` |
@@ -243,9 +250,9 @@ All settings use the `asiAssistant.*` prefix.
 | `asiAssistant.sessionId` | Optional fixed session id |
 | `asiAssistant.maxToolRounds` | Max tool-call rounds per message |
 | `asiAssistant.autoApplyFiles` | Auto-write detected files after replies |
-| `asiAssistant.bannerTitle` | Banner title |
-| `asiAssistant.bannerSubtitle` | Banner subtitle |
-| `asiAssistant.bannerLogoUrl` | Optional HTTPS logo URL |
+| `asiAssistant.bannerTitle` | Optional banner title (setting retained) |
+| `asiAssistant.bannerSubtitle` | Optional banner subtitle (setting retained) |
+| `asiAssistant.bannerLogoUrl` | Optional HTTPS logo URL (setting retained) |
 | `asiAssistant.linkWebsite` | Website URL |
 | `asiAssistant.linkDocs` | Documentation URL |
 | `asiAssistant.linkX` | X (Twitter) URL |
@@ -388,7 +395,7 @@ Package Extension:
 npm run package
 ```
 
-This **`README.vsix.md`** file is what ships as the Marketplace long description when you run **`npm run package`** (`vsce package --readme-path README.vsix.md`). The same content is kept in **`README.md`** on GitHub.
+This **`README.vsix.md`** file is what ships as the Marketplace long description when you run **`npm run package`** (`vsce package --readme-path README.vsix.md`) — **v0.1.2** includes the icon + banner above. The same content is kept in **`README.md`** on GitHub.
 
 ---
 

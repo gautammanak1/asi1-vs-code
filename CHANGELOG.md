@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.2] - 2026-03-31
+
+### Added
+
+- **README.vsix.md** / **README.md** (Marketplace long description): extension **icon** at the top, **v0.1.2** callout, release badge, image API settings documented, `.vsix` install filename updated.
+
+### Changed
+
+- Chat webview: **black / zinc** theme, **large top banner** removed from the sidebar; compact **ASI1 Code** label in the chat top bar.
+
+---
+
 ## [0.0.2] - 2026-03-30
 
 ### Added
@@ -52,7 +64,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.0.2...HEAD  
+[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.1.2...HEAD  
+[0.1.2]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.2  
 [0.0.2]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.0.2  
 [0.1.1]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.1  
 [0.1.0]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.0  

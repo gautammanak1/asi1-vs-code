@@ -333,38 +333,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     });
   }
 
-  private _readBannerConfig(): {
-    title: string;
-    subtitle: string;
-    logoUrlOverride: string;
-    links: Array<{ label: string; href: string }>;
-  } {
-    const c = vscode.workspace.getConfiguration("asiAssistant");
-    const title = (c.get<string>("bannerTitle") ?? "").trim();
-    const subtitle = (c.get<string>("bannerSubtitle") ?? "ASI1 · VS Code & Cursor").trim();
-    const logoUrlOverride = (c.get<string>("bannerLogoUrl") ?? "").trim();
-
-    const pairs: Array<[string, string]> = [
-      ["Website", c.get<string>("linkWebsite") ?? ""],
-      ["Docs", c.get<string>("linkDocs") ?? ""],
-      ["X", c.get<string>("linkX") ?? ""],
-      ["Community", c.get<string>("linkCommunity") ?? ""],
-      ["Resources", c.get<string>("linkResources") ?? ""],
-      ["Support", c.get<string>("linkSupport") ?? ""],
-      ["Contact us", c.get<string>("linkContact") ?? ""],
-    ];
-
-    const links: Array<{ label: string; href: string }> = [];
-    for (const [label, raw] of pairs) {
-      const href = raw.trim();
-      if (href && /^https?:\/\//i.test(href)) {
-        links.push({ label, href });
-      }
-    }
-
-    return { title, subtitle, logoUrlOverride, links };
-  }
-
   private _buildHtml(webview: vscode.Webview): string {
     const nonce = String(Date.now());
     const mdScriptUri = webview.asWebviewUri(
@@ -382,31 +350,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     const chatPanelJsUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this._context.extensionUri, "media", "chatPanel.js")
     );
-    const { title, subtitle, logoUrlOverride, links } = this._readBannerConfig();
-    const esc = (s: string) =>
-      s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-    const localLogo = webview
-      .asWebviewUri(vscode.Uri.joinPath(this._context.extensionUri, "resources", "logo.png"))
-      .toString();
-    const logoSrc =
-      logoUrlOverride && /^https?:\/\//i.test(logoUrlOverride) ? esc(logoUrlOverride) : localLogo;
-    const linkHtml = links
-      .map(
-        (l) =>
-          `<a class="link-chip" href="${esc(l.href)}" target="_blank" rel="noreferrer noopener">${esc(
-            l.label
-          )}</a>`
-      )
-      .join("");
-    const subtitleHtml =
-      subtitle.length > 0 ? `<p class="banner-sub">${esc(subtitle)}</p>` : "";
-    const titleHtml =
-      title.length > 0
-        ? `<div class="banner-head-text"><h1 class="banner-title">${esc(title)}</h1>${subtitleHtml}</div>`
-        : subtitle.length > 0
-          ? `<div class="banner-head-text">${subtitleHtml}</div>`
-          : "";
-
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -418,20 +361,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   <script src="${mdScriptUri}"></script>
 </head>
 <body>
-  <div id="banner-wrap">
-    <div id="banner">
-      <div class="banner-top">
-        <div class="banner-brand">
-          <img class="brand-logo" src="${logoSrc}" alt="ASI1 Code" />
-          ${titleHtml}
-        </div>
-        <button type="button" id="collapse-btn" title="Collapse or expand banner">▲</button>
-      </div>
-      <div class="banner-body">
-        ${linkHtml ? `<div class="link-row">${linkHtml}</div>` : ""}
-      </div>
-    </div>
-  </div>
   <div id="main" class="asi-dark-chat">
     <div id="activity-bar"><span id="activity-text"></span></div>
     <div id="setup-row" class="setup-row">
@@ -454,6 +383,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     </div>
     <div id="chat-top-bar" class="chat-top-bar">
       <div class="chat-top-left">
+        <span class="asi-brand">ASI1 Code</span>
         <button type="button" class="chat-meta-btn" disabled aria-hidden="true">
           <span class="chev">▸</span>
           <span id="msg-count">0</span> turns

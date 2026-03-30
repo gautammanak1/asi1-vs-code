@@ -3,25 +3,7 @@ const log = document.getElementById('log');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const loadingEl = document.getElementById('loading');
-const banner = document.getElementById('banner');
-const collapseBtn = document.getElementById('collapse-btn');
 let loading = false;
-
-try {
-  if (sessionStorage.getItem('asiBannerCollapsed') === '1') {
-    banner.classList.add('collapsed');
-    collapseBtn.textContent = '▼';
-  }
-} catch (e) {}
-
-collapseBtn.addEventListener('click', function () {
-  banner.classList.toggle('collapsed');
-  var collapsed = banner.classList.contains('collapsed');
-  collapseBtn.textContent = collapsed ? '▼' : '▲';
-  try {
-    sessionStorage.setItem('asiBannerCollapsed', collapsed ? '1' : '0');
-  } catch (e) {}
-});
 
 function autoResize() {
   input.style.height = 'auto';

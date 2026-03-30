@@ -3,7 +3,7 @@
   "displayName": "ASI1 Code",
   "description": "Sidebar AI chat for VS Code powered by ASI1 — streaming replies, markdown, and workspace file hints.",
   "icon": "resources/icon.png",
-  "version": "0.0.2",
+  "version": "0.1.2",
   "publisher": "gautammanak2",
   "license": "MIT",
   "author": "Gautam Manak",
