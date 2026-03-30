@@ -7,14 +7,14 @@
   <a href="https://github.com/gautammanak1/asi1-vs-code/actions/workflows/ci.yml"><img src="https://github.com/gautammanak1/asi1-vs-code/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
   <a href="https://code.visualstudio.com/"><img src="https://img.shields.io/badge/VS%20Code-1.85+-007ACC?logo=visualstudiocode&logoColor=white" alt="VS Code" /></a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=GautamManak.asi1-code"><img src="https://img.shields.io/badge/VS%20Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white" alt="Install on VS Marketplace" /></a>
+  <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code"><img src="https://img.shields.io/badge/VS%20Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white" alt="Install on VS Marketplace" /></a>
 </p>
 
 # ASI1 Code
 
 **ASI1 Code** is a **Visual Studio Code** extension (works in **Cursor** too) that adds a **sidebar AI chat** wired to the **ASI1** API ([api.asi1.ai](https://api.asi1.ai)). It streams replies, renders **Markdown** and syntax-highlighted code, and can turn hints in answers into files in your open workspace. Banner chips link to **Website**, **Docs**, **X**, **Community**, **Resources**, **Support**, and **Contact** — tailored for **ASI1** and the **Fetch.ai** ecosystem.
 
-**Extension id:** `GautamManak.asi1-code`  
+**Extension id:** `gautammanak2.asi1-code`  
 **Engine:** VS Code `^1.85.0`.
 
 ---
@@ -47,7 +47,7 @@ ASI1 Code is built for developers who want a **fast, focused coding assistant** 
 
 ## Get started
 
-1. **Install** from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=GautamManak.asi1-code), or install a local `.vsix` (see below).  
+1. **Install** from the [Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code), or install a local `.vsix` (see below).  
 2. **Set your API key** — Command Palette → **ASI: Set API Key**, or settings / environment as in [Configuration](#configuration).  
 3. Open **ASI1 Code** in the activity bar → **Chat**, or press **`Ctrl+Shift+;`** (**`Cmd+Shift+;`** on macOS) for **ASI: Open Assistant Chat**.  
 4. Open a **folder** if you want generated files written into the project.

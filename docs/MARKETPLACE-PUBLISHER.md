@@ -7,7 +7,7 @@ Use these as **templates**; replace names, emails, and URLs with your real detai
 | Field | Example / what to enter |
 |--------|-------------------------|
 | **Name** | `Gautam Manak` — display name shown on your publisher page (your name or brand). |
-| **ID** | Must match `package.json` → `"publisher"` (e.g. `GautamManak`). Create once; hard to change. |
+| **ID** | Must match `package.json` → `"publisher"` (this project: `gautammanak2`). Create once; hard to change. |
 | **Verified domain** | Optional. Skip until you own a domain; you can add DNS verification later ([Microsoft docs](https://learn.microsoft.com/azure/devops/marketplace/verify-domain)). |
 
 ## About you
