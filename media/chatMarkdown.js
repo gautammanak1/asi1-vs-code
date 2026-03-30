@@ -8,6 +8,10 @@
   var FENCE = BT + BT + BT;
 
   var PSEUDO_LANG = {
+    PLAINTEXT: "plaintext",
+    TXT: "plaintext",
+    TEXT: "plaintext",
+    PYTHON: "python",
     JSON: "json",
     TS: "typescript",
     TYPESCRIPT: "typescript",
@@ -25,7 +29,6 @@
     XML: "xml",
     SQL: "sql",
     PY: "python",
-    PYTHON: "python",
     MD: "markdown",
     MARKDOWN: "markdown",
     YAML: "yaml",

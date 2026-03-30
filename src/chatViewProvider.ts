@@ -1,11 +1,22 @@
+import { randomUUID } from "node:crypto";
 import * as vscode from "vscode";
 import {
   completeChat,
   completeChatStreaming,
+  generateImage,
   isApiKeyConfigured,
+  runChatWithTools,
+  type ApiChatMessage,
   type ChatMessage,
 } from "./asiClient";
 import { extractFilesFromMarkdown, writeExtractedFiles } from "./workspaceFiles";
+
+const CHAT_STATE_KEY = "asiAssistant.sidebarChat.v1";
+
+interface StoredChatState {
+  chatId: string;
+  history: ChatMessage[];
+}
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "asiAssistant.chatView";
@@ -13,8 +24,36 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   private _view?: vscode.WebviewView;
   /** User/assistant turns only; system prompt is added per request from settings. */
   private _history: ChatMessage[] = [];
+  /** When tool calling is enabled: full OpenAI-style thread including tool messages. */
+  private _apiThread: ApiChatMessage[] = [];
+  /** Used for `x-session-id` when agentic session is on and no manual session id is set. */
+  private _sessionIdGenerated = randomUUID();
+  /** Stable id for this chat thread (shown in UI, persisted across reloads). */
+  private _chatId: string;
 
-  constructor(private readonly _context: vscode.ExtensionContext) {}
+  constructor(private readonly _context: vscode.ExtensionContext) {
+    this._chatId = randomUUID();
+    const raw = this._context.globalState.get<string>(CHAT_STATE_KEY);
+    if (raw) {
+      try {
+        const s = JSON.parse(raw) as StoredChatState;
+        if (s.chatId && Array.isArray(s.history)) {
+          this._chatId = s.chatId;
+          this._history = s.history;
+          this._apiThread = [];
+        }
+      } catch {
+        /* keep fresh chat */
+      }
+    }
+  }
+
+  private _persistChatState(): void {
+    void this._context.globalState.update(
+      CHAT_STATE_KEY,
+      JSON.stringify({ chatId: this._chatId, history: this._history } satisfies StoredChatState)
+    );
+  }
 
   resolveWebviewView(
     webviewView: vscode.WebviewView,
@@ -40,13 +79,48 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       }
       if (msg.type === "setupReady") {
         await this.refreshSetupState();
+        this._postState();
         return;
       }
       if (msg.type === "send" && typeof msg.text === "string") {
         await this._handleUserMessage(msg.text.trim());
       }
+      if (msg.type === "asiModalSubmit") {
+        const prompt = typeof msg.prompt === "string" ? msg.prompt.trim() : "";
+        if (!prompt) {
+          return;
+        }
+        const mode = msg.mode === "image" ? "image" : "chat";
+        this._view?.webview.postMessage({ type: "asiModalLoading", value: true });
+        try {
+          if (mode === "image") {
+            const size = typeof msg.size === "string" ? msg.size : undefined;
+            const model = typeof msg.model === "string" ? msg.model : undefined;
+            const r = await generateImage({ prompt, size, model });
+            this._view?.webview.postMessage({
+              type: "asiModalResult",
+              mode: "image",
+              b64Json: r.b64Json,
+              url: r.url,
+              revisedPrompt: r.revisedPrompt,
+            });
+          } else {
+            await this._runModalChat(prompt);
+            this._view?.webview.postMessage({ type: "asiModalResult", mode: "chat", ok: true });
+          }
+        } catch (e) {
+          const err = e instanceof Error ? e.message : String(e);
+          this._view?.webview.postMessage({ type: "asiModalResult", mode, error: err });
+        } finally {
+          this._view?.webview.postMessage({ type: "asiModalLoading", value: false });
+        }
+      }
       if (msg.type === "clear") {
         this._history = [];
+        this._apiThread = [];
+        this._sessionIdGenerated = randomUUID();
+        this._chatId = randomUUID();
+        this._persistChatState();
         this._postState();
       }
       if (msg.type === "createFiles") {
@@ -70,6 +144,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         void this.refreshSetupState();
       }
     });
+
   }
 
   /** Re-post onboarding row (API key / dev install). Call after key save or settings change. */
@@ -87,19 +162,68 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       return;
     }
     this._history.push({ role: "user", content: text });
+    if (vscode.workspace.getConfiguration("asiAssistant").get<boolean>("enableTools") !== false) {
+      this._apiThread.push({ role: "user", content: text });
+    }
     this._postState();
     void this._completeFromHistory();
   }
 
-  private buildMessagesForApi(): ChatMessage[] {
+  private _resolveSessionIdForHeader(): string | undefined {
+    const cfg = vscode.workspace.getConfiguration("asiAssistant");
+    const manual = cfg.get<string>("sessionId")?.trim();
+    if (manual) {
+      return manual;
+    }
+    if (cfg.get<boolean>("agenticSession") === true) {
+      return this._sessionIdGenerated;
+    }
+    return undefined;
+  }
+
+  /** Messages for ASI API (system + thread). */
+  private buildMessagesForApi(): ApiChatMessage[] {
     const sys =
       vscode.workspace.getConfiguration("asiAssistant").get<string>("systemPrompt") ?? "";
-    const messages: ChatMessage[] = [];
+    const useTools =
+      vscode.workspace.getConfiguration("asiAssistant").get<boolean>("enableTools") !== false;
+    const messages: ApiChatMessage[] = [];
     if (sys.trim()) {
       messages.push({ role: "system", content: sys });
     }
-    messages.push(...this._history);
+    if (useTools) {
+      messages.push(...this._apiThread);
+    } else {
+      for (const m of this._history) {
+        if (m.role === "user" || m.role === "assistant") {
+          messages.push({ role: m.role, content: m.content });
+        }
+      }
+    }
     return messages;
+  }
+
+  /** One-shot chat from the ASI modal (no tools; uses same session header as main chat). */
+  private async _runModalChat(prompt: string): Promise<void> {
+    const cfg = vscode.workspace.getConfiguration("asiAssistant");
+    const sys = cfg.get<string>("systemPrompt") ?? "";
+    const msgs: ChatMessage[] = [];
+    if (sys.trim()) {
+      msgs.push({ role: "system", content: sys });
+    }
+    msgs.push({ role: "user", content: prompt });
+    const r = await completeChat(msgs, undefined, {
+      sessionIdHeader: this._resolveSessionIdForHeader(),
+    });
+    const content = r.content ?? "";
+    this._history.push({ role: "user", content: prompt });
+    this._history.push({ role: "assistant", content });
+    const useTools = cfg.get<boolean>("enableTools") !== false;
+    if (useTools) {
+      this._apiThread.push({ role: "user", content: prompt });
+      this._apiThread.push({ role: "assistant", content });
+    }
+    this._postState();
   }
 
   private async _handleUserMessage(text: string): Promise<void> {
@@ -107,6 +231,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       return;
     }
     this._history.push({ role: "user", content: text });
+    const useTools =
+      vscode.workspace.getConfiguration("asiAssistant").get<boolean>("enableTools") !== false;
+    if (useTools) {
+      this._apiThread.push({ role: "user", content: text });
+    }
     this._postState();
     await this._completeFromHistory();
   }
@@ -115,6 +244,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     const messages = this.buildMessagesForApi();
     const cfg = vscode.workspace.getConfiguration("asiAssistant");
     const useStream = cfg.get<boolean>("streamResponse") !== false;
+    const useTools = cfg.get<boolean>("enableTools") !== false;
+    const sessionHeader = this._resolveSessionIdForHeader();
 
     this._view?.webview.postMessage({ type: "activity", text: "Connecting to ASI…" });
     this._view?.webview.postMessage({ type: "loading", value: true });
@@ -122,22 +253,46 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
 
     try {
       let content = "";
-      if (useStream) {
-        this._view?.webview.postMessage({ type: "activity", text: "Streaming response…" });
-        const r = await completeChatStreaming(messages, (_delta, full) => {
-          content = full;
-          this._view?.webview.postMessage({ type: "stream", text: full });
+      if (useTools) {
+        this._view?.webview.postMessage({
+          type: "activity",
+          text: "ASI:One (tools + web search)…",
         });
+        const maxToolRounds =
+          vscode.workspace.getConfiguration("asiAssistant").get<number>("maxToolRounds") ?? 12;
+        const { apiThread, lastAssistantText } = await runChatWithTools(messages, {
+          onProgress: (label) => {
+            this._view?.webview.postMessage({ type: "activity", text: label });
+          },
+          sessionId: sessionHeader,
+          maxRounds: maxToolRounds,
+        });
+        this._apiThread = apiThread;
+        content = lastAssistantText;
+        this._view?.webview.postMessage({ type: "stream", text: content });
+      } else if (useStream) {
+        this._view?.webview.postMessage({ type: "activity", text: "Streaming response…" });
+        const r = await completeChatStreaming(
+          messages as ChatMessage[],
+          (_delta, full) => {
+            content = full;
+            this._view?.webview.postMessage({ type: "stream", text: full });
+          },
+          undefined,
+          { sessionIdHeader: sessionHeader }
+        );
         content = r.content || content;
       } else {
         this._view?.webview.postMessage({ type: "activity", text: "Waiting for reply…" });
-        const r = await completeChat(messages);
+        const r = await completeChat(messages as ChatMessage[], undefined, {
+          sessionIdHeader: sessionHeader,
+        });
         content = r.content;
       }
 
       this._history.push({ role: "assistant", content });
-      this._view?.webview.postMessage({ type: "stream", done: true });
       this._postState();
+      this._view?.webview.postMessage({ type: "stream", done: true });
 
       const autoApply = cfg.get<boolean>("autoApplyFiles") === true;
       const files = extractFilesFromMarkdown(content);
@@ -168,10 +323,13 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   private _postState(): void {
     const lastAssistant = [...this._history].reverse().find((m) => m.role === "assistant");
     const extractedFiles = lastAssistant ? extractFilesFromMarkdown(lastAssistant.content) : [];
+    this._persistChatState();
     this._view?.webview.postMessage({
       type: "state",
       history: this._history,
       extractedFiles,
+      chatId: this._chatId,
+      chatIdShort: this._chatId.replace(/-/g, "").slice(0, 10),
     });
   }
 
@@ -218,6 +376,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     const hljsJsUri = webview.asWebviewUri(
       vscode.Uri.joinPath(this._context.extensionUri, "media", "highlight.min.js")
     );
+    const chatCssUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._context.extensionUri, "media", "chat.css")
+    );
+    const chatPanelJsUri = webview.asWebviewUri(
+      vscode.Uri.joinPath(this._context.extensionUri, "media", "chatPanel.js")
+    );
     const { title, subtitle, logoUrlOverride, links } = this._readBannerConfig();
     const esc = (s: string) =>
       s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
@@ -238,453 +402,17 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       subtitle.length > 0 ? `<p class="banner-sub">${esc(subtitle)}</p>` : "";
     const titleHtml =
       title.length > 0
-        ? `<div class="banner-head-text"><h1 class="banner-title">${esc(title)}</h1></div>`
-        : "";
+        ? `<div class="banner-head-text"><h1 class="banner-title">${esc(title)}</h1>${subtitleHtml}</div>`
+        : subtitle.length > 0
+          ? `<div class="banner-head-text">${subtitleHtml}</div>`
+          : "";
 
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' ${webview.cspSource}; script-src 'nonce-${nonce}' ${webview.cspSource}; img-src ${webview.cspSource} data: https: blob:; frame-src https:; font-src https:;" />
-  <style>
-    :root {
-      color-scheme: dark;
-      --asi-radius: 0.5rem;
-      --asi-radius-lg: 0.75rem;
-      --asi-border: hsl(240 6% 12%);
-      --asi-card: hsl(240 10% 3.9%);
-      --asi-muted: hsl(240 5% 64.9%);
-      --asi-ring: hsl(240 5% 34%);
-      --asi-accent: var(--vscode-textLink-foreground);
-    }
-    * { box-sizing: border-box; }
-    body {
-      font-family: var(--vscode-font-family);
-      font-size: 13px;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      background: #000000;
-    }
-    #banner-wrap {
-      flex-shrink: 0;
-      padding: 8px 10px 0;
-    }
-    #banner {
-      border-radius: var(--asi-radius-lg);
-      background: var(--asi-card);
-      border: 1px solid var(--asi-border);
-      padding: 10px 12px 10px;
-      position: relative;
-      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.25);
-    }
-    #banner.collapsed .banner-body { display: none; }
-    #banner.collapsed { padding-bottom: 8px; }
-    .banner-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .banner-brand {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      min-width: 0;
-      flex: 1;
-    }
-    .brand-logo {
-      height: 48px;
-      width: auto;
-      max-width: min(220px, 58vw);
-      object-fit: contain;
-      flex-shrink: 0;
-      opacity: 0.98;
-      display: block;
-    }
-    .banner-head-text { min-width: 0; }
-    .banner-title {
-      font-size: 14px;
-      font-weight: 600;
-      letter-spacing: -0.02em;
-      color: var(--vscode-sideBarTitle-foreground);
-      margin: 0;
-      line-height: 1.25;
-    }
-    .banner-sub {
-      font-size: 11px;
-      line-height: 1.4;
-      color: var(--asi-muted);
-      margin: 4px 0 0 0;
-    }
-    .banner-body {
-      margin-top: 8px;
-    }
-    .link-row {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-    }
-    .link-chip {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 28px;
-      padding: 0 10px;
-      font-size: 11px;
-      font-weight: 500;
-      border-radius: calc(var(--asi-radius) - 2px);
-      border: 1px solid var(--asi-border);
-      background: hsl(240 6% 8%);
-      color: var(--vscode-foreground);
-      text-decoration: none;
-      transition: background 0.12s ease, border-color 0.12s ease;
-    }
-    .link-chip:hover {
-      background: hsl(240 5% 12%);
-      border-color: var(--asi-ring);
-      text-decoration: none;
-    }
-    #collapse-btn {
-      flex-shrink: 0;
-      height: 28px;
-      width: 28px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      background: hsl(240 6% 8%);
-      border: 1px solid var(--asi-border);
-      color: var(--vscode-foreground);
-      border-radius: var(--asi-radius);
-      padding: 0;
-      font-size: 11px;
-      line-height: 1;
-      cursor: pointer;
-    }
-    #collapse-btn:hover { background: hsl(240 5% 12%); }
-    #main.asi-dark-chat {
-      flex: 1;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-      padding: 8px 10px 10px;
-      background: #000000;
-    }
-    #log {
-      flex: 1;
-      overflow-y: auto;
-      margin-bottom: 8px;
-      white-space: pre-wrap;
-      word-break: break-word;
-      padding: 8px 6px;
-      background: #000000;
-      color: #e8e8e8;
-      border-radius: var(--asi-radius-lg);
-      border: 1px solid var(--asi-border);
-    }
-    .empty-hint {
-      font-size: 12px;
-      color: #888;
-      padding: 12px 8px;
-      text-align: center;
-      line-height: 1.5;
-    }
-    .msg { margin: 8px 0; padding: 10px 12px; border-radius: 8px; max-width: 100%; }
-    .asi-dark-chat .user {
-      background: #141414;
-      border: 1px solid #2a2a2a;
-      color: #e0e0e0;
-    }
-    .asi-dark-chat .assistant {
-      background: #101010;
-      border: 1px solid #252525;
-      color: #eaeaea;
-    }
-    .asi-dark-chat .role { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.65; margin-bottom: 6px; color: #888; }
-    .loading-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: #ccc;
-      padding: 8px 4px;
-    }
-    .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: #3b82f6;
-      animation: pulse 1s ease-in-out infinite;
-    }
-    .dot:nth-child(2) { animation-delay: 0.15s; }
-    .dot:nth-child(3) { animation-delay: 0.3s; }
-    @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
-    #composer {
-      flex-shrink: 0;
-      border-radius: var(--asi-radius-lg);
-      border: 1px solid var(--asi-border);
-      background: hsl(240 6% 6%);
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.2);
-    }
-    #row {
-      display: flex;
-      gap: 8px;
-      align-items: flex-end;
-      border-radius: var(--asi-radius);
-      border: 1px solid var(--asi-border);
-      background: #000000;
-      padding: 4px 4px 4px 8px;
-    }
-    #row:focus-within {
-      border-color: var(--asi-ring);
-      box-shadow: 0 0 0 1px var(--asi-ring);
-    }
-    #input {
-      flex: 1;
-      resize: none;
-      min-height: 40px;
-      max-height: 160px;
-      padding: 8px 6px;
-      font-family: inherit;
-      font-size: 13px;
-      line-height: 1.45;
-      background: transparent;
-      color: #fafafa;
-      border: none;
-      outline: none;
-    }
-    #input::placeholder { color: hsl(240 5% 45%); opacity: 1; }
-    #send {
-      flex-shrink: 0;
-      min-width: 72px;
-      padding: 8px 14px;
-      cursor: pointer;
-      background: hsl(0 0% 98%);
-      color: hsl(240 10% 3.9%);
-      border: 1px solid hsl(240 6% 12%);
-      border-radius: calc(var(--asi-radius) - 2px);
-      font-weight: 600;
-      font-size: 12px;
-    }
-    #send:hover { filter: brightness(1.03); }
-    #send:disabled { opacity: 0.45; cursor: not-allowed; }
-    #toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 8px;
-    }
-    #hint { font-size: 10px; color: #777; opacity: 1; }
-    #clear {
-      background: transparent;
-      color: var(--vscode-textLink-foreground);
-      border: none;
-      cursor: pointer;
-      font-size: 11px;
-      padding: 2px 4px;
-    }
-    #clear:hover { text-decoration: underline; }
-    .msg-body { font-size: 13px; line-height: 1.5; }
-    .md-plain { white-space: pre-wrap; word-break: break-word; }
-    .md-prose { margin: 4px 0 10px 0; color: #e4e4e4; }
-    .md-prose .md-p { margin: 0 0 8px 0; line-height: 1.6; }
-    .md-prose strong { color: #ffffff; font-weight: 600; }
-    .md-prose em { color: #dcdcdc; }
-    .md-prose .md-h { margin: 12px 0 8px 0; font-weight: 600; line-height: 1.35; color: #ffffff; }
-    .md-prose h1.md-h { font-size: 1.2rem; }
-    .md-prose h2.md-h { font-size: 1.1rem; }
-    .md-prose h3.md-h, .md-prose h4.md-h, .md-prose h5.md-h, .md-prose h6.md-h { font-size: 1.02rem; color: #f0f0f0; }
-    .md-prose .md-ul, .md-prose .md-ol { margin: 6px 0 10px 0; padding-left: 1.35em; }
-    .md-prose .md-li { margin: 4px 0; line-height: 1.55; }
-    .md-prose .md-task-list .md-li { list-style: none; margin-left: -1em; }
-    .md-prose .md-task-box { margin-right: 6px; opacity: 0.9; }
-    .md-prose .md-inline-code {
-      font-family: var(--vscode-editor-font-family), ui-monospace, monospace;
-      font-size: 12px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: #1e1e1e;
-      color: #d4d4d4;
-      border: 1px solid #333;
-    }
-    .md-prose .md-a { color: #6ea8fe; text-decoration: none; }
-    .md-prose .md-a:hover { text-decoration: underline; }
-    .md-prose .md-hr { border: none; border-top: 1px solid #333; margin: 12px 0; }
-    .md-prose .md-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0; }
-    .md-prose .md-th, .md-prose .md-td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
-    .md-prose .md-th { background: #1a1a1a; color: #fff; font-weight: 600; }
-    .md-prose .md-td { background: #121212; }
-    .md-fence-md { padding: 4px 0; }
-    .code-wrap { margin: 8px 0; border-radius: 6px; overflow: hidden; border: 1px solid #333; }
-    .code-label {
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
-      padding: 5px 10px;
-      background: #1a1a1a;
-      color: #e0e0e0;
-      font-weight: 600;
-    }
-    .code-label-typescript, .code-label-tsx { background: #3178c6; color: #fff; }
-    .code-label-javascript, .code-label-js, .code-label-jsx { background: #ca8a04; color: #111; }
-    .code-label-json { background: #cbcb41; color: #111; }
-    .code-label-bash, .code-label-shell { background: #3fa75c; color: #fff; }
-    .code-label-css, .code-label-scss { background: #264de4; color: #fff; }
-    .code-label-html, .code-label-xml { background: #c6532c; color: #fff; }
-    .code-label-sql { background: #336791; color: #fff; }
-    .code-label-python { background: #3776ab; color: #fff; }
-    .code-label-markdown, .code-label-md { background: #083fa1; color: #fff; }
-    .code-label-yaml { background: #cb171e; color: #fff; }
-    .code-label-dockerfile { background: #2496ed; color: #fff; }
-    .code-label-graphql { background: #e10098; color: #fff; }
-    .code-label-nginx { background: #009639; color: #fff; }
-    .code-label-plaintext { background: #444; color: #ddd; }
-    pre.code-block code.hljs { background: #0d1117 !important; }
-    .hljs { background: #0d1117 !important; }
-    .code-block {
-      margin: 0; padding: 10px 12px;
-      font-family: var(--vscode-editor-font-family), ui-monospace, monospace;
-      font-size: 12px;
-      line-height: 1.45;
-      overflow-x: auto;
-      background: #050505;
-      color: #d6d6d6;
-    }
-    .code-block code { font-family: inherit; }
-    #create-bar {
-      display: none;
-      flex-shrink: 0;
-      align-items: center;
-      gap: 10px;
-      flex-wrap: wrap;
-      padding: 8px 10px;
-      margin: 0 0 8px 0;
-      border-radius: var(--asi-radius);
-      background: #141414;
-      border: 1px solid #2a2a2a;
-    }
-    #create-bar.visible { display: flex; }
-    #create-files-btn {
-      padding: 8px 14px;
-      cursor: pointer;
-      background: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 12px;
-    }
-    #create-files-btn:hover { filter: brightness(1.05); }
-    #create-list { font-size: 11px; color: #999; }
-    #activity-bar {
-      display: none;
-      font-size: 11px;
-      color: #bbb;
-      padding: 6px 10px;
-      margin: 0 0 8px 0;
-      border-radius: 6px;
-      background: #141414;
-      border: 1px solid #2a2a2a;
-    }
-    #activity-bar.visible { display: block; }
-    #setup-row {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      flex-shrink: 0;
-      margin: 0 0 8px 0;
-      padding: 10px 10px;
-      border-radius: var(--asi-radius-lg);
-      border: 1px solid var(--asi-border);
-      background: hsl(240 6% 5%);
-    }
-    #setup-row.setup-hidden { display: none !important; }
-    .setup-step {
-      display: flex;
-      gap: 10px;
-      align-items: flex-start;
-    }
-    .setup-step.setup-done .setup-num {
-      background: hsl(142 76% 28%);
-      border-color: hsl(142 70% 40%);
-      color: #ecfdf5;
-    }
-    .setup-num {
-      flex-shrink: 0;
-      width: 22px;
-      height: 22px;
-      border-radius: 999px;
-      font-size: 11px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: hsl(240 6% 12%);
-      border: 1px solid var(--asi-border);
-      color: var(--vscode-foreground);
-    }
-    .setup-inner { min-width: 0; flex: 1; }
-    .setup-head {
-      font-size: 12px;
-      font-weight: 600;
-      color: #fafafa;
-      margin: 0 0 4px 0;
-    }
-    .setup-desc {
-      font-size: 11px;
-      line-height: 1.45;
-      color: var(--asi-muted);
-      margin: 0 0 8px 0;
-    }
-    .setup-desc code {
-      font-family: var(--vscode-editor-font-family), ui-monospace, monospace;
-      font-size: 10px;
-      padding: 1px 4px;
-      border-radius: 3px;
-      background: #0a0a0a;
-      border: 1px solid var(--asi-border);
-    }
-    .setup-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      height: 30px;
-      padding: 0 12px;
-      font-size: 11px;
-      font-weight: 600;
-      border-radius: var(--asi-radius);
-      border: 1px solid var(--asi-border);
-      background: hsl(240 6% 10%);
-      color: var(--vscode-foreground);
-      cursor: pointer;
-    }
-    .setup-btn:hover { background: hsl(240 5% 14%); }
-    .setup-btn.primary {
-      background: hsl(0 0% 96%);
-      color: hsl(240 10% 3.9%);
-      border-color: hsl(240 6% 12%);
-    }
-    .setup-btn.primary:hover { filter: brightness(1.03); }
-    .msg.stream-live {
-      border-left: 3px solid var(--vscode-progressBar-background);
-      animation: fadeIn 0.2s ease;
-    }
-    .streaming-body {
-      font-family: var(--vscode-font-family);
-      font-size: 13px;
-      white-space: normal;
-      word-break: break-word;
-      max-height: 45vh;
-      overflow-y: auto;
-      color: #eaeaea;
-    }
-    @keyframes fadeIn { from { opacity: 0.6; } to { opacity: 1; } }
-  </style>
+  <link rel="stylesheet" href="${chatCssUri}" />
   <link rel="stylesheet" href="${hljsCssUri}" />
   <script src="${hljsJsUri}"></script>
   <script src="${mdScriptUri}"></script>
@@ -697,10 +425,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           <img class="brand-logo" src="${logoSrc}" alt="ASI1 Code" />
           ${titleHtml}
         </div>
-        <button type="button" id="collapse-btn" title="Show / hide intro">▲</button>
+        <button type="button" id="collapse-btn" title="Collapse or expand banner">▲</button>
       </div>
       <div class="banner-body">
-        ${subtitleHtml}
         ${linkHtml ? `<div class="link-row">${linkHtml}</div>` : ""}
       </div>
     </div>
@@ -725,6 +452,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         </div>
       </div>
     </div>
+    <div id="chat-top-bar" class="chat-top-bar">
+      <div class="chat-top-left">
+        <button type="button" class="chat-meta-btn" disabled aria-hidden="true">
+          <span class="chev">▸</span>
+          <span id="msg-count">0</span> turns
+        </button>
+        <span id="chat-session-id" class="chat-session-id" title="Chat session — persisted until you Clear">…</span>
+      </div>
+      <button type="button" id="clear" class="chat-review-btn">Clear</button>
+    </div>
     <div id="log"></div>
     <div id="create-bar">
       <button type="button" id="create-files-btn">Create files in workspace</button>
@@ -735,251 +472,55 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       <span>ASI is thinking…</span>
     </div>
     <div id="composer">
-      <div id="row">
-        <textarea id="input" rows="2" placeholder="Message ASI — plan a feature, paste an error, ask for code…"></textarea>
-        <button type="button" id="send">Send</button>
+      <div class="composer-input-wrap">
+        <div id="row">
+          <textarea id="input" rows="3" placeholder="Ask ASI… code, errors, refactors, or paste a stack trace"></textarea>
+        </div>
       </div>
-      <div id="toolbar">
-        <span id="hint">Enter send · Shift+Enter newline · Stream + status above</span>
-        <button type="button" id="clear">Clear chat</button>
+      <div class="composer-toolbar">
+        <div class="composer-left">
+          <span class="composer-pill accent">ASI1</span>
+          <span class="composer-pill">ASI</span>
+          <button type="button" class="composer-tool-btn" id="asi-open-modal" title="Chat or image (same prompt UI)">Run…</button>
+        </div>
+        <div class="composer-right">
+          <button type="button" id="send" title="Send (Enter)">↑</button>
+        </div>
+      </div>
+      <div id="composer-hint">Enter send · Shift+Enter newline</div>
+    </div>
+    <div id="asi-modal" class="asi-modal" hidden aria-hidden="true">
+      <div class="asi-modal-backdrop" id="asi-modal-backdrop"></div>
+      <div class="asi-modal-panel" role="dialog" aria-modal="true" aria-labelledby="asi-modal-title">
+        <div class="asi-modal-head">
+          <h2 id="asi-modal-title">ASI run</h2>
+          <button type="button" class="asi-modal-close" id="asi-modal-close" title="Close">×</button>
+        </div>
+        <label class="asi-modal-label" for="asi-modal-endpoint">Endpoint</label>
+        <select id="asi-modal-endpoint" class="asi-modal-select">
+          <option value="chat">Chat completions</option>
+          <option value="image">Image generate</option>
+        </select>
+        <div id="asi-modal-image-opts" class="asi-modal-image-opts" hidden>
+          <label class="asi-modal-label" for="asi-modal-size">Size</label>
+          <select id="asi-modal-size" class="asi-modal-select">
+            <option value="1024x1024">1024×1024</option>
+            <option value="512x512">512×512</option>
+            <option value="1024x1792">1024×1792</option>
+            <option value="1792x1024">1792×1024</option>
+          </select>
+        </div>
+        <label class="asi-modal-label" for="asi-modal-prompt">Prompt</label>
+        <textarea id="asi-modal-prompt" class="asi-modal-textarea" rows="5" placeholder="Describe what you want…"></textarea>
+        <div id="asi-modal-error" class="asi-modal-error" hidden></div>
+        <div id="asi-modal-result" class="asi-modal-result"></div>
+        <div class="asi-modal-actions">
+          <button type="button" class="asi-modal-submit" id="asi-modal-submit">Run</button>
+        </div>
       </div>
     </div>
   </div>
-  <script nonce="${nonce}">
-    const vscode = acquireVsCodeApi();
-    const log = document.getElementById('log');
-    const input = document.getElementById('input');
-    const sendBtn = document.getElementById('send');
-    const loadingEl = document.getElementById('loading');
-    const banner = document.getElementById('banner');
-    const collapseBtn = document.getElementById('collapse-btn');
-    let loading = false;
-
-    try {
-      if (sessionStorage.getItem('asiBannerCollapsed') === '1') {
-        banner.classList.add('collapsed');
-        collapseBtn.textContent = '▼';
-      }
-    } catch (e) {}
-
-    collapseBtn.addEventListener('click', function () {
-      banner.classList.toggle('collapsed');
-      var collapsed = banner.classList.contains('collapsed');
-      collapseBtn.textContent = collapsed ? '▼' : '▲';
-      try {
-        sessionStorage.setItem('asiBannerCollapsed', collapsed ? '1' : '0');
-      } catch (e) {}
-    });
-
-    function autoResize() {
-      input.style.height = 'auto';
-      input.style.height = Math.min(input.scrollHeight, 160) + 'px';
-    }
-    input.addEventListener('input', autoResize);
-
-    function setActivity(text) {
-      var ab = document.getElementById('activity-bar');
-      var at = document.getElementById('activity-text');
-      if (text) {
-        at.textContent = text;
-        ab.classList.add('visible');
-      } else {
-        at.textContent = '';
-        ab.classList.remove('visible');
-      }
-    }
-
-    var hlTimer = null;
-    function scheduleSyntaxHighlight() {
-      if (hlTimer) clearTimeout(hlTimer);
-      hlTimer = setTimeout(function () {
-        hlTimer = null;
-        if (typeof ASI_MD !== 'undefined' && ASI_MD.applySyntaxHighlight) {
-          ASI_MD.applySyntaxHighlight(log);
-        }
-      }, 100);
-    }
-
-    function setStreamPreview(text) {
-      var slot = document.getElementById('stream-live');
-      if (!slot) {
-        slot = document.createElement('div');
-        slot.id = 'stream-live';
-        slot.className = 'msg assistant stream-live';
-        var role = document.createElement('div');
-        role.className = 'role';
-        role.textContent = 'ASI';
-        slot.appendChild(role);
-        var body = document.createElement('div');
-        body.className = 'msg-body streaming-body';
-        body.id = 'stream-live-body';
-        slot.appendChild(body);
-        log.appendChild(slot);
-      }
-      var b = document.getElementById('stream-live-body');
-      if (b) {
-        while (b.firstChild) b.removeChild(b.firstChild);
-        if (typeof ASI_MD !== 'undefined' && ASI_MD.renderAssistant) {
-          ASI_MD.renderAssistant(b, text);
-        } else {
-          b.textContent = text;
-        }
-      }
-      log.scrollTop = log.scrollHeight;
-      if (text && text.length) loadingEl.style.display = 'none';
-      scheduleSyntaxHighlight();
-    }
-
-    function removeStreamPreview() {
-      var slot = document.getElementById('stream-live');
-      if (slot) slot.remove();
-    }
-
-    function renderAssistantBody(container, raw) {
-      if (typeof ASI_MD !== 'undefined' && ASI_MD.renderAssistant) {
-        ASI_MD.renderAssistant(container, raw);
-      } else {
-        var fb = document.createElement('div');
-        fb.className = 'md-plain';
-        fb.textContent = raw;
-        container.appendChild(fb);
-      }
-    }
-
-    function render(history) {
-      log.innerHTML = '';
-      var list = history || [];
-      if (list.length === 0) {
-        var empty = document.createElement('div');
-        empty.className = 'empty-hint';
-        empty.textContent = 'Start a conversation below. Ask for a plan, implementation, or paste code/errors.';
-        log.appendChild(empty);
-        return;
-      }
-      list.forEach(function (m) {
-        var div = document.createElement('div');
-        div.className = 'msg ' + (m.role === 'user' ? 'user' : 'assistant');
-        var role = document.createElement('div');
-        role.className = 'role';
-        role.textContent = m.role === 'user' ? 'You' : 'ASI';
-        div.appendChild(role);
-        var body = document.createElement('div');
-        body.className = 'msg-body';
-        if (m.role === 'user') {
-          var plain = document.createElement('div');
-          plain.className = 'md-plain';
-          plain.textContent = m.content;
-          body.appendChild(plain);
-        } else {
-          renderAssistantBody(body, m.content);
-        }
-        div.appendChild(body);
-        log.appendChild(div);
-      });
-      log.scrollTop = log.scrollHeight;
-      scheduleSyntaxHighlight();
-    }
-
-    function updateCreateBar(files) {
-      var bar = document.getElementById('create-bar');
-      var btn = document.getElementById('create-files-btn');
-      var list = document.getElementById('create-list');
-      if (!files || files.length === 0) {
-        bar.classList.remove('visible');
-        return;
-      }
-      bar.classList.add('visible');
-      list.textContent = files.map(function (f) { return f.relativePath; }).join(' · ');
-    }
-
-    window.addEventListener('message', function (e) {
-      var m = e.data;
-      if (m.type === 'activity') {
-        setActivity(m.text || '');
-      }
-      if (m.type === 'stream') {
-        if (m.reset || m.done) removeStreamPreview();
-        if (!m.done && typeof m.text === 'string' && m.text.length) setStreamPreview(m.text);
-      }
-      if (m.type === 'setup') {
-        applySetup(m);
-      }
-      if (m.type === 'state') {
-        removeStreamPreview();
-        render(m.history);
-        updateCreateBar(m.extractedFiles);
-      }
-      if (m.type === 'loading') {
-        loading = !!m.value;
-        sendBtn.disabled = loading;
-        input.disabled = loading;
-        loadingEl.style.display = loading ? 'flex' : 'none';
-        if (loading) log.scrollTop = log.scrollHeight;
-      }
-      if (m.type === 'error') {
-        var div = document.createElement('div');
-        div.className = 'msg user';
-        div.textContent = 'Error: ' + m.value;
-        log.appendChild(div);
-      }
-    });
-
-    function send() {
-      var t = input.value.trim();
-      if (!t || loading) return;
-      input.value = '';
-      autoResize();
-      vscode.postMessage({ type: 'send', text: t });
-    }
-
-    sendBtn.addEventListener('click', send);
-    input.addEventListener('keydown', function (ev) {
-      if (ev.key === 'Enter' && !ev.shiftKey) {
-        ev.preventDefault();
-        send();
-      }
-    });
-    document.getElementById('clear').addEventListener('click', function () {
-      vscode.postMessage({ type: 'clear' });
-    });
-    document.getElementById('create-files-btn').addEventListener('click', function () {
-      vscode.postMessage({ type: 'createFiles' });
-    });
-
-    var btnInstall = document.getElementById('btn-install-vsix');
-    var btnApi = document.getElementById('btn-api-key');
-    var stepInstall = document.getElementById('step-install');
-    var stepApi = document.getElementById('step-api');
-    var setupRow = document.getElementById('setup-row');
-
-    function applySetup(m) {
-      if (!m || typeof m.dev !== 'boolean') return;
-      var dev = m.dev;
-      var hasApiKey = !!m.hasApiKey;
-      stepInstall.style.display = dev ? '' : 'none';
-      if (hasApiKey) {
-        stepApi.classList.add('setup-done');
-        btnApi.textContent = 'Change API key';
-      } else {
-        stepApi.classList.remove('setup-done');
-        btnApi.textContent = 'Add API key';
-      }
-      var hideRow = !dev && hasApiKey;
-      setupRow.classList.toggle('setup-hidden', hideRow);
-      if (dev && hasApiKey && !hideRow) {
-        setupRow.style.flexDirection = 'column';
-      }
-    }
-
-    btnInstall.addEventListener('click', function () {
-      vscode.postMessage({ type: 'installVsix' });
-    });
-    btnApi.addEventListener('click', function () {
-      vscode.postMessage({ type: 'openApiKey' });
-    });
-
-    vscode.postMessage({ type: 'setupReady' });
-  </script>
+  <script nonce="${nonce}" src="${chatPanelJsUri}"></script>
 </body>
 </html>`;
   }

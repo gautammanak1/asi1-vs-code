@@ -105,6 +105,9 @@ export function normalizeModelFencesForExtraction(raw: string): string {
   const NL = "\n";
   let t = raw.replace(/\r\n/g, NL).replace(/\r/g, NL);
   const pseudo: Record<string, string> = {
+    PLAINTEXT: "plaintext",
+    TXT: "plaintext",
+    TEXT: "plaintext",
     JSON: "json",
     TS: "typescript",
     TYPESCRIPT: "typescript",
@@ -245,11 +248,75 @@ function blockExplicitPath(block: FenceBlock): string | undefined {
   );
 }
 
+/** `Save as path/to/file.ext` on its own line, then a ``` fenced block (common model pattern). */
+function extractSaveAsThenFence(text: string): ExtractedFile[] {
+  const norm = text.replace(/\r\n/g, "\n");
+  const out: ExtractedFile[] = [];
+  const re =
+    /(?:^|\n)\s*Save as\s+([\w./-]+\.[a-zA-Z0-9]{1,8})\s*\r?\n+\s*```[^\n]*\r?\n([\s\S]*?)```/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(norm)) !== null) {
+    const path = m[1].replace(/\\/g, "/").trim();
+    let inner = m[2];
+    const firstLine = inner.split(/\r?\n/)[0] ?? "";
+    const langMatch = firstLine.match(/^([a-zA-Z0-9_-]+)\s*$/);
+    if (langMatch && /^[A-Z]{2,12}$/.test(langMatch[1])) {
+      inner = inner.split(/\r?\n/).slice(1).join("\n");
+    }
+    const body = inner.replace(/^\s*\n/, "").replace(/\n+$/, "");
+    if (isSafeRelativePath(path)) {
+      out.push({ relativePath: path, content: body });
+    }
+  }
+  return out;
+}
+
+/** Closing ``` then `Save as path` (some models put the hint after the block). */
+function extractFenceThenSaveAs(text: string): ExtractedFile[] {
+  const norm = text.replace(/\r\n/g, "\n");
+  const out: ExtractedFile[] = [];
+  const re =
+    /```[\s\S]*?```\s*\r?\n\s*Save as\s+([\w./-]+\.[a-zA-Z0-9]{1,8})\s*(?:\r?\n|$)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(norm)) !== null) {
+    const full = m[0];
+    const fenceMatch = /^```[^\n]*\n([\s\S]*?)```/.exec(full);
+    if (!fenceMatch) {
+      continue;
+    }
+    const path = m[1].replace(/\\/g, "/").trim();
+    let body = fenceMatch[1];
+    const fl = body.split(/\r?\n/)[0] ?? "";
+    if (/^[A-Z]{2,12}$/.test(fl.trim())) {
+      body = body.split(/\r?\n/).slice(1).join("\n");
+    }
+    body = body.replace(/^\s*\n/, "").replace(/\n+$/, "");
+    if (isSafeRelativePath(path)) {
+      out.push({ relativePath: path, content: body });
+    }
+  }
+  return out;
+}
+
+function mergeExtracted(primary: ExtractedFile[], extra: ExtractedFile[]): ExtractedFile[] {
+  const seen = new Set(primary.map((p) => p.relativePath));
+  const out = [...primary];
+  for (const e of extra) {
+    if (!seen.has(e.relativePath)) {
+      seen.add(e.relativePath);
+      out.push(e);
+    }
+  }
+  return out;
+}
+
 /**
  * Parses ``` blocks + prose ("Save as `file.py`") + pairs when model omits `# path`.
  */
 export function extractFilesFromMarkdown(text: string): ExtractedFile[] {
   const normalized = normalizeModelFencesForExtraction(text);
+  const fromSaveFence = extractSaveAsThenFence(normalized);
+  const fromFenceSave = extractFenceThenSaveAs(normalized);
   const blocks = parseFenceBlocks(normalized);
   const prose = collectProseFilenames(normalized);
   const out: ExtractedFile[] = [];
@@ -269,10 +336,6 @@ export function extractFilesFromMarkdown(text: string): ExtractedFile[] {
       continue;
     }
     unpaired.push(block);
-  }
-
-  if (unpaired.length === 0) {
-    return out;
   }
 
   const usedNames = new Set(out.map((o) => o.relativePath));
@@ -305,7 +368,7 @@ export function extractFilesFromMarkdown(text: string): ExtractedFile[] {
     });
   }
 
-  return out;
+  return mergeExtracted(mergeExtracted(out, fromSaveFence), fromFenceSave);
 }
 
 async function mkdirpParentOfFile(root: vscode.Uri, fileSegments: string[]): Promise<void> {
@@ -328,9 +391,16 @@ export async function writeExtractedFiles(files: ExtractedFile[]): Promise<boole
   }
   const folder = vscode.workspace.workspaceFolders?.[0];
   if (!folder) {
-    vscode.window.showErrorMessage(
-      "Open a folder first (File → Open Folder) so ASI can create files on disk."
-    );
+    void vscode.window
+      .showErrorMessage(
+        "Open a folder first so ASI can write files to disk.",
+        "Open Folder…"
+      )
+      .then((choice) => {
+        if (choice === "Open Folder…") {
+          void vscode.commands.executeCommand("workbench.action.files.openFolder");
+        }
+      });
     return false;
   }
   for (const f of files) {

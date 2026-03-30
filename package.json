@@ -2,7 +2,8 @@
   "name": "asi1-code",
   "displayName": "ASI1 Code",
   "description": "Sidebar AI chat for VS Code powered by ASI1 — streaming replies, markdown, and workspace file hints.",
-  "version": "0.1.1",
+  "icon": "resources/icon.png",
+  "version": "0.0.2",
   "publisher": "gautammanak2",
   "license": "MIT",
   "author": "Gautam Manak",
@@ -52,6 +53,11 @@
       {
         "command": "asiAssistant.installFromVsix",
         "title": "ASI: Install Extension from .vsix"
+      },
+      {
+        "command": "asiAssistant.createAgentverseAgent",
+        "title": "ASI: Create Agentverse uAgent Project",
+        "category": "ASI"
       }
     ],
     "viewsContainers": {
@@ -93,17 +99,67 @@
           "description": "Model id",
           "order": 3
         },
+        "asiAssistant.imageBaseUrl": {
+          "type": "string",
+          "default": "",
+          "description": "Optional override for image API base (e.g. https://api.asi1.ai/v1). Empty derives from asiAssistant.baseUrl.",
+          "order": 31
+        },
+        "asiAssistant.imageModel": {
+          "type": "string",
+          "default": "",
+          "description": "Model id for image/generate. Empty falls back to asiAssistant.model.",
+          "order": 32
+        },
+        "asiAssistant.imageSize": {
+          "type": "string",
+          "default": "1024x1024",
+          "description": "Default size for image generation (e.g. 1024x1024).",
+          "order": 33
+        },
         "asiAssistant.systemPrompt": {
           "type": "string",
-          "default": "You are a coding assistant in VS Code/Cursor. Use ONLY standard GitHub-flavored markdown: real triple-backtick fences with a language tag (e.g. ```markdown, ```sql, ```bash). Never output the words MARKDOWN or CODE as fake fences. For a full .md document, put it inside a ```markdown fence, then on a new line after the closing fence write: Save as `filename.md`. For code files use ```ts / ```py etc. and Save as `path/file.ext`. Tables, lists, and headings are welcome.",
+          "default": "You are a coding assistant in VS Code/Cursor. Use ONLY standard GitHub-flavored markdown: real triple-backtick fences with a language tag (e.g. ```markdown, ```sql, ```bash). Never output the words MARKDOWN or CODE as fake fences. For a full .md document, put it inside a ```markdown fence, then on a new line after the closing fence write: Save as `filename.md`. For code files use ```ts / ```py etc. and Save as `path/file.ext`. Tables, lists, and headings are welcome.\n\nFetch.ai / ASI:One / Agentverse: When the user asks to create Agentverse agents, uAgents, or ASI1 chat-profile compatible agents, tell them to run the command **ASI: Create Agentverse uAgent Project** from the Command Palette — it scaffolds the same folder layout as the `create-agentverse-agent` CLI (`main.py` with uAgents + Agent Chat Protocol from `uagents_core.contrib.protocols.chat`, `agent.py` with the `chat` hook, Makefile, Docker, `.env`). Alternatively they can use `pip install create-agentverse-agent` and run `create-agentverse-agent` locally. Explain that they should set `AGENTVERSE_API_KEY` in `.env` for Agentverse registration, keep `AGENT_SEED_PHRASE` secret, and use `make dev` / `make run` per the generated README. Official Fetch uAgents are Python — do not scaffold or recommend JavaScript/TypeScript uAgent servers; use the Python command and templates only.",
           "description": "System message prepended to every conversation",
           "order": 4
         },
         "asiAssistant.streamResponse": {
           "type": "boolean",
           "default": true,
-          "description": "Stream the model reply (SSE). Turn off if your API returns JSON only.",
+          "description": "Stream the model reply (SSE). Ignored while built-in tools are enabled (tools use non-streaming rounds).",
           "order": 5
+        },
+        "asiAssistant.webSearch": {
+          "type": "boolean",
+          "default": true,
+          "description": "Send ASI:One web_search so the model can use live web results (see OpenAI compatibility docs).",
+          "order": 51
+        },
+        "asiAssistant.enableTools": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable client-side tools (read/search workspace files) with ASI:One tool calling. When off, only web_search + chat apply.",
+          "order": 52
+        },
+        "asiAssistant.agenticSession": {
+          "type": "boolean",
+          "default": false,
+          "description": "Send x-session-id for Agentverse / agentic flows (ASI:One). Uses sessionId if set, otherwise a per-chat random id until you Clear.",
+          "order": 53
+        },
+        "asiAssistant.sessionId": {
+          "type": "string",
+          "default": "",
+          "description": "Optional fixed x-session-id (overrides auto). Empty uses a generated id when agentic session is on.",
+          "order": 54
+        },
+        "asiAssistant.maxToolRounds": {
+          "type": "number",
+          "default": 12,
+          "minimum": 1,
+          "maximum": 32,
+          "description": "Max API rounds when resolving tool calls (each round may invoke multiple tools).",
+          "order": 55
         },
         "asiAssistant.autoApplyFiles": {
           "type": "boolean",
