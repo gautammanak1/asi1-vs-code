@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.3] - 2026-03-31
+
+### Added
+
+- **Single composer** for chat and image: toolbar **Chat** / **Image** + optional **size**; no separate modal.
+- Markdown: inline images from `![alt](https://…)` or `data:image/…` (`md-inline-img`).
+
+### Changed
+
+- Image generation results appear **in the chat log** as assistant messages (markdown image).
+
+### Removed
+
+- **ASI run** modal (replaced by Chat/Image mode on the main input).
+
+---
+
 ## [0.1.2] - 2026-03-31
 
 ### Added
@@ -64,7 +81,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.1.2...HEAD  
+[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.1.3...HEAD  
+[0.1.3]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.3  
 [0.1.2]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.2  
 [0.0.2]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.0.2  
 [0.1.1]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.1  

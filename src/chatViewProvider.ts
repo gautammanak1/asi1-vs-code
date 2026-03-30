@@ -83,37 +83,13 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         return;
       }
       if (msg.type === "send" && typeof msg.text === "string") {
-        await this._handleUserMessage(msg.text.trim());
-      }
-      if (msg.type === "asiModalSubmit") {
-        const prompt = typeof msg.prompt === "string" ? msg.prompt.trim() : "";
-        if (!prompt) {
+        const text = msg.text.trim();
+        if (!text) {
           return;
         }
         const mode = msg.mode === "image" ? "image" : "chat";
-        this._view?.webview.postMessage({ type: "asiModalLoading", value: true });
-        try {
-          if (mode === "image") {
-            const size = typeof msg.size === "string" ? msg.size : undefined;
-            const model = typeof msg.model === "string" ? msg.model : undefined;
-            const r = await generateImage({ prompt, size, model });
-            this._view?.webview.postMessage({
-              type: "asiModalResult",
-              mode: "image",
-              b64Json: r.b64Json,
-              url: r.url,
-              revisedPrompt: r.revisedPrompt,
-            });
-          } else {
-            await this._runModalChat(prompt);
-            this._view?.webview.postMessage({ type: "asiModalResult", mode: "chat", ok: true });
-          }
-        } catch (e) {
-          const err = e instanceof Error ? e.message : String(e);
-          this._view?.webview.postMessage({ type: "asiModalResult", mode, error: err });
-        } finally {
-          this._view?.webview.postMessage({ type: "asiModalLoading", value: false });
-        }
+        const imageSize = typeof msg.imageSize === "string" ? msg.imageSize.trim() : undefined;
+        await this._handleUserSend(text, mode, imageSize);
       }
       if (msg.type === "clear") {
         this._history = [];
@@ -203,27 +179,46 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     return messages;
   }
 
-  /** One-shot chat from the ASI modal (no tools; uses same session header as main chat). */
-  private async _runModalChat(prompt: string): Promise<void> {
-    const cfg = vscode.workspace.getConfiguration("asiAssistant");
-    const sys = cfg.get<string>("systemPrompt") ?? "";
-    const msgs: ChatMessage[] = [];
-    if (sys.trim()) {
-      msgs.push({ role: "system", content: sys });
+  private async _handleUserSend(text: string, mode: "chat" | "image", imageSize?: string): Promise<void> {
+    if (mode === "image") {
+      await this._generateImageTurn(text, imageSize);
+      return;
     }
-    msgs.push({ role: "user", content: prompt });
-    const r = await completeChat(msgs, undefined, {
-      sessionIdHeader: this._resolveSessionIdForHeader(),
-    });
-    const content = r.content ?? "";
+    await this._handleUserMessage(text);
+  }
+
+  /** Image generation from the same composer; appends user + assistant turns to history. */
+  private async _generateImageTurn(prompt: string, size?: string): Promise<void> {
     this._history.push({ role: "user", content: prompt });
-    this._history.push({ role: "assistant", content });
-    const useTools = cfg.get<boolean>("enableTools") !== false;
-    if (useTools) {
-      this._apiThread.push({ role: "user", content: prompt });
-      this._apiThread.push({ role: "assistant", content });
-    }
     this._postState();
+    this._view?.webview.postMessage({ type: "activity", text: "Generating image…" });
+    this._view?.webview.postMessage({ type: "loading", value: true });
+    try {
+      const r = await generateImage({ prompt, size });
+      let line = "**Image**\n\n";
+      if (r.url) {
+        line += `![Generated](${r.url})\n`;
+      } else if (r.b64Json) {
+        line += `![Generated](data:image/png;base64,${r.b64Json})\n`;
+      } else {
+        line += "_(No image in response)_\n";
+      }
+      if (r.revisedPrompt) {
+        line += `\n\n_Revised prompt: ${r.revisedPrompt}_`;
+      }
+      this._history.push({ role: "assistant", content: line });
+      this._postState();
+    } catch (e) {
+      const errMsg = e instanceof Error ? e.message : String(e);
+      vscode.window.showErrorMessage(errMsg);
+      this._history.push({ role: "assistant", content: `**Error:** ${errMsg}` });
+      this._postState();
+    } finally {
+      this._view?.webview.postMessage({ type: "loading", value: false });
+      setTimeout(() => {
+        this._view?.webview.postMessage({ type: "activity", text: "" });
+      }, 800);
+    }
   }
 
   private async _handleUserMessage(text: string): Promise<void> {
@@ -404,50 +399,31 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     <div id="composer">
       <div class="composer-input-wrap">
         <div id="row">
-          <textarea id="input" rows="3" placeholder="Ask ASI… code, errors, refactors, or paste a stack trace"></textarea>
+          <textarea id="input" rows="3" placeholder="Chat with ASI or describe an image — same box for both"></textarea>
         </div>
       </div>
       <div class="composer-toolbar">
         <div class="composer-left">
           <span class="composer-pill accent">ASI1</span>
           <span class="composer-pill">ASI</span>
-          <button type="button" class="composer-tool-btn" id="asi-open-modal" title="Chat or image (same prompt UI)">Run…</button>
-        </div>
-        <div class="composer-right">
-          <button type="button" id="send" title="Send (Enter)">↑</button>
-        </div>
-      </div>
-      <div id="composer-hint">Enter send · Shift+Enter newline</div>
-    </div>
-    <div id="asi-modal" class="asi-modal" hidden aria-hidden="true">
-      <div class="asi-modal-backdrop" id="asi-modal-backdrop"></div>
-      <div class="asi-modal-panel" role="dialog" aria-modal="true" aria-labelledby="asi-modal-title">
-        <div class="asi-modal-head">
-          <h2 id="asi-modal-title">ASI run</h2>
-          <button type="button" class="asi-modal-close" id="asi-modal-close" title="Close">×</button>
-        </div>
-        <label class="asi-modal-label" for="asi-modal-endpoint">Endpoint</label>
-        <select id="asi-modal-endpoint" class="asi-modal-select">
-          <option value="chat">Chat completions</option>
-          <option value="image">Image generate</option>
-        </select>
-        <div id="asi-modal-image-opts" class="asi-modal-image-opts" hidden>
-          <label class="asi-modal-label" for="asi-modal-size">Size</label>
-          <select id="asi-modal-size" class="asi-modal-select">
+          <label class="sr-only" for="send-mode">Send as</label>
+          <select id="send-mode" class="composer-mode-select" title="Chat reply or image generation">
+            <option value="chat">Chat</option>
+            <option value="image">Image</option>
+          </select>
+          <label class="sr-only" for="image-size">Image size</label>
+          <select id="image-size" class="composer-mode-select composer-image-size" hidden title="Image size">
             <option value="1024x1024">1024×1024</option>
             <option value="512x512">512×512</option>
             <option value="1024x1792">1024×1792</option>
             <option value="1792x1024">1792×1024</option>
           </select>
         </div>
-        <label class="asi-modal-label" for="asi-modal-prompt">Prompt</label>
-        <textarea id="asi-modal-prompt" class="asi-modal-textarea" rows="5" placeholder="Describe what you want…"></textarea>
-        <div id="asi-modal-error" class="asi-modal-error" hidden></div>
-        <div id="asi-modal-result" class="asi-modal-result"></div>
-        <div class="asi-modal-actions">
-          <button type="button" class="asi-modal-submit" id="asi-modal-submit">Run</button>
+        <div class="composer-right">
+          <button type="button" id="send" title="Send (Enter)">↑</button>
         </div>
       </div>
+      <div id="composer-hint">Enter send · Shift+Enter newline · choose Chat or Image above</div>
     </div>
   </div>
   <script nonce="${nonce}" src="${chatPanelJsUri}"></script>

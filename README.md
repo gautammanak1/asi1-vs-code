@@ -8,7 +8,7 @@
 
 # ASI1 Code
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.2**
+### AI Coding Assistant for VS Code & Cursor · **v0.1.3**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code">
@@ -29,8 +29,8 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.2">
-    <img src="https://img.shields.io/badge/release-v0.1.2-22c55e?style=flat" alt="Version 0.1.2" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.3">
+    <img src="https://img.shields.io/badge/release-v0.1.3-22c55e?style=flat" alt="Version 0.1.3" />
   </a>
 </p>
 
@@ -166,7 +166,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./asi1-code-0.1.2.vsix
+code --install-extension ./asi1-code-0.1.3.vsix
 ```
 
 Or:
@@ -399,7 +399,7 @@ Package Extension:
 npm run package
 ```
 
-The VSIX uses **`README.vsix.md`** for the Marketplace listing (`vscode:prepublish` / `vsce package --readme-path README.vsix.md`). **v0.1.2** ships the icon + banner shown at the top of this file.
+The VSIX uses **`README.vsix.md`** for the Marketplace listing (`vscode:prepublish` / `vsce package --readme-path README.vsix.md`). **v0.1.3** ships the icon + banner shown at the top of this file.
 
 ---
 

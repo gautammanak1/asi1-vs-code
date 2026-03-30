@@ -111,6 +111,25 @@
     var s = String(str);
     var i = 0;
     while (i < s.length) {
+      if (s.charAt(i) === "!" && s.charAt(i + 1) === "[") {
+        var imgCloseBracket = s.indexOf("]", i + 2);
+        if (imgCloseBracket > i + 1 && s.slice(imgCloseBracket, imgCloseBracket + 2) === "](") {
+          var imgCloseParen = s.indexOf(")", imgCloseBracket + 2);
+          if (imgCloseParen > imgCloseBracket + 2) {
+            var imgAlt = s.slice(i + 2, imgCloseBracket);
+            var imgSrc = s.slice(imgCloseBracket + 2, imgCloseParen);
+            if (/^https?:\/\//i.test(imgSrc) || /^data:image\//i.test(imgSrc)) {
+              var imgEl = document.createElement("img");
+              imgEl.src = imgSrc;
+              imgEl.alt = imgAlt;
+              imgEl.className = "md-inline-img";
+              parent.appendChild(imgEl);
+              i = imgCloseParen + 1;
+              continue;
+            }
+          }
+        }
+      }
       if (s.charAt(i) === "`") {
         var end = s.indexOf("`", i + 1);
         if (end > i) {

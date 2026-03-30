@@ -176,47 +176,6 @@ window.addEventListener('message', function (e) {
     loadingEl.style.display = loading ? 'flex' : 'none';
     if (loading) log.scrollTop = log.scrollHeight;
   }
-  if (m.type === 'asiModalLoading') {
-    var ms = document.getElementById('asi-modal-submit');
-    if (ms) ms.disabled = !!m.value;
-  }
-  if (m.type === 'asiModalResult') {
-    var errEl = document.getElementById('asi-modal-error');
-    var resEl = document.getElementById('asi-modal-result');
-    if (!errEl || !resEl) return;
-    if (m.error) {
-      errEl.textContent = m.error;
-      errEl.hidden = false;
-      return;
-    }
-    errEl.hidden = true;
-    if (m.mode === 'chat' && m.ok) {
-      closeAsiModal();
-      return;
-    }
-    if (m.mode === 'image') {
-      resEl.innerHTML = '';
-      if (m.b64Json) {
-        var im1 = document.createElement('img');
-        im1.className = 'asi-modal-img';
-        im1.alt = 'Generated image';
-        im1.src = 'data:image/png;base64,' + m.b64Json;
-        resEl.appendChild(im1);
-      } else if (m.url) {
-        var im2 = document.createElement('img');
-        im2.className = 'asi-modal-img';
-        im2.alt = 'Generated image';
-        im2.src = m.url;
-        resEl.appendChild(im2);
-      }
-      if (m.revisedPrompt) {
-        var rp = document.createElement('p');
-        rp.className = 'asi-modal-revised';
-        rp.textContent = 'Revised prompt: ' + m.revisedPrompt;
-        resEl.appendChild(rp);
-      }
-    }
-  }
   if (m.type === 'error') {
     var div = document.createElement('div');
     div.className = 'msg user';
@@ -228,9 +187,13 @@ window.addEventListener('message', function (e) {
 function send() {
   var t = input.value.trim();
   if (!t || loading) return;
+  var modeEl = document.getElementById('send-mode');
+  var mode = modeEl && modeEl.value === 'image' ? 'image' : 'chat';
+  var sizeEl = document.getElementById('image-size');
+  var imageSize = mode === 'image' && sizeEl && sizeEl.value ? sizeEl.value : undefined;
   input.value = '';
   autoResize();
-  vscode.postMessage({ type: 'send', text: t });
+  vscode.postMessage({ type: 'send', text: t, mode: mode, imageSize: imageSize });
 }
 
 sendBtn.addEventListener('click', send);
@@ -281,72 +244,14 @@ btnApi.addEventListener('click', function () {
 
 vscode.postMessage({ type: 'setupReady' });
 
-var asiModal = document.getElementById('asi-modal');
-var asiOpenModal = document.getElementById('asi-open-modal');
-var asiModalBackdrop = document.getElementById('asi-modal-backdrop');
-var asiModalClose = document.getElementById('asi-modal-close');
-var asiModalEndpoint = document.getElementById('asi-modal-endpoint');
-var asiModalImageOpts = document.getElementById('asi-modal-image-opts');
-var asiModalSubmit = document.getElementById('asi-modal-submit');
-var asiModalPrompt = document.getElementById('asi-modal-prompt');
-
-function openAsiModal() {
-  if (!asiModal) return;
-  asiModal.hidden = false;
-  asiModal.setAttribute('aria-hidden', 'false');
-  var err = document.getElementById('asi-modal-error');
-  var res = document.getElementById('asi-modal-result');
-  if (err) {
-    err.hidden = true;
-    err.textContent = '';
-  }
-  if (res) res.innerHTML = '';
-  if (asiModalPrompt) {
-    try {
-      asiModalPrompt.focus();
-    } catch (e) {}
+var sendModeEl = document.getElementById('send-mode');
+var imageSizeEl = document.getElementById('image-size');
+function syncImageSizeVisibility() {
+  if (sendModeEl && imageSizeEl) {
+    imageSizeEl.hidden = sendModeEl.value !== 'image';
   }
 }
-
-function closeAsiModal() {
-  if (!asiModal) return;
-  asiModal.hidden = true;
-  asiModal.setAttribute('aria-hidden', 'true');
-}
-
-if (asiOpenModal && asiModal) {
-  asiOpenModal.addEventListener('click', openAsiModal);
-}
-if (asiModalBackdrop) {
-  asiModalBackdrop.addEventListener('click', closeAsiModal);
-}
-if (asiModalClose) {
-  asiModalClose.addEventListener('click', closeAsiModal);
-}
-document.addEventListener('keydown', function (ev) {
-  if (ev.key === 'Escape' && asiModal && !asiModal.hidden) {
-    closeAsiModal();
-  }
-});
-if (asiModalEndpoint && asiModalImageOpts) {
-  asiModalEndpoint.addEventListener('change', function () {
-    asiModalImageOpts.hidden = asiModalEndpoint.value !== 'image';
-  });
-}
-if (asiModalSubmit && asiModalPrompt && asiModalEndpoint) {
-  asiModalSubmit.addEventListener('click', function () {
-    var t = asiModalPrompt.value.trim();
-    if (!t) return;
-    if (asiModalEndpoint.value === 'image') {
-      var sz = document.getElementById('asi-modal-size');
-      vscode.postMessage({
-        type: 'asiModalSubmit',
-        mode: 'image',
-        prompt: t,
-        size: sz && sz.value ? sz.value : undefined,
-      });
-    } else {
-      vscode.postMessage({ type: 'asiModalSubmit', mode: 'chat', prompt: t });
-    }
-  });
+if (sendModeEl) {
+  sendModeEl.addEventListener('change', syncImageSizeVisibility);
+  syncImageSizeVisibility();
 }
