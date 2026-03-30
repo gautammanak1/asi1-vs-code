@@ -29,9 +29,22 @@ jobs:
         with:
           node-version: "20"
           cache: npm
+
+      - name: Check VSCE_PAT secret
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error title=Missing secret::Add repository secret VSCE_PAT — Azure DevOps PAT with scope Marketplace → Manage (same Microsoft account as publisher gautammanak2). Repo → Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
       - run: npm ci
       - run: npm run compile
+
       - name: Publish to VS Code Marketplace
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: npx @vscode/vsce publish --readme-path README.vsix.md
+        run: |
+          npx @vscode/vsce --version
+          npx @vscode/vsce publish --readme-path README.vsix.md --no-dependencies

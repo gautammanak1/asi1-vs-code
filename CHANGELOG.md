@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-03-31
+
+### Fixed
+
+- CI publish: clearer failure when `VSCE_PAT` is missing; `vsce publish` with `--no-dependencies` for faster, more reliable runs.
+
+### Changed
+
+- Version **0.1.1** so Marketplace accepts the update after **0.1.0** (publishing **0.0.2** is rejected as a downgrade).
+
 ## [0.0.2] - 2026-03-31
 
 ### Changed
@@ -20,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Initial release: sidebar chat webview, ASI1 API integration, streaming replies, Markdown and syntax-highlighted code blocks, workspace file hints and optional auto-apply, banner links (website, docs, community, etc.), commands for chat, selection, API key, and install from `.vsix`.
 
-[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.1
 [0.0.2]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.0.2
 [0.1.0]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.0

@@ -83,7 +83,7 @@ npm run package
 Then **Extensions: Install from VSIX…** and select `asi1-code-<version>.vsix`, or:
 
 ```bash
-code --install-extension ./asi1-code-0.0.2.vsix
+code --install-extension ./asi1-code-0.1.1.vsix
 ```
 
 > Vector artwork for the banner lives in [`resources/readme-banner.svg`](./resources/readme-banner.svg). The README uses **PNG** so VS Code’s Markdown preview and the Marketplace accept the image.
