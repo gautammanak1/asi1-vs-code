@@ -438,6 +438,12 @@
           lbl.className = "code-label code-label-" + hl;
           lbl.textContent = headerRaw || hl || "code";
           wrap.appendChild(lbl);
+          var copyBtn = document.createElement("button");
+          copyBtn.type = "button";
+          copyBtn.className = "code-copy-btn";
+          copyBtn.textContent = "Copy";
+          copyBtn.setAttribute("aria-label", "Copy code block");
+          wrap.appendChild(copyBtn);
           var pre = document.createElement("pre");
           pre.className = "code-block";
           var codeEl = document.createElement("code");

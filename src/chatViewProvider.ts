@@ -16,6 +16,7 @@ const CHAT_STATE_KEY = "asiAssistant.sidebarChat.v1";
 interface StoredChatState {
   chatId: string;
   history: ChatMessage[];
+  webSearchEnabled?: boolean;
 }
 
 export class ChatViewProvider implements vscode.WebviewViewProvider {
@@ -30,9 +31,13 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   private _sessionIdGenerated = randomUUID();
   /** Stable id for this chat thread (shown in UI, persisted across reloads). */
   private _chatId: string;
+  /** UI web-search toggle state persisted across reopen. */
+  private _webSearchEnabled: boolean;
 
   constructor(private readonly _context: vscode.ExtensionContext) {
     this._chatId = randomUUID();
+    this._webSearchEnabled =
+      vscode.workspace.getConfiguration("asiAssistant").get<boolean>("webSearch") !== false;
     const raw = this._context.globalState.get<string>(CHAT_STATE_KEY);
     if (raw) {
       try {
@@ -41,6 +46,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           this._chatId = s.chatId;
           this._history = s.history;
           this._apiThread = [];
+          if (typeof s.webSearchEnabled === "boolean") {
+            this._webSearchEnabled = s.webSearchEnabled;
+          }
         }
       } catch {
         /* keep fresh chat */
@@ -51,7 +59,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   private _persistChatState(): void {
     void this._context.globalState.update(
       CHAT_STATE_KEY,
-      JSON.stringify({ chatId: this._chatId, history: this._history } satisfies StoredChatState)
+      JSON.stringify({
+        chatId: this._chatId,
+        history: this._history,
+        webSearchEnabled: this._webSearchEnabled,
+      } satisfies StoredChatState)
     );
   }
 
@@ -89,13 +101,32 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         }
         const mode = msg.mode === "image" ? "image" : "chat";
         const imageSize = typeof msg.imageSize === "string" ? msg.imageSize.trim() : undefined;
-        await this._handleUserSend(text, mode, imageSize);
+        const webSearchOverride = typeof msg.webSearch === "boolean" ? msg.webSearch : undefined;
+        const attachments = Array.isArray(msg.attachments)
+          ? msg.attachments
+              .filter(
+                (a: unknown): a is { name: string; content: string } =>
+                  !!a &&
+                  typeof a === "object" &&
+                  typeof (a as { name?: unknown }).name === "string" &&
+                  typeof (a as { content?: unknown }).content === "string"
+              )
+              .slice(0, 8)
+          : undefined;
+        await this._handleUserSend(text, mode, imageSize, webSearchOverride, attachments);
+      }
+      if (msg.type === "setWebSearch" && typeof msg.value === "boolean") {
+        this._webSearchEnabled = msg.value;
+        this._persistChatState();
+        return;
       }
       if (msg.type === "clear") {
         this._history = [];
         this._apiThread = [];
         this._sessionIdGenerated = randomUUID();
         this._chatId = randomUUID();
+        this._webSearchEnabled =
+          vscode.workspace.getConfiguration("asiAssistant").get<boolean>("webSearch") !== false;
         this._persistChatState();
         this._postState();
       }
@@ -112,6 +143,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           return;
         }
         await writeExtractedFiles(files);
+        return;
+      }
+      if (msg.type === "copyToClipboard" && typeof msg.text === "string") {
+        await vscode.env.clipboard.writeText(msg.text);
       }
     });
 
@@ -158,9 +193,17 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   }
 
   /** Messages for ASI API (system + thread). */
-  private buildMessagesForApi(): ApiChatMessage[] {
-    const sys =
+  private buildMessagesForApi(webSearchForRequest?: boolean): ApiChatMessage[] {
+    let sys =
       vscode.workspace.getConfiguration("asiAssistant").get<string>("systemPrompt") ?? "";
+    const styleHint =
+      "If the user provides example code/snippets, follow that example's structure, coding style, and conventions first; do not switch to an unrelated template/layout unless the user explicitly asks.";
+    sys = sys.trim() ? `${sys.trim()}\n\n${styleHint}` : styleHint;
+    if (webSearchForRequest) {
+      const hint =
+        "Live web search is enabled on the ASI:One API for this turn. For current events, sports schedules and scores, breaking news, weather, prices, or any time-sensitive facts, use the retrieved web information and answer directly. Do not refuse by claiming you lack real-time or internet access.";
+      sys = sys.trim() ? `${sys.trim()}\n\n${hint}` : hint;
+    }
     const useTools =
       vscode.workspace.getConfiguration("asiAssistant").get<boolean>("enableTools") !== false;
     const messages: ApiChatMessage[] = [];
@@ -179,12 +222,83 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     return messages;
   }
 
-  private async _handleUserSend(text: string, mode: "chat" | "image", imageSize?: string): Promise<void> {
+  private async _handleUserSend(
+    text: string,
+    mode: "chat" | "image",
+    imageSize?: string,
+    webSearchOverride?: boolean,
+    attachments?: Array<{ name: string; content: string }>
+  ): Promise<void> {
     if (mode === "image") {
       await this._generateImageTurn(text, imageSize);
       return;
     }
-    await this._handleUserMessage(text);
+    const mentionAttachments = await this._readMentionedFilesFromText(text);
+    const mergedText = this._mergeAttachmentsIntoPrompt(text, [
+      ...(attachments ?? []),
+      ...mentionAttachments,
+    ]);
+    await this._handleUserMessage(mergedText, webSearchOverride);
+  }
+
+  private async _readMentionedFilesFromText(text: string): Promise<Array<{ name: string; content: string }>> {
+    const folders = vscode.workspace.workspaceFolders;
+    if (!folders?.length || !text.includes("@")) {
+      return [];
+    }
+    const root = folders[0].uri;
+    const matches = [...text.matchAll(/(^|\s)@([./\w-]+(?:\/[./\w-]+)+)/g)];
+    if (!matches.length) {
+      return [];
+    }
+    const paths = Array.from(
+      new Set(
+        matches
+          .map((m) => (m[2] || "").trim())
+          .filter((p) => {
+            if (!p || p.includes("..")) {
+              return false;
+            }
+            // Keep template internals out of prompt injection.
+            if (p.startsWith("resources/agentverse-templates")) {
+              return false;
+            }
+            return true;
+          })
+          .slice(0, 8)
+      )
+    );
+    const out: Array<{ name: string; content: string }> = [];
+    for (const rel of paths) {
+      try {
+        const uri = vscode.Uri.joinPath(root, rel);
+        const bytes = await vscode.workspace.fs.readFile(uri);
+        let content = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
+        if (content.length > 120_000) {
+          content = `${content.slice(0, 120_000)}\n… [truncated]`;
+        }
+        out.push({ name: rel, content });
+      } catch {
+        // Ignore invalid mentions or binary/unreadable files.
+      }
+    }
+    return out;
+  }
+
+  private _mergeAttachmentsIntoPrompt(
+    text: string,
+    attachments?: Array<{ name: string; content: string }>
+  ): string {
+    if (!attachments?.length) {
+      return text;
+    }
+    const blocks: string[] = [];
+    for (const a of attachments) {
+      const name = a.name.trim() || "attached-file.txt";
+      const content = a.content.length > 120_000 ? `${a.content.slice(0, 120_000)}\n… [truncated]` : a.content;
+      blocks.push(`Attached file: ${name}\n\`\`\`\n${content}\n\`\`\``);
+    }
+    return `${text}\n\n${blocks.join("\n\n")}`;
   }
 
   /** Image generation from the same composer; appends user + assistant turns to history. */
@@ -221,7 +335,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
   }
 
-  private async _handleUserMessage(text: string): Promise<void> {
+  private async _handleUserMessage(
+    text: string,
+    webSearchOverride?: boolean
+  ): Promise<void> {
     if (!text) {
       return;
     }
@@ -232,12 +349,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       this._apiThread.push({ role: "user", content: text });
     }
     this._postState();
-    await this._completeFromHistory();
+    await this._completeFromHistory(webSearchOverride);
   }
 
-  private async _completeFromHistory(): Promise<void> {
-    const messages = this.buildMessagesForApi();
+  private async _completeFromHistory(
+    webSearchOverride?: boolean
+  ): Promise<void> {
     const cfg = vscode.workspace.getConfiguration("asiAssistant");
+    const cfgWebSearch = cfg.get<boolean>("webSearch") !== false;
+    const webSearch = webSearchOverride ?? cfgWebSearch;
+    const messages = this.buildMessagesForApi(webSearch);
     const useStream = cfg.get<boolean>("streamResponse") !== false;
     const useTools = cfg.get<boolean>("enableTools") !== false;
     const sessionHeader = this._resolveSessionIdForHeader();
@@ -251,7 +372,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       if (useTools) {
         this._view?.webview.postMessage({
           type: "activity",
-          text: "ASI:One (tools + web search)…",
+          text: webSearch ? "ASI:One (tools + web search)…" : "ASI:One (tools)…",
         });
         const maxToolRounds =
           vscode.workspace.getConfiguration("asiAssistant").get<number>("maxToolRounds") ?? 12;
@@ -261,6 +382,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           },
           sessionId: sessionHeader,
           maxRounds: maxToolRounds,
+          webSearch,
         });
         this._apiThread = apiThread;
         content = lastAssistantText;
@@ -274,13 +396,14 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
             this._view?.webview.postMessage({ type: "stream", text: full });
           },
           undefined,
-          { sessionIdHeader: sessionHeader }
+          { sessionIdHeader: sessionHeader, webSearch }
         );
         content = r.content || content;
       } else {
         this._view?.webview.postMessage({ type: "activity", text: "Waiting for reply…" });
         const r = await completeChat(messages as ChatMessage[], undefined, {
           sessionIdHeader: sessionHeader,
+          webSearch,
         });
         content = r.content;
       }
@@ -325,6 +448,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       extractedFiles,
       chatId: this._chatId,
       chatIdShort: this._chatId.replace(/-/g, "").slice(0, 10),
+      webSearchEnabled: this._webSearchEnabled,
     });
   }
 
@@ -397,33 +521,40 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       <span>ASI is thinking…</span>
     </div>
     <div id="composer">
+      <select id="send-mode" class="sr-only" aria-hidden="true" tabindex="-1" title="Mode">
+        <option value="chat" selected>Chat</option>
+        <option value="image">Image</option>
+      </select>
+      <select id="image-size" class="sr-only" aria-hidden="true" tabindex="-1" title="Image size">
+        <option value="1024x1024" selected>1024×1024</option>
+        <option value="512x512">512×512</option>
+      </select>
       <div class="composer-input-wrap">
         <div id="row">
-          <textarea id="input" rows="3" placeholder="Chat with ASI or describe an image — same box for both"></textarea>
+          <textarea id="input" rows="2" placeholder="Plan, @ for context, / for commands"></textarea>
+          <div id="attach-list" class="attach-list"></div>
+          <div id="mention-list" class="mention-list"></div>
+          <div class="composer-inline-bar">
+            <div class="inline-left">
+              <button type="button" id="upload-btn" class="inline-chip-btn" title="Attach file" aria-label="Attach file">
+                Attach
+              </button>
+            </div>
+            <div class="inline-right">
+              <button type="button" id="web-search-btn" class="inline-chip-btn" title="Web search" aria-label="Web search" aria-pressed="true">
+                Web
+              </button>
+              <button type="button" id="image-mode-btn" class="inline-chip-btn" title="Image mode" aria-label="Image mode" aria-pressed="false">
+                Image
+              </button>
+              <button type="button" id="send" class="icon-btn send-btn" title="Send (Enter)" aria-label="Send">
+                <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20V4"/><path d="m5 11 7-7 7 7"/></svg>
+              </button>
+            </div>
+          </div>
         </div>
+        <input id="attach-input" type="file" multiple hidden />
       </div>
-      <div class="composer-toolbar">
-        <div class="composer-left">
-          <span class="composer-pill accent">ASI1</span>
-          <span class="composer-pill">ASI</span>
-          <label class="sr-only" for="send-mode">Send as</label>
-          <select id="send-mode" class="composer-mode-select" title="Chat reply or image generation">
-            <option value="chat">Chat</option>
-            <option value="image">Image</option>
-          </select>
-          <label class="sr-only" for="image-size">Image size</label>
-          <select id="image-size" class="composer-mode-select composer-image-size" hidden title="Image size">
-            <option value="1024x1024">1024×1024</option>
-            <option value="512x512">512×512</option>
-            <option value="1024x1792">1024×1792</option>
-            <option value="1792x1024">1792×1024</option>
-          </select>
-        </div>
-        <div class="composer-right">
-          <button type="button" id="send" title="Send (Enter)">↑</button>
-        </div>
-      </div>
-      <div id="composer-hint">Enter send · Shift+Enter newline · choose Chat or Image above</div>
     </div>
   </div>
   <script nonce="${nonce}" src="${chatPanelJsUri}"></script>

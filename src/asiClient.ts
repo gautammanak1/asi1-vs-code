@@ -194,11 +194,13 @@ export async function runChatWithTools(
     signal?: AbortSignal;
     onProgress?: (label: string) => void;
     maxRounds?: number;
+    webSearch?: boolean;
     /** When agentic session is enabled, sent as `x-session-id` (overrides setting). */
     sessionId?: string;
   } = {}
 ): Promise<RunChatWithToolsResult> {
-  const { url, model, webSearch, agenticSession } = readConfig();
+  const { url, model, webSearch: cfgWebSearch, agenticSession } = readConfig();
+  const webSearch = options.webSearch ?? cfgWebSearch;
   const maxRounds = options.maxRounds ?? 12;
   const apiKey = await resolveApiKey();
   if (!apiKey) {
@@ -232,9 +234,9 @@ export async function runChatWithTools(
       parallel_tool_calls: false,
       stream: false,
     };
-    if (webSearch) {
-      body.web_search = true;
-    }
+    body.web_search = webSearch;
+    // Compatibility: some OpenAI-compatible gateways read this nested form.
+    body.extra_body = { web_search: webSearch };
 
     const res = await fetch(url, {
       method: "POST",
@@ -349,9 +351,8 @@ export async function completeChat(
     model,
     messages,
   };
-  if (webSearch) {
-    body.web_search = true;
-  }
+  body.web_search = webSearch;
+  body.extra_body = { web_search: webSearch };
 
   const res = await fetch(url, {
     method: "POST",
@@ -428,9 +429,8 @@ export async function completeChatStreaming(
     messages,
     stream: true,
   };
-  if (webSearch) {
-    body.web_search = true;
-  }
+  body.web_search = webSearch;
+  body.extra_body = { web_search: webSearch };
 
   const res = await fetch(url, {
     method: "POST",
@@ -548,7 +548,8 @@ export type GenerateImageResult = {
 };
 
 /**
- * POST `{v1}/image/generate` — OpenAI-style image response (`data[].url` or `data[].b64_json`).
+ * POST `{v1}/image/generate`.
+ * ASI returns `{ images: [{ url }] }`; OpenAI-style `{ data: [{ url, b64_json }] }` is also accepted.
  */
 export async function generateImage(options: {
   prompt: string;
@@ -562,7 +563,10 @@ export async function generateImage(options: {
   const base = overrideBase || deriveApiV1Base(chatUrl);
   const url = `${base.replace(/\/$/, "")}/image/generate`;
   const model =
-    options.model?.trim() || config.get<string>("imageModel")?.trim() || config.get<string>("model") || "asi1";
+    options.model?.trim() ||
+    config.get<string>("imageModel")?.trim() ||
+    config.get<string>("model")?.trim() ||
+    "asi1-mini";
   const size = options.size?.trim() || config.get<string>("imageSize")?.trim() || "1024x1024";
   const apiKey = await resolveApiKey();
 
@@ -604,14 +608,23 @@ export async function generateImage(options: {
   }
 
   const obj = json as {
+    /** OpenAI-style */
     data?: Array<{ url?: string; b64_json?: string; revised_prompt?: string }>;
+    /** ASI:One documented shape: `{ images: [{ url }] }` */
+    images?: Array<{ url?: string; b64_json?: string; revised_prompt?: string }>;
+    message?: string;
   };
-  const d0 = obj.data?.[0];
+  let d0 = obj.data?.[0];
+  if (!d0 && Array.isArray(obj.images) && obj.images.length > 0) {
+    d0 = obj.images[0];
+  }
   const b64Json = d0?.b64_json;
   const imageUrl = d0?.url;
   const revisedPrompt = d0?.revised_prompt;
   if (!b64Json && !imageUrl) {
-    throw new Error("Image API: no image in response (expected data[0].url or data[0].b64_json).");
+    throw new Error(
+      "Image API: no image in response (expected images[0].url / data[0].url or b64_json)."
+    );
   }
 
   return { b64Json, url: imageUrl, revisedPrompt };

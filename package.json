@@ -3,7 +3,7 @@
   "displayName": "ASI1 Code",
   "description": "Sidebar AI chat for VS Code powered by ASI1 — streaming replies, markdown, and workspace file hints.",
   "icon": "resources/icon.png",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "publisher": "gautammanak2",
   "license": "MIT",
   "author": "Gautam Manak",
@@ -53,11 +53,6 @@
       {
         "command": "asiAssistant.installFromVsix",
         "title": "ASI: Install Extension from .vsix"
-      },
-      {
-        "command": "asiAssistant.createAgentverseAgent",
-        "title": "ASI: Create Agentverse uAgent Project",
-        "category": "ASI"
       }
     ],
     "viewsContainers": {
@@ -119,7 +114,7 @@
         },
         "asiAssistant.systemPrompt": {
           "type": "string",
-          "default": "You are a coding assistant in VS Code/Cursor. Use ONLY standard GitHub-flavored markdown: real triple-backtick fences with a language tag (e.g. ```markdown, ```sql, ```bash). Never output the words MARKDOWN or CODE as fake fences. For a full .md document, put it inside a ```markdown fence, then on a new line after the closing fence write: Save as `filename.md`. For code files use ```ts / ```py etc. and Save as `path/file.ext`. Tables, lists, and headings are welcome.\n\nFetch.ai / ASI:One / Agentverse: When the user asks to create Agentverse agents, uAgents, or ASI1 chat-profile compatible agents, tell them to run the command **ASI: Create Agentverse uAgent Project** from the Command Palette — it scaffolds the same folder layout as the `create-agentverse-agent` CLI (`main.py` with uAgents + Agent Chat Protocol from `uagents_core.contrib.protocols.chat`, `agent.py` with the `chat` hook, Makefile, Docker, `.env`). Alternatively they can use `pip install create-agentverse-agent` and run `create-agentverse-agent` locally. Explain that they should set `AGENTVERSE_API_KEY` in `.env` for Agentverse registration, keep `AGENT_SEED_PHRASE` secret, and use `make dev` / `make run` per the generated README. Official Fetch uAgents are Python — do not scaffold or recommend JavaScript/TypeScript uAgent servers; use the Python command and templates only.",
+          "default": "You are a coding assistant in VS Code/Cursor. Use ONLY standard GitHub-flavored markdown: real triple-backtick fences with a language tag (e.g. ```markdown, ```sql, ```bash). Never output the words MARKDOWN or CODE as fake fences. For a full .md document, put it inside a ```markdown fence, then on a new line after the closing fence write: Save as `filename.md`. For code files use ```ts / ```py etc. and Save as `path/file.ext`. Tables, lists, and headings are welcome.",
           "description": "System message prepended to every conversation",
           "order": 4
         },

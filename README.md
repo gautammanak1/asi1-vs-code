@@ -8,7 +8,7 @@
 
 # ASI1 Code
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.3**
+### AI Coding Assistant for VS Code & Cursor · **v0.1.4**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code">
@@ -29,14 +29,14 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.3">
-    <img src="https://img.shields.io/badge/release-v0.1.3-22c55e?style=flat" alt="Version 0.1.3" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.4">
+    <img src="https://img.shields.io/badge/release-v0.1.4-22c55e?style=flat" alt="Version 0.1.4" />
   </a>
 </p>
 
 <p align="center">
   Build faster with AI directly inside your editor.<br/>
-  Generate code, explain bugs, create files, scaffold uAgent projects, and ship without leaving VS Code.
+  Generate code, explain bugs, create files, and ship without leaving VS Code.
 </p>
 
 </div>
@@ -56,7 +56,6 @@ It gives you a fast, clean **sidebar chat** so you can:
 - Understand selected code  
 - Stream AI responses in real time  
 - Optionally use **tool calling** (workspace files) and **web search** (ASI1 API)  
-- Scaffold **Fetch.ai uAgent** projects (**uAgents** + **Agent Chat Protocol**) with one command  
 
 Instead of switching between tabs, websites, and separate tools, you can stay in the IDE.
 
@@ -64,15 +63,14 @@ Instead of switching between tabs, websites, and separate tools, you can stay in
 
 ## Why this exists
 
-Building with **ASI1** and **Agentverse-style** workflows should not mean juggling browser tabs and copy-pasted snippets. This extension adds a **one-command scaffold** aligned with [`create-agentverse-agent`](https://pypi.org/project/create-agentverse-agent/) plus chat, tools, and web search in one place.
+Building with **ASI1** should not mean juggling browser tabs and copy-pasted snippets. This extension keeps chat, tools, and web search in one place.
 
 ---
 
 ## Who is this for?
 
 - Developers who want **ASI1** inside the editor.  
-- **Fetch.ai / uAgents** builders who want the same folder layout as the official Python CLI.  
-- Teams that want **chat → code → optional Agentverse-ready Python project** in one flow.
+- Developers building with LLM APIs who want prompt + code + files in one sidebar flow.
 
 ---
 
@@ -85,7 +83,6 @@ Building with **ASI1** and **Agentverse-style** workflows should not mean juggli
 | **Workspace** | Tools to read files and glob-search paths (when enabled) |
 | **Web** | `web_search` via ASI1 (when enabled) |
 | **Files** | Fenced code + “Save as” hints; optional auto-apply |
-| **Agents** | **ASI: Create Agentverse uAgent Project** — `main.py`, `agent.py`, Docker, Makefile, `.env`, etc. |
 | **Image** | **Run…** in chat — chat or image endpoint (`/v1/image/generate`); optional `imageBaseUrl`, `imageModel`, `imageSize` |
 
 ### AI chat inside VS Code
@@ -127,12 +124,6 @@ The sidebar uses a **minimal black** theme with an **ASI1 Code** label, session 
 
 When enabled in settings, requests can include **workspace tools** and/or **`web_search`** per ASI:One / OpenAI-compatible behavior.
 
-### Agentverse uAgent scaffold
-
-Command palette: **ASI: Create Agentverse uAgent Project** — creates a Python project with **uAgents** and the **Agent Chat Protocol** (see [Agentverse uAgent scaffold](#agentverse-uagent-scaffold)).
-
----
-
 ## Preview
 
 <div align="center">
@@ -166,7 +157,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./asi1-code-0.1.3.vsix
+code --install-extension ./asi1-code-0.1.4.vsix
 ```
 
 Or:
@@ -230,7 +221,6 @@ Cmd + Shift + ;   (Mac)
 | `ASI: Ask About Selection` | Ask about selected code (or file) |
 | `ASI: Set API Key` | Save your API key securely |
 | `ASI: Install Extension from .vsix` | Install extension from a `.vsix` file |
-| `ASI: Create Agentverse uAgent Project` | Scaffold a uAgent project (uAgents + chat protocol) |
 
 ---
 
@@ -299,32 +289,6 @@ All settings use the `asiAssistant.*` prefix.
 
 ---
 
-## Agentverse uAgent scaffold
-
-This extension can generate a project aligned with **`create-agentverse-agent`**: **uAgents**, **Agent Chat Protocol** (`uagents_core.contrib.protocols.chat`), `chat()` in **`agent.py`**, entry in **`main.py`**.
-
-**Run:** Command Palette → **`ASI: Create Agentverse uAgent Project`** → choose a display name and parent folder.
-
-**Generated layout** (folder name is a slug of your display name):
-
-```text
-<your-agent-slug>/
-├── main.py              # uAgent, protocols, message manager, Agentverse registration
-├── agent.py             # async chat(session_id, user_id, message, logger, send_progress)
-├── test.py              # Streamlit test UI
-├── Makefile
-├── pyproject.toml
-├── requirements.txt
-├── docker-compose.yml
-├── Dockerfile
-├── .env
-└── README.md
-```
-
-For the interactive Python CLI (wizard, `--default`, `--advanced`), see the upstream project: [create-agentverse-agent on PyPI](https://pypi.org/project/create-agentverse-agent/).
-
----
-
 ## Project structure (this repository)
 
 ```text
@@ -333,12 +297,10 @@ asi1-vs-code/
 │   ├── extension.ts           # activation, commands
 │   ├── chatViewProvider.ts    # webview chat UI
 │   ├── asiClient.ts           # ASI1 API, tools, web_search
-│   ├── agentverseScaffold.ts  # Agentverse template render + write
 │   └── workspaceFiles.ts      # extract/write files from replies
 ├── media/                     # chat.css, chatPanel.js, markdown + highlight
 ├── resources/
 │   ├── icon.png, logo.png, readme-banner.png
-│   └── agentverse-templates/  # templates for uAgent scaffold
 ├── package.json
 ├── README.md
 ├── README.vsix.md             # Marketplace readme (VSIX packaging)

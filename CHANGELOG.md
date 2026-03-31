@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.4] - 2026-03-31
+
+### Changed
+
+- Removed Agentverse/uAgent scaffold command and related template assets from the extension.
+- Updated docs (`README.md`, `README.vsix.md`) to reflect the current command set and feature scope.
+
+---
+
 ## [0.1.3] - 2026-03-31
 
 ### Added
@@ -81,7 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.1.3...HEAD  
+[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.1.4...HEAD  
+[0.1.4]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.4  
 [0.1.3]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.3  
 [0.1.2]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.2  
 [0.0.2]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.0.2  
