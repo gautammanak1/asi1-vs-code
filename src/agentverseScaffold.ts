@@ -16,7 +16,8 @@ export interface AgentScaffoldInput {
   agentverseApiKey?: string;
 }
 
-const TEMPLATE_FILES: Array<{ template: string; output: string }> = [
+/** Same list used by scaffold and by chat template injection. */
+export const AGENTVERSE_SCAFFOLD_TEMPLATE_MANIFEST: ReadonlyArray<{ template: string; output: string }> = [
   { template: "template.agent.py.j2", output: "agent.py" },
   { template: "template.main.py.j2", output: "main.py" },
   { template: "env.j2", output: ".env" },
@@ -32,6 +33,7 @@ const TEMPLATE_FILES: Array<{ template: string; output: string }> = [
 const REQUIREMENTS_TXT = `uagents>=0.23.4,<0.24
 python-dotenv>=1.2.1
 pydantic>=2,<3
+openai>=1.40.0
 `;
 
 function safeName(displayName: string): string {
@@ -149,7 +151,7 @@ export async function scaffoldAgentverseProject(
     await vscode.workspace.fs.createDirectory(projectDir);
   }
 
-  for (const { template, output } of TEMPLATE_FILES) {
+  for (const { template, output } of AGENTVERSE_SCAFFOLD_TEMPLATE_MANIFEST) {
     const raw = await readTemplate(extensionUri, template);
     const rendered = renderTemplate(raw, ctx);
     await writeText(vscode.Uri.joinPath(projectDir, output), rendered);

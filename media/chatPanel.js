@@ -4,10 +4,16 @@ const input = document.getElementById('input');
 const sendBtn = document.getElementById('send');
 const loadingEl = document.getElementById('loading');
 let loading = false;
+var webSearchEnabled = true;
+var imageModeEnabled = false;
+var attachedFiles = [];
+var detectedMentions = [];
+var MAX_ATTACH_FILES = 8;
+var MAX_ATTACH_BYTES = 200000;
 
 function autoResize() {
   input.style.height = 'auto';
-  input.style.height = Math.min(input.scrollHeight, 160) + 'px';
+  input.style.height = Math.min(input.scrollHeight, 120) + 'px';
 }
 input.addEventListener('input', autoResize);
 
@@ -23,8 +29,9 @@ function setActivity(text) {
   }
 }
 
-var streamRaf = null;
+var streamFlushTimer = null;
 var pendingStreamText = null;
+var lastRenderedStreamText = "";
 var hlTimer = null;
 function scheduleSyntaxHighlight() {
   if (hlTimer) clearTimeout(hlTimer);
@@ -37,10 +44,12 @@ function scheduleSyntaxHighlight() {
 }
 
 function flushStreamPreview() {
-  streamRaf = null;
+  streamFlushTimer = null;
   var text = pendingStreamText;
   pendingStreamText = null;
   if (text === null || text === undefined) return;
+  if (text === lastRenderedStreamText) return;
+  lastRenderedStreamText = text;
   var slot = document.getElementById('stream-live');
   if (!slot) {
     slot = document.createElement('div');
@@ -70,16 +79,18 @@ function flushStreamPreview() {
 
 function setStreamPreview(text) {
   pendingStreamText = text;
-  if (streamRaf) return;
-  streamRaf = requestAnimationFrame(flushStreamPreview);
+  if (streamFlushTimer) return;
+  // Batch token bursts so streaming looks smooth, not word-by-word.
+  streamFlushTimer = setTimeout(flushStreamPreview, 110);
 }
 
 function removeStreamPreview() {
-  if (streamRaf) {
-    cancelAnimationFrame(streamRaf);
-    streamRaf = null;
+  if (streamFlushTimer) {
+    clearTimeout(streamFlushTimer);
+    streamFlushTimer = null;
   }
   pendingStreamText = null;
+  lastRenderedStreamText = "";
   var slot = document.getElementById('stream-live');
   if (slot) slot.remove();
 }
@@ -163,6 +174,10 @@ window.addEventListener('message', function (e) {
     removeStreamPreview();
     render(m.history);
     updateCreateBar(m.extractedFiles);
+    if (typeof m.webSearchEnabled === 'boolean') {
+      webSearchEnabled = m.webSearchEnabled;
+      syncWebSearchButton();
+    }
     var sidEl = document.getElementById('chat-session-id');
     if (sidEl && m.chatIdShort) {
       sidEl.textContent = m.chatIdShort;
@@ -192,8 +207,19 @@ function send() {
   var sizeEl = document.getElementById('image-size');
   var imageSize = mode === 'image' && sizeEl && sizeEl.value ? sizeEl.value : undefined;
   input.value = '';
+  detectedMentions = [];
+  renderMentionList();
   autoResize();
-  vscode.postMessage({ type: 'send', text: t, mode: mode, imageSize: imageSize });
+  vscode.postMessage({
+    type: 'send',
+    text: t,
+    mode: mode,
+    imageSize: imageSize,
+    webSearch: webSearchEnabled,
+    attachments: attachedFiles
+  });
+  attachedFiles = [];
+  renderAttachList();
 }
 
 sendBtn.addEventListener('click', send);
@@ -208,6 +234,33 @@ document.getElementById('clear').addEventListener('click', function () {
 });
 document.getElementById('create-files-btn').addEventListener('click', function () {
   vscode.postMessage({ type: 'createFiles' });
+});
+log.addEventListener('click', function (ev) {
+  var target = ev.target;
+  if (!(target instanceof HTMLElement) || !target.classList.contains('code-copy-btn')) {
+    return;
+  }
+  var wrap = target.closest('.code-wrap');
+  var codeEl = wrap ? wrap.querySelector('.code-block code') : null;
+  var codeText = codeEl ? codeEl.textContent || '' : '';
+  if (!codeText) return;
+  var onDone = function () {
+    target.textContent = 'Copied';
+    target.disabled = true;
+    setTimeout(function () {
+      target.textContent = 'Copy';
+      target.disabled = false;
+    }, 1000);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(codeText).then(onDone).catch(function () {
+      vscode.postMessage({ type: 'copyToClipboard', text: codeText });
+      onDone();
+    });
+    return;
+  }
+  vscode.postMessage({ type: 'copyToClipboard', text: codeText });
+  onDone();
 });
 
 var btnInstall = document.getElementById('btn-install-vsix');
@@ -228,11 +281,9 @@ function applySetup(m) {
     stepApi.classList.remove('setup-done');
     btnApi.textContent = 'Add API key';
   }
-  var hideRow = !dev && hasApiKey;
+  // If API key is already set, hide onboarding completely.
+  var hideRow = hasApiKey;
   setupRow.classList.toggle('setup-hidden', hideRow);
-  if (dev && hasApiKey && !hideRow) {
-    setupRow.style.flexDirection = 'column';
-  }
 }
 
 btnInstall.addEventListener('click', function () {
@@ -245,13 +296,156 @@ btnApi.addEventListener('click', function () {
 vscode.postMessage({ type: 'setupReady' });
 
 var sendModeEl = document.getElementById('send-mode');
-var imageSizeEl = document.getElementById('image-size');
+var webSearchBtnEl = document.getElementById('web-search-btn');
+var imageModeBtnEl = document.getElementById('image-mode-btn');
+var uploadBtnEl = document.getElementById('upload-btn');
+var attachInputEl = document.getElementById('attach-input');
+var attachListEl = document.getElementById('attach-list');
+var mentionListEl = document.getElementById('mention-list');
+var rowEl = document.getElementById('row');
+var composerEl = document.getElementById('composer');
 function syncImageSizeVisibility() {
-  if (sendModeEl && imageSizeEl) {
-    imageSizeEl.hidden = sendModeEl.value !== 'image';
+  // kept for compatibility; no inline size picker in compact UI
+}
+function syncWebSearchButton() {
+  if (!webSearchBtnEl) return;
+  webSearchBtnEl.setAttribute('aria-pressed', webSearchEnabled ? 'true' : 'false');
+  webSearchBtnEl.classList.toggle('active', webSearchEnabled);
+  webSearchBtnEl.title = webSearchEnabled ? 'Web search: ON' : 'Web search: OFF';
+}
+function syncImageModeButton() {
+  if (sendModeEl) {
+    sendModeEl.value = imageModeEnabled ? 'image' : 'chat';
   }
+  if (!imageModeBtnEl) return;
+  imageModeBtnEl.setAttribute('aria-pressed', imageModeEnabled ? 'true' : 'false');
+  imageModeBtnEl.classList.toggle('active', imageModeEnabled);
+  imageModeBtnEl.title = imageModeEnabled
+    ? 'Image mode: ON (prompts go to image API)'
+    : 'Image mode: OFF (chat)';
+  if (input) {
+    input.placeholder = imageModeEnabled
+      ? 'Describe the image to generate…'
+      : 'Plan, @ for context, / for commands';
+  }
+}
+function renderAttachList() {
+  if (!attachListEl) return;
+  if (!attachedFiles.length) {
+    attachListEl.textContent = '';
+    return;
+  }
+  attachListEl.textContent = attachedFiles.map(function (f) { return f.name; }).join(' · ');
+}
+function updateDetectedMentionsFromInput() {
+  var text = input && typeof input.value === 'string' ? input.value : '';
+  var re = /(^|\s)@([./\w-]+(?:\/[./\w-]+)+)/g;
+  var set = {};
+  var found = [];
+  var m;
+  while ((m = re.exec(text)) !== null) {
+    var p = (m[2] || '').trim();
+    if (!p || set[p]) continue;
+    set[p] = true;
+    found.push(p);
+    if (found.length >= 8) break;
+  }
+  detectedMentions = found;
+  renderMentionList();
+}
+function renderMentionList() {
+  if (!mentionListEl) return;
+  mentionListEl.innerHTML = '';
+  if (!detectedMentions.length) return;
+  detectedMentions.forEach(function (p) {
+    var chip = document.createElement('span');
+    chip.className = 'mention-chip';
+    chip.textContent = '@' + p;
+    mentionListEl.appendChild(chip);
+  });
+}
+function readFileAsText(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result || '')); };
+    reader.onerror = function () { reject(new Error('Failed to read file')); };
+    reader.readAsText(file);
+  });
+}
+async function handleFiles(fileList) {
+  var files = Array.prototype.slice.call(fileList || []);
+  if (!files.length) return;
+  for (var i = 0; i < files.length; i++) {
+    if (attachedFiles.length >= MAX_ATTACH_FILES) break;
+    var file = files[i];
+    if (!file || !file.name) continue;
+    try {
+      var text = await readFileAsText(file);
+      if (text.length > MAX_ATTACH_BYTES) {
+        text = text.slice(0, MAX_ATTACH_BYTES) + '\n… [truncated]';
+      }
+      attachedFiles.push({ name: file.name, content: text });
+    } catch (_e) {
+      // ignore unreadable file
+    }
+  }
+  renderAttachList();
 }
 if (sendModeEl) {
   sendModeEl.addEventListener('change', syncImageSizeVisibility);
   syncImageSizeVisibility();
 }
+if (webSearchBtnEl) {
+  webSearchBtnEl.addEventListener('click', function () {
+    webSearchEnabled = !webSearchEnabled;
+    syncWebSearchButton();
+    vscode.postMessage({ type: 'setWebSearch', value: webSearchEnabled });
+  });
+  syncWebSearchButton();
+}
+if (imageModeBtnEl) {
+  imageModeBtnEl.addEventListener('click', function () {
+    imageModeEnabled = !imageModeEnabled;
+    syncImageModeButton();
+  });
+  syncImageModeButton();
+}
+input.addEventListener('input', updateDetectedMentionsFromInput);
+if (uploadBtnEl && attachInputEl) {
+  uploadBtnEl.addEventListener('click', function () {
+    attachInputEl.click();
+  });
+}
+if (attachInputEl) {
+  attachInputEl.addEventListener('change', function () {
+    void handleFiles(attachInputEl.files);
+    attachInputEl.value = '';
+  });
+}
+function setupDropZone(el) {
+  if (!el) return;
+  el.addEventListener('dragover', function (ev) {
+    ev.preventDefault();
+    el.classList.add('drag-over');
+  });
+  el.addEventListener('dragleave', function () {
+    el.classList.remove('drag-over');
+  });
+  el.addEventListener('drop', function (ev) {
+    ev.preventDefault();
+    el.classList.remove('drag-over');
+    if (ev.dataTransfer && ev.dataTransfer.files) {
+      void handleFiles(ev.dataTransfer.files);
+    }
+  });
+}
+setupDropZone(rowEl);
+setupDropZone(composerEl);
+document.addEventListener('dragover', function (ev) {
+  ev.preventDefault();
+});
+document.addEventListener('drop', function (ev) {
+  ev.preventDefault();
+});
+renderAttachList();
+renderMentionList();

@@ -1,7 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as vscode from "vscode";
-import { scaffoldAgentverseProject } from "./agentverseScaffold";
 import { registerApiKeyFromExtensionFile, registerApiKeySecret } from "./asiClient";
 import { ChatViewProvider } from "./chatViewProvider";
 
@@ -118,90 +117,6 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
-  context.subscriptions.push(
-    vscode.commands.registerCommand("asiAssistant.createAgentverseAgent", async () => {
-      const displayName = await vscode.window.showInputBox({
-        title: "Agentverse uAgent (Fetch.ai)",
-        prompt: "Display name for the agent (a folder with a slug name will be created)",
-        placeHolder: "e.g. My Fetch Assistant",
-        validateInput: (v) => (v.trim() ? "" : "Enter a name"),
-      });
-      if (!displayName?.trim()) {
-        return;
-      }
-
-      let parent: vscode.Uri | undefined;
-      const wf = vscode.workspace.workspaceFolders?.[0];
-      if (wf) {
-        type ParentPick = vscode.QuickPickItem & { folder?: vscode.Uri };
-        const pick = await vscode.window.showQuickPick<ParentPick>(
-          [
-            {
-              label: "$(folder) Workspace root",
-              description: wf.uri.fsPath,
-              folder: wf.uri,
-            },
-            {
-              label: "$(folder-opened) Choose another folder…",
-              description: "Pick a parent directory",
-            },
-          ],
-          { placeHolder: "Where should the project folder be created?" }
-        );
-        if (!pick) {
-          return;
-        }
-        if (pick.folder) {
-          parent = pick.folder;
-        } else {
-          const dirs = await vscode.window.showOpenDialog({
-            canSelectFolders: true,
-            canSelectMany: false,
-            openLabel: "Select parent folder",
-          });
-          parent = dirs?.[0];
-        }
-      } else {
-        const dirs = await vscode.window.showOpenDialog({
-          canSelectFolders: true,
-          canSelectMany: false,
-          openLabel: "Select parent folder for the agent project",
-        });
-        parent = dirs?.[0];
-      }
-      if (!parent) {
-        return;
-      }
-
-      try {
-        const projectDir = await scaffoldAgentverseProject(context.extensionUri, {
-          displayName,
-          parentFolder: parent,
-        });
-        const revealLabel =
-          process.platform === "win32"
-            ? "Reveal in File Explorer"
-            : process.platform === "darwin"
-              ? "Reveal in Finder"
-              : "Show in file manager";
-        const choice = await vscode.window.showInformationMessage(
-          `Created uAgent project (uAgents + chat protocol) at ${projectDir.fsPath}`,
-          "Open in new window",
-          revealLabel
-        );
-        if (choice === "Open in new window") {
-          await vscode.commands.executeCommand("vscode.openFolder", projectDir, true);
-        } else if (choice === revealLabel) {
-          await vscode.commands.executeCommand("revealFileInOS", projectDir);
-        }
-      } catch (e) {
-        if (e instanceof Error && e.message === "Cancelled") {
-          return;
-        }
-        vscode.window.showErrorMessage(e instanceof Error ? e.message : String(e));
-      }
-    })
-  );
 }
 
 export function deactivate(): void {}
