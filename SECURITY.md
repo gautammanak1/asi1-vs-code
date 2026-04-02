@@ -7,7 +7,7 @@ We address security fixes for the **latest published** version of the ASI1 Code 
 ## Reporting a vulnerability
 
 Please **do not** open a public GitHub issue for undisclosed security vulnerabilities.
-
+5
 Instead:
 
 1. Open a **[GitHub Security Advisory](https://github.com/gautammanak1/asi1-vs-code/security/advisories/new)** for this repository (if enabled), **or**

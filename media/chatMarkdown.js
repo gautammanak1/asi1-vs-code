@@ -7,87 +7,81 @@
   var BT = String.fromCharCode(96);
   var FENCE = BT + BT + BT;
 
-  var PSEUDO_LANG = {
-    PLAINTEXT: "plaintext",
-    TXT: "plaintext",
-    TEXT: "plaintext",
-    PYTHON: "python",
-    JSON: "json",
-    TS: "typescript",
-    TYPESCRIPT: "typescript",
-    TSX: "tsx",
-    JS: "javascript",
-    JAVASCRIPT: "javascript",
-    JSX: "jsx",
-    BASH: "bash",
-    SH: "bash",
-    SHELL: "bash",
-    ZSH: "bash",
-    CSS: "css",
-    SCSS: "scss",
-    HTML: "html",
-    XML: "xml",
-    SQL: "sql",
-    PY: "python",
-    MD: "markdown",
-    MARKDOWN: "markdown",
-    YAML: "yaml",
-    YML: "yaml",
-    ENV: "bash",
-    DOCKERFILE: "dockerfile",
-    NGINX: "nginx",
-    GRAPHQL: "graphql",
-  };
-
   function toHlLang(header) {
     var first = (header || "").trim().split(/\s+/)[0].toLowerCase();
-    var map = {
-      ts: "typescript",
-      typescript: "typescript",
-      tsx: "tsx",
-      js: "javascript",
-      javascript: "javascript",
-      jsx: "jsx",
-      json: "json",
-      sh: "bash",
-      shell: "bash",
-      bash: "bash",
-      zsh: "bash",
-      yml: "yaml",
-      yaml: "yaml",
-      py: "python",
-      python: "python",
-      md: "markdown",
-      html: "xml",
-      htm: "xml",
-      xml: "xml",
-      css: "css",
-      scss: "scss",
-      sql: "sql",
-      graphql: "graphql",
-      nginx: "nginx",
-      dockerfile: "dockerfile",
-    };
-    return map[first] || first || "plaintext";
+    if (!first) {
+      return "plaintext";
+    }
+    // Keep model-provided language as-is; avoid forced remapping.
+    return first.replace(/[^a-z0-9_+-]/g, "") || "plaintext";
   }
 
-  /** MARKDOWN/CODE + one-line JSON, TS, BASH, … → real ``` fences; balance odd fences. */
+  function langIconMarkup(lang) {
+    var l = (lang || "").toLowerCase();
+    function badge(bg, fg, txt) {
+      return (
+        '<svg viewBox="0 0 24 24" aria-hidden="true">' +
+        '<rect x="2" y="2" width="20" height="20" rx="5" fill="' + bg + '"/>' +
+        '<text x="12" y="15" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="8" font-weight="700" fill="' + fg + '">' + txt + '</text>' +
+        '</svg>'
+      );
+    }
+    var icons = {
+      typescript: badge("#3178c6", "#ffffff", "TS"),
+      javascript: badge("#f7df1e", "#111111", "JS"),
+      python: badge("#3776ab", "#ffffff", "PY"),
+      java: badge("#e76f00", "#ffffff", "JV"),
+      go: badge("#00add8", "#ffffff", "GO"),
+      rust: badge("#dea584", "#111111", "RS"),
+      csharp: badge("#68217a", "#ffffff", "C#"),
+      php: badge("#777bb4", "#ffffff", "PHP"),
+      ruby: badge("#cc342d", "#ffffff", "RB"),
+      swift: badge("#f05138", "#ffffff", "SW"),
+      kotlin: badge("#7f52ff", "#ffffff", "KT"),
+      html: badge("#e34f26", "#ffffff", "HTML"),
+      css: badge("#264de4", "#ffffff", "CSS"),
+      scss: badge("#cd6799", "#ffffff", "SCSS"),
+      json: badge("#9ca3af", "#111111", "JSON"),
+      yaml: badge("#cb171e", "#ffffff", "YML"),
+      sql: badge("#336791", "#ffffff", "SQL"),
+      bash: badge("#3fa75c", "#ffffff", "SH"),
+      shell: badge("#3fa75c", "#ffffff", "SH"),
+      zsh: badge("#3fa75c", "#ffffff", "SH"),
+      markdown: badge("#0ea5e9", "#ffffff", "MD"),
+      plaintext: badge("#475569", "#ffffff", "TXT"),
+      xml: badge("#a855f7", "#ffffff", "XML"),
+      dockerfile: badge("#2496ed", "#ffffff", "DKR"),
+      graphql: badge("#e10098", "#ffffff", "GQL"),
+      nginx: badge("#009639", "#ffffff", "NGX"),
+      cpp: badge("#00599c", "#ffffff", "C++"),
+      c: badge("#64748b", "#ffffff", "C"),
+      dart: badge("#0175c2", "#ffffff", "DART"),
+      r: badge("#276dc3", "#ffffff", "R"),
+      scala: badge("#dc322f", "#ffffff", "SC"),
+      lua: badge("#000080", "#ffffff", "LUA"),
+      perl: badge("#39457e", "#ffffff", "PL"),
+      elixir: badge("#6e4a7e", "#ffffff", "EX"),
+      haskell: badge("#5e5086", "#ffffff", "HS"),
+      powershell: badge("#2c74b3", "#ffffff", "PS"),
+    };
+    if (l === "ts" || l === "tsx") l = "typescript";
+    if (l === "js" || l === "jsx") l = "javascript";
+    if (l === "py") l = "python";
+    if (l === "rb") l = "ruby";
+    if (l === "kt") l = "kotlin";
+    if (l === "cs") l = "csharp";
+    if (l === "yml") l = "yaml";
+    if (l === "sh") l = "bash";
+    if (l === "md") l = "markdown";
+    if (l === "htm") l = "html";
+    if (l === "c++") l = "cpp";
+    if (icons[l]) return icons[l];
+    return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="#334155"/><circle cx="12" cy="12" r="3" fill="#93c5fd"/></svg>';
+  }
+
+  /** Keep content raw; only balance odd fences. */
   function normalizeAssistantContent(raw) {
     var t = String(raw).replace(/\r\n/g, NL).replace(/\r/g, NL);
-    var lines = t.split(NL);
-    var out = [];
-    for (var i = 0; i < lines.length; i++) {
-      var tr = lines[i].trim();
-      var up = tr.toUpperCase();
-      if (PSEUDO_LANG[up]) {
-        out.push(FENCE + PSEUDO_LANG[up]);
-      } else if (up === "CODE") {
-        out.push(FENCE);
-      } else {
-        out.push(lines[i]);
-      }
-    }
-    t = out.join(NL);
     var n = 0;
     var p = 0;
     while (true) {
@@ -434,9 +428,26 @@
           var wrap = document.createElement("div");
           wrap.className = "code-wrap";
           wrap.setAttribute("data-lang", hl);
+          wrap.setAttribute("data-raw", inner);
           var lbl = document.createElement("div");
           lbl.className = "code-label code-label-" + hl;
-          lbl.textContent = headerRaw || hl || "code";
+          var labelIcon = document.createElement("span");
+          labelIcon.className = "code-lang-ic";
+          labelIcon.innerHTML = langIconMarkup(hl);
+          lbl.appendChild(labelIcon);
+          var labelText = document.createElement("span");
+          labelText.className = "code-label-text";
+          labelText.textContent = headerRaw || hl || "code";
+          lbl.appendChild(labelText);
+          var labelActions = document.createElement("div");
+          labelActions.className = "code-label-actions";
+          var collapseBtn = document.createElement("button");
+          collapseBtn.type = "button";
+          collapseBtn.className = "code-collapse-btn";
+          collapseBtn.textContent = "Collapse";
+          collapseBtn.setAttribute("aria-label", "Collapse code block");
+          labelActions.appendChild(collapseBtn);
+          lbl.appendChild(labelActions);
           wrap.appendChild(lbl);
           var copyBtn = document.createElement("button");
           copyBtn.type = "button";
@@ -446,10 +457,10 @@
           wrap.appendChild(copyBtn);
           var pre = document.createElement("pre");
           pre.className = "code-block";
-          var codeEl = document.createElement("code");
-          codeEl.textContent = inner;
-          codeEl.className = "language-" + hl;
-          pre.appendChild(codeEl);
+          var code = document.createElement("code");
+          code.className = "code-text language-" + hl;
+          code.textContent = inner;
+          pre.appendChild(code);
           wrap.appendChild(pre);
           container.appendChild(wrap);
         }
@@ -462,7 +473,7 @@
     if (typeof hljs === "undefined" || !hljs.highlightElement) {
       return;
     }
-    root.querySelectorAll(".code-block code").forEach(function (el) {
+    root.querySelectorAll(".code-text").forEach(function (el) {
       try {
         el.removeAttribute("data-highlighted");
         hljs.highlightElement(el);

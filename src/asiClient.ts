@@ -9,6 +9,14 @@ export type ToolCall = {
   function: { name: string; arguments: string };
 };
 
+export type ToolExecutionEvent = {
+  phase: "start" | "result";
+  round: number;
+  name: string;
+  argsPreview?: string;
+  resultPreview?: string;
+};
+
 /** Messages sent to ASI:One (OpenAI-compatible), including tool calls and tool results. */
 export type ApiChatMessage =
   | { role: "system" | "user"; content: string }
@@ -114,7 +122,59 @@ export const ASI_BUILTIN_TOOLS: object[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "workspace_list_directory",
+      description:
+        "List files/directories inside a workspace directory path. Path is relative to the workspace root.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: {
+            type: "string",
+            description: "Relative directory path, e.g. src or src/components",
+          },
+          maxResults: {
+            type: "integer",
+            description: "Max entries to return (default 100, max 300)",
+          },
+        },
+        required: ["path"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "workspace_write_file",
+      description:
+        "Create or overwrite a UTF-8 text file in the workspace. Creates parent directories automatically.",
+      parameters: {
+        type: "object",
+        properties: {
+          path: {
+            type: "string",
+            description: "Relative path, e.g. src/new-file.ts",
+          },
+          content: {
+            type: "string",
+            description: "Full file content to write",
+          },
+        },
+        required: ["path", "content"],
+      },
+    },
+  },
 ];
+
+function safeWorkspacePath(raw: unknown): string {
+  const rel = typeof raw === "string" ? raw.trim() : "";
+  if (!rel || rel.includes("..") || rel.startsWith("/")) {
+    return "";
+  }
+  return rel;
+}
 
 async function executeBuiltinTool(name: string, argsJson: string): Promise<string> {
   let args: Record<string, unknown>;
@@ -133,8 +193,8 @@ async function executeBuiltinTool(name: string, argsJson: string): Promise<strin
   const root = folders[0].uri;
 
   if (name === "workspace_read_file") {
-    const rel = typeof args.path === "string" ? args.path : "";
-    if (!rel || rel.includes("..")) {
+    const rel = safeWorkspacePath(args.path);
+    if (!rel) {
       return JSON.stringify({ error: "Invalid or unsafe path" });
     }
     const uri = vscode.Uri.joinPath(root, rel);
@@ -175,6 +235,72 @@ async function executeBuiltinTool(name: string, argsJson: string): Promise<strin
     }
   }
 
+  if (name === "workspace_list_directory") {
+    const rel = safeWorkspacePath(args.path);
+    if (!rel) {
+      return JSON.stringify({ error: "Invalid or unsafe path" });
+    }
+    const maxN = Math.min(
+      300,
+      typeof args.maxResults === "number" && args.maxResults > 0 ? args.maxResults : 100
+    );
+    const dirUri = vscode.Uri.joinPath(root, rel);
+    try {
+      const entries = await vscode.workspace.fs.readDirectory(dirUri);
+      const mapped = entries
+        .slice(0, maxN)
+        .map(([name, type]) => ({
+          name,
+          type:
+            type === vscode.FileType.Directory
+              ? "directory"
+              : type === vscode.FileType.File
+                ? "file"
+                : "other",
+        }));
+      return JSON.stringify({ path: rel, entries: mapped, count: mapped.length });
+    } catch (e) {
+      return JSON.stringify({
+        error: e instanceof Error ? e.message : String(e),
+        path: rel,
+      });
+    }
+  }
+
+  if (name === "workspace_write_file") {
+    const rel = safeWorkspacePath(args.path);
+    const content = typeof args.content === "string" ? args.content : "";
+    if (!rel) {
+      return JSON.stringify({ error: "Invalid or unsafe path" });
+    }
+    const maxBytes = 300_000;
+    if (content.length > maxBytes) {
+      return JSON.stringify({
+        error: `Content too large (${content.length} chars). Max ${maxBytes}.`,
+        path: rel,
+      });
+    }
+    const fileUri = vscode.Uri.joinPath(root, rel);
+    try {
+      const parent = vscode.Uri.joinPath(root, rel.split("/").slice(0, -1).join("/"));
+      if (rel.includes("/")) {
+        await vscode.workspace.fs.createDirectory(parent);
+      }
+      const bytes = new TextEncoder().encode(content);
+      await vscode.workspace.fs.writeFile(fileUri, bytes);
+      return JSON.stringify({
+        path: rel,
+        writtenChars: content.length,
+        ok: true,
+      });
+    } catch (e) {
+      return JSON.stringify({
+        error: e instanceof Error ? e.message : String(e),
+        path: rel,
+      });
+    }
+  }
+
   return JSON.stringify({ error: `Unknown tool: ${name}` });
 }
 
@@ -193,6 +319,7 @@ export async function runChatWithTools(
   options: {
     signal?: AbortSignal;
     onProgress?: (label: string) => void;
+    onToolEvent?: (event: ToolExecutionEvent) => void;
     maxRounds?: number;
     webSearch?: boolean;
     /** When agentic session is enabled, sent as `x-session-id` (overrides setting). */
@@ -217,6 +344,52 @@ export async function runChatWithTools(
   };
   if (agenticSession && sid) {
     headers["x-session-id"] = sid;
+  }
+
+  // If no workspace is open, avoid surfacing tool failures to end-users.
+  // Fall back to a normal completion in the same turn.
+  if (!vscode.workspace.workspaceFolders?.length) {
+    options.onProgress?.("No workspace open; running chat without workspace tools…");
+    const body: Record<string, unknown> = {
+      model,
+      messages: messagesWithSystem,
+      stream: false,
+    };
+    body.web_search = webSearch;
+    body.extra_body = { web_search: webSearch };
+    const res = await fetch(url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(body),
+      signal: options.signal,
+    });
+    const text = await res.text();
+    let json: unknown;
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(`ASI API returned non-JSON (${res.status}): ${text.slice(0, 500)}`);
+    }
+    if (!res.ok) {
+      const errMsg =
+        typeof json === "object" && json !== null && "error" in json
+          ? JSON.stringify((json as { error: unknown }).error)
+          : text.slice(0, 500);
+      throw new Error(`ASI API error ${res.status}: ${errMsg}`);
+    }
+    const obj = json as {
+      choices?: Array<{ message?: { content?: string | null } }>;
+    };
+    const content = obj.choices?.[0]?.message?.content ?? "";
+    const baseThread =
+      messagesWithSystem[0]?.role === "system"
+        ? messagesWithSystem.slice(1)
+        : [...messagesWithSystem];
+    const apiThread = [
+      ...baseThread,
+      { role: "assistant", content } as ApiChatMessage,
+    ] as ApiChatMessage[];
+    return { apiThread, lastAssistantText: content };
   }
 
   let msgs = [...messagesWithSystem];
@@ -289,8 +462,20 @@ export async function runChatWithTools(
       for (const tc of message.tool_calls) {
         const fn = tc.function?.name ?? "";
         const args = tc.function?.arguments ?? "{}";
+        options.onToolEvent?.({
+          phase: "start",
+          round: round + 1,
+          name: fn,
+          argsPreview: args.slice(0, 500),
+        });
         options.onProgress?.(`Tool: ${fn}`);
         const out = await executeBuiltinTool(fn, args);
+        options.onToolEvent?.({
+          phase: "result",
+          round: round + 1,
+          name: fn,
+          resultPreview: out.slice(0, 500),
+        });
         msgs.push({
           role: "tool",
           tool_call_id: tc.id,
@@ -465,14 +650,18 @@ export async function completeChatStreaming(
         break;
       }
       buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() ?? "";
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed.startsWith("data:")) {
+      const frames = buffer.split("\n\n");
+      buffer = frames.pop() ?? "";
+      for (const frame of frames) {
+        const dataLines = frame
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l.startsWith("data:"))
+          .map((l) => l.slice(5).trim());
+        if (!dataLines.length) {
           continue;
         }
-        const data = trimmed.slice(5).trim();
+        const data = dataLines.join("\n");
         if (data === "[DONE]") {
           continue;
         }
@@ -484,14 +673,13 @@ export async function completeChatStreaming(
             }>;
           };
           const choice = j.choices?.[0];
-          const piece =
-            choice?.delta?.content ?? choice?.message?.content ?? "";
+          const piece = choice?.delta?.content ?? choice?.message?.content ?? "";
           if (piece) {
             full += piece;
             onDelta(piece, full);
           }
         } catch {
-          /* ignore partial JSON */
+          /* ignore malformed or partial frame */
         }
       }
     }
@@ -517,6 +705,41 @@ export async function completeChatStreaming(
     onDelta(content, content);
   }
   return { content, raw: json };
+}
+
+export async function fetchAvailableModels(): Promise<string[]> {
+  const config = vscode.workspace.getConfiguration("asiAssistant");
+  const chatUrl = config.get<string>("baseUrl") ?? "https://api.asi1.ai/v1/chat/completions";
+  const url = `${deriveApiV1Base(chatUrl)}/models`;
+  const apiKey = await resolveApiKey();
+  if (!apiKey) {
+    return ["asi1"];
+  }
+  try {
+    const res = await fetch(url, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+    });
+    if (!res.ok) {
+      return ["asi1"];
+    }
+    const json = (await res.json()) as { data?: Array<{ id?: string }> };
+    const ids = Array.from(
+      new Set(
+        (json.data ?? [])
+          .map((m) => (typeof m.id === "string" ? m.id.trim() : ""))
+          .filter((id) => id.length > 0)
+      )
+    );
+    if (!ids.includes("asi1")) {
+      ids.unshift("asi1");
+    }
+    return ids.slice(0, 80);
+  } catch {
+    return ["asi1"];
+  }
 }
 
 /** Derive `https://…/v1` from a chat completions URL (`…/v1/chat/completions`). */

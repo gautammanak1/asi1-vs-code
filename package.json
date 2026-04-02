@@ -1,9 +1,9 @@
 {
-  "name": "asi1-code",
-  "displayName": "ASI1 Code",
-  "description": "Sidebar AI chat for VS Code powered by ASI1 — streaming replies, markdown, and workspace file hints.",
+  "name": "fetch-coder",
+  "displayName": "Fetch Coder",
+  "description": "Sidebar AI coding assistant for VS Code/Cursor powered by ASI1 — streaming replies, markdown, and workspace-aware tools.",
   "icon": "resources/icon.png",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "publisher": "gautammanak2",
   "license": "MIT",
   "author": "Gautam Manak",
@@ -59,7 +59,7 @@
       "activitybar": [
         {
           "id": "asiAssistant",
-          "title": "ASI1 Code",
+          "title": "Fetch Coder",
           "icon": "resources/icon.png"
         }
       ]
@@ -74,7 +74,7 @@
       ]
     },
     "configuration": {
-      "title": "ASI1 Code",
+      "title": "Fetch Coder",
       "properties": {
         "asiAssistant.apiKey": {
           "type": "string",
@@ -170,14 +170,14 @@
         },
         "asiAssistant.bannerSubtitle": {
           "type": "string",
-          "default": "ASI1 · VS Code & Cursor",
+          "default": "Fetch Coder · VS Code & Cursor",
           "description": "Short line under the banner title (leave empty to hide)",
           "order": 11
         },
         "asiAssistant.bannerLogoUrl": {
           "type": "string",
           "default": "",
-          "description": "Optional https URL for the banner logo. Empty uses the bundled ASI1 Code logo.",
+          "description": "Optional https URL for the banner logo. Empty uses the bundled Fetch Coder logo.",
           "order": 12
         },
         "asiAssistant.linkWebsite": {

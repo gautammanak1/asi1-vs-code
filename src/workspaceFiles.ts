@@ -423,26 +423,6 @@ export async function writeExtractedFiles(files: ExtractedFile[]): Promise<boole
   } catch {
     /* older builds */
   }
-  try {
-    await vscode.commands.executeCommand("workbench.view.explorer.focus");
-  } catch {
-    /* ignore */
-  }
-  if (written.length > 0) {
-    try {
-      await vscode.commands.executeCommand("revealInExplorer", written[0]);
-    } catch {
-      /* ignore */
-    }
-  }
-
-  if (written.length === 1) {
-    const doc = await vscode.workspace.openTextDocument(written[0]);
-    await vscode.window.showTextDocument(doc, { preview: false });
-  } else if (written.length > 0) {
-    const doc = await vscode.workspace.openTextDocument(written[written.length - 1]);
-    await vscode.window.showTextDocument(doc, { preview: false });
-  }
   vscode.window.showInformationMessage(
     `ASI: created ${written.length} file(s): ${files.map((x) => x.relativePath).join(", ")}`
   );
