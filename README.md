@@ -1,17 +1,17 @@
 <div align="center">
 
 <p align="center">
-  <img src="./resources/icon.png" alt="ASI1 Code" width="96" height="96" />
+  <img src="./resources/icon.png" alt="Fetch Coder" width="96" height="96" />
 </p>
 
-<img src="./resources/readme-banner.png" alt="ASI1 Code Banner" width="100%" />
+<img src="./resources/readme-banner.png" alt="Fetch Coder Banner" width="100%" />
 
-# ASI1 Code
+# Fetch Coder
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.4**
+### AI Coding Assistant for VS Code & Cursor · **v0.1.5**
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code">
+  <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder">
     <img src="https://img.shields.io/badge/VS%20Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white" alt="Marketplace" />
   </a>
   <a href="./LICENSE">
@@ -29,8 +29,8 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.4">
-    <img src="https://img.shields.io/badge/release-v0.1.4-22c55e?style=flat" alt="Version 0.1.4" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.5">
+    <img src="https://img.shields.io/badge/release-v0.1.5-22c55e?style=flat" alt="Version 0.1.5" />
   </a>
 </p>
 
@@ -45,7 +45,7 @@
 
 ## Overview
 
-ASI1 Code is an AI-powered coding assistant built for **VS Code** and **Cursor** using the **ASI1 API**.
+Fetch Coder is an AI-powered coding assistant built for **VS Code** and **Cursor** using the **ASI1 API**.
 
 It gives you a fast, clean **sidebar chat** so you can:
 
@@ -118,7 +118,7 @@ Optional: automatically create files detected from the assistant reply (requires
 
 ### Chat UI & optional branding
 
-The sidebar uses a **minimal black** theme with an **ASI1 Code** label, session id, and turn count. Optional `asiAssistant.banner*` and link settings remain in configuration (compatibility / future use).
+The sidebar uses a **minimal black** theme with a **Fetch Coder** label, session id, and turn count. Optional `asiAssistant.banner*` and link settings remain in configuration (compatibility / future use).
 
 ### Tools & web search (ASI1)
 
@@ -128,7 +128,7 @@ When enabled in settings, requests can include **workspace tools** and/or **`web
 
 <div align="center">
 
-<img src="./resources/readme-banner.png" alt="ASI1 Code Preview" width="100%" />
+<img src="./resources/readme-banner.png" alt="Fetch Coder Preview" width="100%" />
 
 </div>
 
@@ -141,10 +141,10 @@ When enabled in settings, requests can include **workspace tools** and/or **`web
 Install from the Marketplace:
 
 ```txt
-https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code
+https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder
 ```
 
-Or open: [ASI1 Code — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.asi1-code)
+Or open: [Fetch Coder — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder)
 
 ### From a `.vsix` file
 
@@ -157,7 +157,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./asi1-code-0.1.4.vsix
+code --install-extension ./fetch-coder-0.1.5.vsix
 ```
 
 Or:
@@ -201,7 +201,7 @@ A file named `.api-key` next to the extension folder (development only).
 
 ### 2. Open the chat panel
 
-- Use the **Activity Bar** → **ASI1 Code** → **Chat**, or  
+- Use the **Activity Bar** → **Fetch Coder** → **Chat**, or  
 - Command Palette: **`ASI: Open Assistant Chat`**
 
 **Shortcut:**
