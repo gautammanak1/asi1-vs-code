@@ -4,7 +4,7 @@
 
 # Fetch Coder
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.5**
+### AI Coding Assistant for VS Code & Cursor · **v0.1.6**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder">
@@ -25,8 +25,8 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.5">
-    <img src="https://img.shields.io/badge/release-v0.1.5-22c55e?style=flat" alt="Version 0.1.5" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.6">
+    <img src="https://img.shields.io/badge/release-v0.1.6-22c55e?style=flat" alt="Version 0.1.6" />
   </a>
 </p>
 
@@ -45,13 +45,14 @@ Fetch Coder is an AI-powered coding assistant built for **VS Code** and **Cursor
 
 It gives you a fast, clean **sidebar chat** so you can:
 
-- Generate code  
-- Fix errors  
-- Explain functions  
-- Create project files  
-- Understand selected code  
+- Generate code and create project files  
+- Fix errors with inline edits (Cmd+I / Ctrl+I)  
+- Explain functions and debug issues  
+- Auto-apply generated files to your workspace  
+- Run terminal commands directly from chat  
+- Get follow-up suggestions after every response  
 - Stream AI responses in real time  
-- Optionally use **tool calling** (workspace files) and **web search** (ASI1 API)  
+- Use **tool calling** (workspace read/write/search + terminal) and **web search**  
 
 Instead of switching between tabs, websites, and separate tools, you can stay in the IDE.
 
@@ -74,12 +75,14 @@ Building with **ASI1** should not mean juggling browser tabs and copy-pasted sni
 
 | Area | What you get |
 |------|----------------|
-| **Chat** | Sidebar panel, streaming, Markdown, syntax-highlighted code |
-| **Selection** | Send the current selection or file context to the model |
-| **Workspace** | Tools to read files and glob-search paths (when enabled) |
+| **Chat** | Sidebar panel, streaming, Markdown, syntax-highlighted code, follow-up suggestions |
+| **Inline Edit** | Cmd+I / Ctrl+I for targeted code edits with language context |
+| **Auto Apply** | Generated files are automatically written to your workspace |
+| **Terminal** | AI can execute shell commands (npm, git, node, etc.) directly |
+| **Workspace** | Tools to read/write files, glob-search, and run terminal commands |
 | **Web** | `web_search` via ASI1 (when enabled) |
 | **Files** | Fenced code + “Save as” hints; optional auto-apply |
-| **Image** | **Run…** in chat — chat or image endpoint (`/v1/image/generate`); optional `imageBaseUrl`, `imageModel`, `imageSize` |
+| **Image** | Image generation via chat (`/v1/image/generate`) |
 
 ### AI chat inside VS Code
 
@@ -142,6 +145,11 @@ https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder
 
 Or open: [Fetch Coder — Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder)
 
+### Cursor Marketplace / Open VSX
+
+Cursor relies on Open VSX style listings for discoverability.  
+If the extension is visible in VS Marketplace but not in Cursor search, publish the same version to Open VSX as well.
+
 ### From a `.vsix` file
 
 ```bash
@@ -153,7 +161,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./fetch-coder-0.1.5.vsix
+code --install-extension ./fetch-coder-0.1.6.vsix
 ```
 
 Or:
@@ -361,15 +369,30 @@ This **`README.vsix.md`** file is what ships as the Marketplace long description
 
 ---
 
+## Troubleshooting
+
+- `DeprecationWarning: punycode module is deprecated` from Cursor Helper/Plugin is a Node/runtime warning and usually not a functional extension failure.
+- If install/search fails in Cursor, install via VSIX as a fallback and ensure Open VSX publish is completed for that exact version.
+
+---
+
+## What's new in v0.1.6
+
+- New Fetch Coder logo and branding  
+- Auto-apply: generated files are written to workspace automatically  
+- Terminal tool: AI can run shell commands (npm, git, node, etc.)  
+- Follow-up suggestions after every AI response  
+- Inline edit (Cmd+I / Ctrl+I) with language context  
+- Fixed `_broadcast` infinite recursion crash  
+- Fixed VS Code 1.91 compatibility  
+- Quick action buttons on empty chat screen  
+
 ## Roadmap
 
-- Richer workspace context (symbols, diagnostics)  
-- Workspace-aware AI suggestions  
-- Multi-file generation and review flow  
-- Improved file previews  
-- Optional chat history persistence  
+- Multi-file diff review flow  
+- Chat history export/import  
 - More model options where the API supports them  
-- UI polish and animations  
+- VS Code native chat participant (requires VS Code 1.93+)  
 
 ---
 
