@@ -1,9 +1,9 @@
 {
   "name": "fetch-coder",
   "displayName": "Fetch Coder",
-  "description": "Sidebar AI coding assistant for VS Code/Cursor powered by ASI1 — streaming replies, markdown, and workspace-aware tools.",
+  "description": "AI coding assistant for VS Code — chat, inline completions, code actions, inline editing, and terminal help powered by ASI1.",
   "icon": "resources/icon.png",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "gautammanak2",
   "license": "MIT",
   "author": "Gautam Manak",
@@ -22,14 +22,19 @@
     "chat",
     "assistant",
     "copilot",
-    "fetch"
+    "fetch",
+    "code-completion",
+    "inline-chat",
+    "code-actions"
   ],
   "engines": {
-    "vscode": "^1.85.0"
+    "vscode": "^1.91.0"
   },
   "categories": [
-    "Other",
-    "Machine Learning"
+    "AI",
+    "Chat",
+    "Machine Learning",
+    "Programming Languages"
   ],
   "activationEvents": [
     "onStartupFinished",
@@ -37,24 +42,223 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "chatParticipants": [
+      {
+        "id": "asiAssistant.coder",
+        "fullName": "Fetch Coder",
+        "name": "coder",
+        "description": "AI coding assistant powered by ASI1 — explain, fix, generate tests, review, and more",
+        "isSticky": true,
+        "commands": [
+          {
+            "name": "explain",
+            "description": "Explain the selected code or concept"
+          },
+          {
+            "name": "fix",
+            "description": "Fix issues in the selected code"
+          },
+          {
+            "name": "tests",
+            "description": "Generate unit tests for the selected code"
+          },
+          {
+            "name": "doc",
+            "description": "Generate documentation for the selected code"
+          },
+          {
+            "name": "review",
+            "description": "Review the selected code for improvements"
+          }
+        ]
+      }
+    ],
     "commands": [
       {
         "command": "asiAssistant.openChat",
-        "title": "ASI: Open Assistant Chat"
+        "title": "ASI: Open Assistant Chat",
+        "category": "Fetch Coder"
       },
       {
         "command": "asiAssistant.askAboutSelection",
-        "title": "ASI: Ask About Selection"
+        "title": "ASI: Ask About Selection",
+        "category": "Fetch Coder"
       },
       {
         "command": "asiAssistant.insertApiKey",
-        "title": "ASI: Set API Key"
+        "title": "ASI: Set API Key",
+        "category": "Fetch Coder"
       },
       {
         "command": "asiAssistant.installFromVsix",
-        "title": "ASI: Install Extension from .vsix"
+        "title": "ASI: Install Extension from .vsix",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.openChatPanel",
+        "title": "Fetch Coder: Open Chat Panel (Right Side)",
+        "category": "Fetch Coder",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "asiAssistant.explainSelection",
+        "title": "Fetch Coder: Explain This",
+        "category": "Fetch Coder",
+        "icon": "$(lightbulb)"
+      },
+      {
+        "command": "asiAssistant.fixSelection",
+        "title": "Fetch Coder: Fix This",
+        "category": "Fetch Coder",
+        "icon": "$(wrench)"
+      },
+      {
+        "command": "asiAssistant.generateTests",
+        "title": "Fetch Coder: Generate Tests",
+        "category": "Fetch Coder",
+        "icon": "$(beaker)"
+      },
+      {
+        "command": "asiAssistant.addDocumentation",
+        "title": "Fetch Coder: Add Documentation",
+        "category": "Fetch Coder",
+        "icon": "$(book)"
+      },
+      {
+        "command": "asiAssistant.reviewCode",
+        "title": "Fetch Coder: Review Code",
+        "category": "Fetch Coder",
+        "icon": "$(eye)"
+      },
+      {
+        "command": "asiAssistant.inlineEdit",
+        "title": "Fetch Coder: Inline Edit",
+        "category": "Fetch Coder",
+        "icon": "$(edit)"
+      },
+      {
+        "command": "asiAssistant.terminal.explain",
+        "title": "Fetch Coder: Explain Terminal",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.terminal.fix",
+        "title": "Fetch Coder: Fix Terminal Error",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.toggleInlineCompletion",
+        "title": "Fetch Coder: Toggle Inline Completions",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.showRequestLog",
+        "title": "Fetch Coder: Show Request Log",
+        "category": "Fetch Coder",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "asiAssistant.clearRequestLog",
+        "title": "Fetch Coder: Clear Request Log",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.previewMultiFileEdit",
+        "title": "Fetch Coder: Preview Multi-File Edit",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.applyMultiFileEdit",
+        "title": "Fetch Coder: Apply Pending Edits",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.discardMultiFileEdit",
+        "title": "Fetch Coder: Discard Pending Edits",
+        "category": "Fetch Coder"
       }
     ],
+    "submenus": [
+      {
+        "id": "asiAssistant.editorSubmenu",
+        "label": "Fetch Coder"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "asiAssistant.editorSubmenu",
+          "group": "z_fetchCoder"
+        }
+      ],
+      "asiAssistant.editorSubmenu": [
+        {
+          "command": "asiAssistant.explainSelection",
+          "when": "editorHasSelection",
+          "group": "1_understand"
+        },
+        {
+          "command": "asiAssistant.fixSelection",
+          "when": "editorHasSelection",
+          "group": "2_modify"
+        },
+        {
+          "command": "asiAssistant.generateTests",
+          "when": "editorHasSelection",
+          "group": "2_modify"
+        },
+        {
+          "command": "asiAssistant.addDocumentation",
+          "when": "editorHasSelection",
+          "group": "2_modify"
+        },
+        {
+          "command": "asiAssistant.reviewCode",
+          "when": "editorHasSelection",
+          "group": "3_review"
+        },
+        {
+          "command": "asiAssistant.inlineEdit",
+          "group": "4_inline"
+        },
+        {
+          "command": "asiAssistant.askAboutSelection",
+          "group": "5_other"
+        }
+      ],
+      "terminal/context": [
+        {
+          "command": "asiAssistant.terminal.explain",
+          "group": "z_fetchCoder"
+        },
+        {
+          "command": "asiAssistant.terminal.fix",
+          "group": "z_fetchCoder"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "asiAssistant.explainSelection",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "asiAssistant.fixSelection",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "asiAssistant.generateTests",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "asiAssistant.addDocumentation",
+          "when": "editorHasSelection"
+        },
+        {
+          "command": "asiAssistant.reviewCode",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
@@ -114,7 +318,7 @@
         },
         "asiAssistant.systemPrompt": {
           "type": "string",
-          "default": "You are a coding assistant in VS Code/Cursor. Use ONLY standard GitHub-flavored markdown: real triple-backtick fences with a language tag (e.g. ```markdown, ```sql, ```bash). Never output the words MARKDOWN or CODE as fake fences. For a full .md document, put it inside a ```markdown fence, then on a new line after the closing fence write: Save as `filename.md`. For code files use ```ts / ```py etc. and Save as `path/file.ext`. Tables, lists, and headings are welcome.",
+          "default": "You are a coding assistant in VS Code/Cursor. Use ONLY standard GitHub-flavored markdown with triple-backtick fences and language tags. When the user asks you to edit/fix/change a SPECIFIC part of existing code, show ONLY the changed section (~5-15 lines with context), NOT the entire file. For new files use full code with Save as `path/file.ext`. Tables, lists, and headings are welcome.",
           "description": "System message prepended to every conversation",
           "order": 4
         },
@@ -127,25 +331,25 @@
         "asiAssistant.webSearch": {
           "type": "boolean",
           "default": true,
-          "description": "Send ASI:One web_search so the model can use live web results (see OpenAI compatibility docs).",
+          "description": "Send ASI:One web_search so the model can use live web results.",
           "order": 51
         },
         "asiAssistant.enableTools": {
           "type": "boolean",
           "default": true,
-          "description": "Enable client-side tools (read/search workspace files) with ASI:One tool calling. When off, only web_search + chat apply.",
+          "description": "Enable client-side tools (read/search workspace files) with ASI:One tool calling.",
           "order": 52
         },
         "asiAssistant.agenticSession": {
           "type": "boolean",
           "default": false,
-          "description": "Send x-session-id for Agentverse / agentic flows (ASI:One). Uses sessionId if set, otherwise a per-chat random id until you Clear.",
+          "description": "Send x-session-id for Agentverse / agentic flows (ASI:One).",
           "order": 53
         },
         "asiAssistant.sessionId": {
           "type": "string",
           "default": "",
-          "description": "Optional fixed x-session-id (overrides auto). Empty uses a generated id when agentic session is on.",
+          "description": "Optional fixed x-session-id (overrides auto).",
           "order": 54
         },
         "asiAssistant.maxToolRounds": {
@@ -153,14 +357,28 @@
           "default": 12,
           "minimum": 1,
           "maximum": 32,
-          "description": "Max API rounds when resolving tool calls (each round may invoke multiple tools).",
+          "description": "Max API rounds when resolving tool calls.",
           "order": 55
         },
         "asiAssistant.autoApplyFiles": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically write detected files to the open workspace after each reply (requires a folder open). Set false to only use “Create files”.",
+          "description": "Automatically write detected files to the open workspace after each reply.",
           "order": 6
+        },
+        "asiAssistant.inlineCompletion.enabled": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable inline code completions (ghost text). Sends code context to the ASI1 API as you type.",
+          "order": 60
+        },
+        "asiAssistant.inlineCompletion.debounceMs": {
+          "type": "number",
+          "default": 400,
+          "minimum": 100,
+          "maximum": 3000,
+          "description": "Delay in milliseconds before triggering an inline completion request.",
+          "order": 61
         },
         "asiAssistant.bannerTitle": {
           "type": "string",
@@ -229,6 +447,17 @@
         "command": "asiAssistant.openChat",
         "key": "ctrl+shift+;",
         "mac": "cmd+shift+;"
+      },
+      {
+        "command": "asiAssistant.openChatPanel",
+        "key": "ctrl+shift+alt+;",
+        "mac": "cmd+shift+alt+;"
+      },
+      {
+        "command": "asiAssistant.inlineEdit",
+        "key": "ctrl+i",
+        "mac": "cmd+i",
+        "when": "editorTextFocus"
       }
     ]
   },
@@ -240,7 +469,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
-    "@types/vscode": "^1.85.0",
+    "@types/vscode": "^1.91.0",
     "@vscode/vsce": "^3.7.1",
     "typescript": "^5.3.3"
   },

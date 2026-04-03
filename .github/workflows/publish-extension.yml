@@ -1,4 +1,4 @@
-# Publishes ASI1 Code to the Visual Studio Marketplace.
+# Publishes Fetch Coder to the Visual Studio Marketplace.
 #
 # GitHub repo = tumhara (code). Marketplace publisher = gautammanak2 (Aastha ka DevOps).
 # Repo Settings → Secrets → Actions → VSCE_PAT = Azure DevOps PAT (Marketplace → Manage)

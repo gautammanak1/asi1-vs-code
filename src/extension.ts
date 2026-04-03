@@ -3,10 +3,23 @@ import * as path from "path";
 import * as vscode from "vscode";
 import { registerApiKeyFromExtensionFile, registerApiKeySecret } from "./asiClient";
 import { ChatViewProvider } from "./chatViewProvider";
+import { registerChatParticipant } from "./chatParticipant";
+import { registerInlineCompletionProvider } from "./inlineCompletionProvider";
+import {
+  registerCodeActionsProvider,
+  registerFixWithDiagnostics,
+} from "./codeActionsProvider";
+import { registerInlineEditCommand } from "./inlineEditCommand";
+import { registerTerminalCommands } from "./terminalHelper";
+import { registerMultiFileEditCommands } from "./multiFileEditManager";
+import { registerRequestLoggerCommands } from "./requestLogger";
+import { startTrackingEdits } from "./workspaceEditTracker";
+import { setExtensionPath } from "./workspaceFiles";
 
 const SECRET_KEY = "asiAssistant.storedApiKey";
 
 export function activate(context: vscode.ExtensionContext): void {
+  setExtensionPath(context.extensionPath);
   registerApiKeySecret(() => context.secrets.get(SECRET_KEY));
   registerApiKeyFromExtensionFile(() => {
     try {
@@ -20,6 +33,7 @@ export function activate(context: vscode.ExtensionContext): void {
     return undefined;
   });
 
+  // --- Sidebar webview chat (existing) ---
   const provider = new ChatViewProvider(context);
 
   context.subscriptions.push(
@@ -37,6 +51,12 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand("asiAssistant.openChat", async () => {
       await vscode.commands.executeCommand("asiAssistant.chatView.focus");
+    })
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand("asiAssistant.openChatPanel", () => {
+      provider.openAsPanel();
     })
   );
 
@@ -117,6 +137,30 @@ export function activate(context: vscode.ExtensionContext): void {
     })
   );
 
+  // --- Native VS Code Chat Participant ---
+  registerChatParticipant(context);
+
+  // --- Inline Completions (ghost text) ---
+  registerInlineCompletionProvider(context);
+
+  // --- AI Code Actions (quick fix, explain, doc) ---
+  registerCodeActionsProvider(context);
+  registerFixWithDiagnostics(context);
+
+  // --- Inline Edit (Cmd+I / Ctrl+I) ---
+  registerInlineEditCommand(context);
+
+  // --- Terminal Explain / Fix ---
+  registerTerminalCommands(context);
+
+  // --- Multi-File Edit Manager ---
+  registerMultiFileEditCommands(context);
+
+  // --- Request Logger (debug/inspect AI API calls) ---
+  registerRequestLoggerCommands(context);
+
+  // --- Workspace Edit Tracker (recent user edits for context) ---
+  startTrackingEdits(context);
 }
 
 export function deactivate(): void {}

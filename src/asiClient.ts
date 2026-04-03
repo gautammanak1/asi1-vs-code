@@ -1,4 +1,9 @@
 import * as vscode from "vscode";
+import * as cp from "child_process";
+import { logChatRequest } from "./requestLogger";
+import { EventEmitter } from "events";
+
+EventEmitter.defaultMaxListeners = 30;
 
 /** User/assistant turns for UI (plain text only). */
 export type ChatMessage = { role: "system" | "user" | "assistant"; content: string };
@@ -166,6 +171,24 @@ export const ASI_BUILTIN_TOOLS: object[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "run_terminal_command",
+      description:
+        "Execute a shell command in the workspace root directory and return stdout/stderr. Use for npm install, build, test, git, or any CLI task. Commands time out after 60 seconds.",
+      parameters: {
+        type: "object",
+        properties: {
+          command: {
+            type: "string",
+            description: "The shell command to run, e.g. 'npm install' or 'ls -la src/'",
+          },
+        },
+        required: ["command"],
+      },
+    },
+  },
 ];
 
 function safeWorkspacePath(raw: unknown): string {
@@ -298,6 +321,36 @@ async function executeBuiltinTool(name: string, argsJson: string): Promise<strin
         error: e instanceof Error ? e.message : String(e),
         path: rel,
       });
+    }
+  }
+
+  if (name === "run_terminal_command") {
+    const command = typeof args.command === "string" ? args.command.trim() : "";
+    if (!command) {
+      return JSON.stringify({ error: "No command provided" });
+    }
+    const dangerous = /^\s*(rm\s+-rf\s+\/|sudo\s+rm|mkfs|dd\s+if=|:\(\)\{)/i;
+    if (dangerous.test(command)) {
+      return JSON.stringify({ error: "Command blocked for safety" });
+    }
+    const cwd = root.fsPath;
+    const timeout = 60_000;
+    try {
+      const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+        cp.exec(command, { cwd, timeout, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
+          if (err && !stdout && !stderr) {
+            reject(err);
+          } else {
+            resolve({ stdout: stdout ?? "", stderr: stderr ?? "" });
+          }
+        });
+      });
+      const out = result.stdout.slice(0, 50_000);
+      const err = result.stderr.slice(0, 10_000);
+      return JSON.stringify({ command, stdout: out, stderr: err, ok: true });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      return JSON.stringify({ command, error: msg.slice(0, 5_000) });
     }
   }
 
@@ -539,6 +592,8 @@ export async function completeChat(
   body.web_search = webSearch;
   body.extra_body = { web_search: webSearch };
 
+  const _logStartTime = Date.now();
+
   const res = await fetch(url, {
     method: "POST",
     headers,
@@ -551,6 +606,14 @@ export async function completeChat(
   try {
     json = JSON.parse(text);
   } catch {
+    logChatRequest({
+      model,
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
+      startTime: _logStartTime,
+      response: text.slice(0, 500),
+      status: "error",
+      error: `Non-JSON response (${res.status})`,
+    });
     throw new Error(`ASI API returned non-JSON (${res.status}): ${text.slice(0, 500)}`);
   }
 
@@ -559,6 +622,14 @@ export async function completeChat(
       typeof json === "object" && json !== null && "error" in json
         ? JSON.stringify((json as { error: unknown }).error)
         : text.slice(0, 500);
+    logChatRequest({
+      model,
+      messages: messages.map(m => ({ role: m.role, content: m.content })),
+      startTime: _logStartTime,
+      response: errMsg,
+      status: "error",
+      error: errMsg,
+    });
     throw new Error(`ASI API error ${res.status}: ${errMsg}`);
   }
 
@@ -570,6 +641,14 @@ export async function completeChat(
     choice?.message?.content ??
     (typeof choice?.text === "string" ? choice.text : undefined) ??
     "";
+
+  logChatRequest({
+    model,
+    messages: messages.map(m => ({ role: m.role, content: m.content })),
+    startTime: _logStartTime,
+    response: content,
+    status: "success",
+  });
 
   if (!content) {
     return { content: "", raw: json };
@@ -617,6 +696,8 @@ export async function completeChatStreaming(
   body.web_search = webSearch;
   body.extra_body = { web_search: webSearch };
 
+  const _logStartTime = Date.now();
+
   const res = await fetch(url, {
     method: "POST",
     headers,
@@ -634,9 +715,16 @@ export async function completeChatStreaming(
     } catch {
       err = text;
     }
-    throw new Error(
-      `ASI API error ${res.status}: ${typeof err === "object" ? JSON.stringify(err) : String(err).slice(0, 500)}`
-    );
+    const errMsg = `ASI API error ${res.status}: ${typeof err === "object" ? JSON.stringify(err) : String(err).slice(0, 500)}`;
+    logChatRequest({
+      model,
+      messages: messages.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "" })),
+      startTime: _logStartTime,
+      response: errMsg,
+      status: "error",
+      error: errMsg,
+    });
+    throw new Error(errMsg);
   }
 
   if (res.body && ct.includes("text/event-stream")) {
@@ -683,6 +771,13 @@ export async function completeChatStreaming(
         }
       }
     }
+    logChatRequest({
+      model,
+      messages: messages.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "" })),
+      startTime: _logStartTime,
+      response: full,
+      status: "success",
+    });
     return { content: full, raw: undefined };
   }
 
@@ -691,6 +786,14 @@ export async function completeChatStreaming(
   try {
     json = JSON.parse(text);
   } catch {
+    logChatRequest({
+      model,
+      messages: messages.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "" })),
+      startTime: _logStartTime,
+      response: text.slice(0, 500),
+      status: "error",
+      error: "Non-JSON response",
+    });
     throw new Error(`ASI API returned non-JSON: ${text.slice(0, 500)}`);
   }
   const obj = json as {
@@ -701,6 +804,13 @@ export async function completeChatStreaming(
     choice?.message?.content ??
     (typeof choice?.text === "string" ? choice.text : undefined) ??
     "";
+  logChatRequest({
+    model,
+    messages: messages.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "" })),
+    startTime: _logStartTime,
+    response: content,
+    status: "success",
+  });
   if (content) {
     onDelta(content, content);
   }

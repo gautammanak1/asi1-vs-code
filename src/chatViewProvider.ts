@@ -54,6 +54,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   public static readonly viewType = "asiAssistant.chatView";
 
   private _view?: vscode.WebviewView;
+  /** Right-side editor panel (WebviewPanel) – independent of the sidebar view. */
+  private _panel?: vscode.WebviewPanel;
   /** User/assistant turns only; system prompt is added per request from settings. */
   private _history: ChatMessage[] = [];
   /** When tool calling is enabled: full OpenAI-style thread including tool messages. */
@@ -256,6 +258,12 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     );
   }
 
+  /** Send a message to all active webview surfaces (sidebar + panel). */
+  private _broadcast(msg: unknown): void {
+    this._view?.webview.postMessage(msg);
+    this._panel?.webview.postMessage(msg);
+  }
+
   resolveWebviewView(
     webviewView: vscode.WebviewView,
     _context: vscode.WebviewViewResolveContext,
@@ -269,6 +277,19 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     webviewView.webview.html = this._buildHtml(webviewView.webview);
 
     webviewView.webview.onDidReceiveMessage(async (msg) => {
+      await this._onWebviewMessage(msg);
+    });
+
+    webviewView.onDidChangeVisibility(() => {
+      if (webviewView.visible) {
+        void this.refreshSetupState();
+      }
+    });
+
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private async _onWebviewMessage(msg: any): Promise<void> {
       if (msg.type === "installVsix") {
         await vscode.commands.executeCommand("asiAssistant.installFromVsix");
         await this.refreshSetupState();
@@ -334,6 +355,13 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
               .slice(0, 8)
           : undefined;
         await this._handleUserSend(text, mode, imageSize, webSearchOverride, attachments);
+      }
+      if (msg.type === "clickSuggestion" && typeof msg.text === "string") {
+        const text = msg.text.trim();
+        if (text) {
+          await this._handleUserSend(text, "chat");
+        }
+        return;
       }
       if (msg.type === "setWebSearch" && typeof msg.value === "boolean") {
         this._webSearchEnabled = msg.value;
@@ -456,28 +484,54 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       if (msg.type === "copyToClipboard" && typeof msg.text === "string") {
         await vscode.env.clipboard.writeText(msg.text);
       }
-    });
+  }
 
-    webviewView.onDidChangeVisibility(() => {
-      if (webviewView.visible) {
-        void this.refreshSetupState();
+  /**
+   * Open (or reveal) the chat in a right-side editor panel.
+   */
+  public openAsPanel(): void {
+    if (this._panel) {
+      this._panel.reveal(vscode.ViewColumn.Beside);
+      return;
+    }
+
+    const panel = vscode.window.createWebviewPanel(
+      "asiAssistant.chatPanel",
+      "Fetch Coder",
+      { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false },
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [this._context.extensionUri],
       }
+    );
+
+    const iconUri = vscode.Uri.joinPath(this._context.extensionUri, "resources", "icon.png");
+    panel.iconPath = iconUri;
+
+    panel.webview.html = this._buildHtml(panel.webview);
+    this._panel = panel;
+
+    panel.webview.onDidReceiveMessage(async (msg) => {
+      await this._onWebviewMessage(msg);
     });
 
+    panel.onDidDispose(() => {
+      this._panel = undefined;
+    });
+
+    void this.refreshSetupState();
   }
 
   /** Re-post onboarding row (API key / dev install). Call after key save or settings change. */
   public async refreshSetupState(): Promise<void> {
-    if (!this._view) {
-      return;
-    }
     const dev = this._context.extensionMode === vscode.ExtensionMode.Development;
     const hasApiKey = await isApiKeyConfigured();
-    this._view.webview.postMessage({ type: "setup", dev, hasApiKey });
+    this._broadcast({ type: "setup", dev, hasApiKey });
   }
 
   private async _postModelState(): Promise<void> {
-    if (!this._view) {
+    if (!this._view && !this._panel) {
       return;
     }
     const cfg = vscode.workspace.getConfiguration("asiAssistant");
@@ -490,7 +544,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     for (const id of models) {
       capabilities[id] = this._inferModelCapabilities(id);
     }
-    this._view.webview.postMessage({
+    this._broadcast({
       type: "modelState",
       selectedModel,
       models,
@@ -637,8 +691,26 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   private buildMessagesForApi(webSearchForRequest?: boolean): ApiChatMessage[] {
     let sys =
       vscode.workspace.getConfiguration("asiAssistant").get<string>("systemPrompt") ?? "";
-    const styleHint =
-      "If the user provides example code/snippets, follow that example's structure, coding style, and conventions first; do not switch to an unrelated template/layout unless the user explicitly asks.";
+    const useTools =
+      vscode.workspace.getConfiguration("asiAssistant").get<boolean>("enableTools") !== false;
+    const styleHint = [
+      "IMPORTANT RULES FOR CODE EDITS:",
+      ...(useTools
+        ? [
+            "- You have workspace tools available: workspace_read_file, workspace_write_file, workspace_search_files, workspace_list_directory, and run_terminal_command.",
+            "- When the user asks you to CREATE or UPDATE files, you MUST use workspace_write_file to actually write the files. Do NOT just show code blocks — actually write them.",
+            "- When the user mentions files with @filename or asks you to edit existing files, FIRST use workspace_read_file to read the current content, then make your changes, then use workspace_write_file to write the updated file.",
+            "- When the user asks to run commands (npm install, etc.), use the run_terminal_command tool.",
+            "- ALWAYS apply changes to files using tools. Show the code in your response AND write it with workspace_write_file.",
+          ]
+        : [
+            "- When the user asks to change/fix/update specific lines or a small part of their code, show ONLY the changed lines with a few lines of surrounding context — do NOT rewrite the entire file.",
+            "- Use a diff-like approach: show the specific section that changed inside a code block, not the whole file.",
+          ]),
+      "- If the user asks you to change 1 line, output only ~5-10 lines around that change, not 200 lines.",
+      "- For new files or complete rewrites, output the full code.",
+      "- If the user provides example code/snippets, follow that example's structure, coding style, and conventions; do not switch to an unrelated template/layout unless explicitly asked.",
+    ].join("\n");
     sys = sys.trim() ? `${sys.trim()}\n\n${styleHint}` : styleHint;
     if (webSearchForRequest) {
       const hint =
@@ -648,16 +720,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     const modeHints: Record<AssistantMode, string> = {
       plan:
         "Assistant mode is PLAN. Provide a structured implementation plan only. Do not output final code unless the user explicitly asks for code.",
-      code:
-        "Assistant mode is CODE. Prioritize implementation-ready code and direct execution details.",
+      code: useTools
+        ? "Assistant mode is CODE. Prioritize implementation-ready code. When the user asks to create or edit files, ALWAYS use workspace_write_file to write them. Read files first with workspace_read_file before editing."
+        : "Assistant mode is CODE. Prioritize implementation-ready code. When editing existing code, show ONLY the changed section with minimal context — never rewrite the entire file for a small change.",
       debug:
-        "Assistant mode is DEBUG. Focus on diagnosis, likely root causes, and concrete fix steps. Prefer debugging evidence over broad rewrites.",
+        "Assistant mode is DEBUG. Focus on diagnosis, likely root causes, and concrete fix steps. Show only the specific lines that need fixing, not the whole file.",
       ask:
         "Assistant mode is ASK. Focus on explanations and answers. Avoid code changes unless the user explicitly requests implementation.",
     };
     sys = sys.trim() ? `${sys.trim()}\n\n${modeHints[this._assistantMode]}` : modeHints[this._assistantMode];
-    const useTools =
-      vscode.workspace.getConfiguration("asiAssistant").get<boolean>("enableTools") !== false;
     const messages: ApiChatMessage[] = [];
     if (sys.trim()) {
       messages.push({ role: "system", content: sys });
@@ -696,11 +767,11 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
   private async _enhancePrompt(text: string): Promise<void> {
     const raw = text.trim();
     if (!raw) {
-      this._view?.webview.postMessage({ type: "promptEnhanced", value: "" });
+      this._broadcast({ type: "promptEnhanced", value: "" });
       return;
     }
-    this._view?.webview.postMessage({ type: "enhanceLoading", value: true });
-    this._view?.webview.postMessage({ type: "activity", text: "Enhancing prompt…" });
+    this._broadcast({ type: "enhanceLoading", value: true });
+    this._broadcast({ type: "activity", text: "Enhancing prompt…" });
     try {
       const messages: ChatMessage[] = [
         {
@@ -712,14 +783,14 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       ];
       const r = await completeChat(messages, undefined, { webSearch: false });
       const next = (r.content || "").trim() || raw;
-      this._view?.webview.postMessage({ type: "promptEnhanced", value: next });
+      this._broadcast({ type: "promptEnhanced", value: next });
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      this._view?.webview.postMessage({ type: "error", value: msg });
+      this._broadcast({ type: "error", value: msg });
     } finally {
-      this._view?.webview.postMessage({ type: "enhanceLoading", value: false });
+      this._broadcast({ type: "enhanceLoading", value: false });
       setTimeout(() => {
-        this._view?.webview.postMessage({ type: "activity", text: "" });
+        this._broadcast({ type: "activity", text: "" });
       }, 700);
     }
   }
@@ -751,7 +822,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       const recentFiltered = recent.filter((p) => (q ? p.toLowerCase().includes(q) : true)).slice(0, 8);
       const recentSet = new Set(recentFiltered);
       const workspaceOnly = ranked.filter((p) => !recentSet.has(p)).slice(0, 40);
-      this._view?.webview.postMessage({
+      this._broadcast({
         type: "mentionCandidates",
         sections: {
           recent: recentFiltered,
@@ -759,7 +830,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         },
       });
     } catch {
-      this._view?.webview.postMessage({
+      this._broadcast({
         type: "mentionCandidates",
         sections: { recent: recent.slice(0, 12), workspace: [] },
       });
@@ -810,7 +881,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       return [];
     }
     const root = folders[0].uri;
-    const matches = [...text.matchAll(/(^|\s)@([./\w-]+(?:\/[./\w-]+)+)/g)];
+    const matches = [...text.matchAll(/(^|\s)@([\w./-][\w./-]*\.[\w]{1,10})/g)];
     if (!matches.length) {
       return [];
     }
@@ -864,13 +935,64 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     return `${text}\n\n${blocks.join("\n\n")}`;
   }
 
+  private _generateSuggestions(
+    content: string,
+    files: { relativePath: string }[]
+  ): string[] {
+    const suggestions: string[] = [];
+    const lower = content.toLowerCase();
+    const fileNames = files.map(f => f.relativePath);
+    const hasHtml = fileNames.some(f => f.endsWith(".html"));
+    const hasCss = fileNames.some(f => f.endsWith(".css"));
+    const hasJs = fileNames.some(f => /\.(js|ts|jsx|tsx)$/.test(f));
+    const hasPy = fileNames.some(f => f.endsWith(".py"));
+    const hasPackageJson = fileNames.some(f => f === "package.json");
+
+    if (files.length > 0) {
+      if (hasHtml) {
+        suggestions.push("Add responsive design and media queries");
+        suggestions.push("Add dark/light mode toggle");
+      }
+      if (hasJs || hasHtml) {
+        suggestions.push("Add form validation");
+        suggestions.push("Add animations and transitions");
+      }
+      if (hasCss) {
+        suggestions.push("Improve the color scheme and typography");
+      }
+      if (hasPackageJson) {
+        suggestions.push("Run npm install");
+      }
+      if (hasPy) {
+        suggestions.push("Add error handling and logging");
+        suggestions.push("Write unit tests");
+      }
+      suggestions.push("Add more features to this project");
+      suggestions.push("Explain what this code does");
+    } else if (lower.includes("error") || lower.includes("fix") || lower.includes("bug")) {
+      suggestions.push("Are there any other issues?");
+      suggestions.push("Add error handling for edge cases");
+      suggestions.push("Write tests for this fix");
+    } else if (lower.includes("```")) {
+      suggestions.push("Save this to a file");
+      suggestions.push("Explain this code step by step");
+      suggestions.push("Add error handling");
+      suggestions.push("Optimize this code");
+    } else {
+      suggestions.push("Show me an example");
+      suggestions.push("Tell me more");
+    }
+
+    return suggestions.slice(0, 4);
+  }
+
   /** Image generation from the same composer; appends user + assistant turns to history. */
   private async _generateImageTurn(prompt: string, size?: string): Promise<void> {
     this._history.push({ role: "user", content: prompt });
     this._turnMeta.push({});
     this._postState();
-    this._view?.webview.postMessage({ type: "activity", text: "Generating image…" });
-    this._view?.webview.postMessage({ type: "loading", value: true });
+    this._broadcast({ type: "activity", text: "Generating image…" });
+    this._broadcast({ type: "loading", value: true });
     const ac = new AbortController();
     this._inflightAbort = ac;
     try {
@@ -908,9 +1030,9 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       if (this._inflightAbort === ac) {
         this._inflightAbort = undefined;
       }
-      this._view?.webview.postMessage({ type: "loading", value: false });
+      this._broadcast({ type: "loading", value: false });
       setTimeout(() => {
-        this._view?.webview.postMessage({ type: "activity", text: "" });
+        this._broadcast({ type: "activity", text: "" });
       }, 800);
     }
   }
@@ -945,17 +1067,17 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     const useTools = cfg.get<boolean>("enableTools") !== false;
     const sessionHeader = this._resolveSessionIdForHeader();
 
-    this._view?.webview.postMessage({ type: "activity", text: "Connecting to ASI…" });
-    this._view?.webview.postMessage({ type: "loading", value: true });
-    this._view?.webview.postMessage({ type: "stream", reset: true });
-    this._view?.webview.postMessage({ type: "tools", reset: true });
+    this._broadcast({ type: "activity", text: "Connecting to ASI…" });
+    this._broadcast({ type: "loading", value: true });
+    this._broadcast({ type: "stream", reset: true });
+    this._broadcast({ type: "tools", reset: true });
     const ac = new AbortController();
     this._inflightAbort = ac;
 
     try {
       let content = "";
       if (useTools) {
-        this._view?.webview.postMessage({
+        this._broadcast({
           type: "activity",
           text: webSearch ? "ASI:One (tools + web search)…" : "ASI:One (tools)…",
         });
@@ -963,10 +1085,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
           vscode.workspace.getConfiguration("asiAssistant").get<number>("maxToolRounds") ?? 12;
         const { apiThread, lastAssistantText } = await runChatWithTools(messages, {
           onProgress: (label) => {
-            this._view?.webview.postMessage({ type: "activity", text: label });
+            this._broadcast({ type: "activity", text: label });
           },
           onToolEvent: (event: ToolExecutionEvent) => {
-            this._view?.webview.postMessage({ type: "tools", event });
+            this._broadcast({ type: "tools", event });
           },
           sessionId: sessionHeader,
           maxRounds: maxToolRounds,
@@ -975,21 +1097,21 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         });
         this._apiThread = apiThread;
         content = lastAssistantText;
-        this._view?.webview.postMessage({ type: "stream", text: content });
+        this._broadcast({ type: "stream", text: content });
       } else if (useStream) {
-        this._view?.webview.postMessage({ type: "activity", text: "Streaming response…" });
+        this._broadcast({ type: "activity", text: "Streaming response…" });
         const r = await completeChatStreaming(
           messages as ChatMessage[],
           (_delta, full) => {
             content = full;
-            this._view?.webview.postMessage({ type: "stream", text: full });
+            this._broadcast({ type: "stream", text: full });
           },
           ac.signal,
           { sessionIdHeader: sessionHeader, webSearch }
         );
         content = r.content || content;
       } else {
-        this._view?.webview.postMessage({ type: "activity", text: "Waiting for reply…" });
+        this._broadcast({ type: "activity", text: "Waiting for reply…" });
         const r = await completeChat(messages as ChatMessage[], ac.signal, {
           sessionIdHeader: sessionHeader,
           webSearch,
@@ -1001,41 +1123,45 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       this._turnMeta.push(this._pendingAssistantMeta ?? {});
       this._pendingAssistantMeta = undefined;
       this._postState();
-      this._view?.webview.postMessage({ type: "stream", done: true });
+      this._broadcast({ type: "stream", done: true });
 
-      const autoApply = cfg.get<boolean>("autoApplyFiles") === true;
       const files = extractFilesFromMarkdown(content);
-      if (autoApply && files.length > 0) {
-        this._view?.webview.postMessage({
+      if (files.length > 0) {
+        this._broadcast({
           type: "activity",
           text: `Writing ${files.length} file(s) to workspace…`,
         });
         await writeExtractedFiles(files);
+        this._broadcast({
+          type: "activity",
+          text: `Created ${files.length} file(s): ${files.map(f => f.relativePath).join(", ")}`,
+        });
       }
-      this._view?.webview.postMessage({
-        type: "activity",
-        text: autoApply && files.length > 0 ? "Ready." : "",
-      });
+
+      const suggestions = this._generateSuggestions(content, files);
+      if (suggestions.length > 0) {
+        this._broadcast({ type: "suggestions", items: suggestions });
+      }
     } catch (e) {
       if (ac.signal.aborted) {
         this._history.push({ role: "assistant", content: "_Stopped by user._" });
         this._turnMeta.push(this._pendingAssistantMeta ?? {});
         this._pendingAssistantMeta = undefined;
         this._postState();
-        this._view?.webview.postMessage({ type: "activity", text: "Stopped." });
+        this._broadcast({ type: "activity", text: "Stopped." });
         return;
       }
       const msg = e instanceof Error ? e.message : String(e);
       vscode.window.showErrorMessage(msg);
-      this._view?.webview.postMessage({ type: "error", value: msg });
-      this._view?.webview.postMessage({ type: "stream", done: true });
+      this._broadcast({ type: "error", value: msg });
+      this._broadcast({ type: "stream", done: true });
     } finally {
       if (this._inflightAbort === ac) {
         this._inflightAbort = undefined;
       }
-      this._view?.webview.postMessage({ type: "loading", value: false });
+      this._broadcast({ type: "loading", value: false });
       setTimeout(() => {
-        this._view?.webview.postMessage({ type: "activity", text: "" });
+        this._broadcast({ type: "activity", text: "" });
       }, 1200);
     }
   }
@@ -1055,7 +1181,7 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       };
     });
     this._persistChatState();
-    this._view?.webview.postMessage({
+    this._broadcast({
       type: "state",
       history: this._history,
       turnMeta: this._turnMeta,
@@ -1106,16 +1232,8 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       <button type="button" id="new-tab-btn" class="new-tab-btn" title="New chat tab" aria-label="New chat tab">+</button>
     </div>
     <div id="setup-row" class="setup-row">
-      <div class="setup-step" id="step-install">
-        <span class="setup-num">1</span>
-        <div class="setup-inner">
-          <div class="setup-head">Permanent install (Cursor / VS Code)</div>
-          <p class="setup-desc">Run <code>vsce package</code> in the extension folder, then choose the <code>.vsix</code> file here to install it.</p>
-          <button type="button" class="setup-btn" id="btn-install-vsix">Choose .vsix &amp; install</button>
-        </div>
-      </div>
       <div class="setup-step" id="step-api">
-        <span class="setup-num">2</span>
+        <span class="setup-num">1</span>
         <div class="setup-inner">
           <div class="setup-head">API key</div>
           <p class="setup-desc">Add your ASI1 key to start chatting. You can also set <code>asiAssistant.apiKey</code> in Settings or <code>ASI_ONE_API_KEY</code> in the environment.</p>
@@ -1137,16 +1255,6 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         <button type="button" id="revert" class="chat-review-btn">Revert</button>
         <button type="button" id="clear" class="chat-review-btn">Clear</button>
       </div>
-    </div>
-    <div id="context-graphs" class="context-graphs">
-      <div class="context-graphs-head">
-        <span class="context-graphs-title">Context Graphs</span>
-        <span id="context-graphs-status" class="context-graphs-status">Idle</span>
-      </div>
-      <div class="context-graphs-progress-track">
-        <span id="context-graphs-progress" class="context-graphs-progress"></span>
-      </div>
-      <div id="context-graphs-list" class="context-graphs-list"></div>
     </div>
     <div id="log"></div>
     <div id="create-bar">

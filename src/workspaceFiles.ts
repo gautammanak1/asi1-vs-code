@@ -5,6 +5,43 @@ export interface ExtractedFile {
   content: string;
 }
 
+const EXTENSION_PROTECTED_PATHS = new Set([
+  "src/extension.ts",
+  "src/asiClient.ts",
+  "src/chatViewProvider.ts",
+  "src/chatParticipant.ts",
+  "src/inlineCompletionProvider.ts",
+  "src/inlineEditCommand.ts",
+  "src/codeActionsProvider.ts",
+  "src/terminalHelper.ts",
+  "src/languageContext.ts",
+  "src/multiFileEditManager.ts",
+  "src/requestLogger.ts",
+  "src/workspaceEditTracker.ts",
+  "src/workspaceFiles.ts",
+  "src/agentverseScaffold.ts",
+  "media/chat.css",
+  "media/chatPanel.js",
+  "media/chatMarkdown.js",
+  "package.json",
+  "tsconfig.json",
+  "next.config.js",
+  "next.config.mjs",
+  "next.config.ts",
+]);
+
+let _extensionPath: string | undefined;
+export function setExtensionPath(p: string): void {
+  _extensionPath = p;
+}
+
+function isExtensionWorkspace(): boolean {
+  if (!_extensionPath) return false;
+  const folder = vscode.workspace.workspaceFolders?.[0];
+  if (!folder) return false;
+  return folder.uri.fsPath === _extensionPath;
+}
+
 /** Reject absolute paths and `..` segments. */
 export function isSafeRelativePath(p: string): boolean {
   const s = p.trim().replace(/\\/g, "/");
@@ -403,6 +440,27 @@ export async function writeExtractedFiles(files: ExtractedFile[]): Promise<boole
       });
     return false;
   }
+
+  if (isExtensionWorkspace()) {
+    const dangerous = files.filter(f =>
+      EXTENSION_PROTECTED_PATHS.has(f.relativePath) ||
+      f.relativePath.startsWith("src/app/") ||
+      f.relativePath.startsWith("src/components/") ||
+      f.relativePath.startsWith("src/lib/") ||
+      f.relativePath.startsWith("src/types/") ||
+      f.relativePath === "tailwind.config.ts" ||
+      f.relativePath === "tailwind.config.js"
+    );
+    if (dangerous.length > 0) {
+      const skip = dangerous.map(f => f.relativePath).join(", ");
+      vscode.window.showWarningMessage(
+        `Blocked writing ${dangerous.length} file(s) into extension folder: ${skip}. Open a different project folder as your workspace.`
+      );
+      files = files.filter(f => !dangerous.includes(f));
+      if (files.length === 0) return false;
+    }
+  }
+
   for (const f of files) {
     if (!isSafeRelativePath(f.relativePath)) {
       vscode.window.showErrorMessage(`Invalid path: ${f.relativePath}`);

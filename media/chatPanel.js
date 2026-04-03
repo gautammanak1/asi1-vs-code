@@ -26,8 +26,6 @@ var mentionIndex = 0;
 var mentionQueryTimer = null;
 var mentionLastQuery = "";
 var assistantMode = 'code';
-var contextItems = [];
-var contextProgress = 0;
 var currentHistory = [];
 var currentTurnMeta = [];
 var currentTabs = [];
@@ -76,48 +74,6 @@ function setActivity(text) {
   } else {
     at.textContent = '';
     ab.classList.remove('visible');
-  }
-}
-
-function renderContextGraphs() {
-  var statusEl = document.getElementById('context-graphs-status');
-  var progressEl = document.getElementById('context-graphs-progress');
-  var listEl = document.getElementById('context-graphs-list');
-  if (progressEl) progressEl.style.width = Math.max(0, Math.min(100, contextProgress)) + '%';
-  if (statusEl) {
-    statusEl.textContent = loading ? 'Running…' : (contextProgress >= 100 ? 'Ready' : (contextItems.length ? 'Indexing…' : 'Idle'));
-  }
-  if (!listEl) return;
-  if (!contextItems.length) {
-    listEl.innerHTML = '<div class="context-item">No context attached yet.</div>';
-    return;
-  }
-  listEl.innerHTML = contextItems
-    .slice(-8)
-    .map(function (x) { return '<div class="context-item">• ' + escapeHtml(x) + '</div>'; })
-    .join('');
-}
-
-function pushContextItem(text, progressDelta) {
-  var t = String(text || '').trim();
-  if (!t) return;
-  contextItems.push(t);
-  if (typeof progressDelta === 'number' && isFinite(progressDelta)) {
-    contextProgress = Math.min(98, contextProgress + Math.max(0, progressDelta));
-  }
-  renderContextGraphs();
-}
-
-function startContextIndexing(sourceNames) {
-  contextItems = [];
-  contextProgress = 12;
-  var list = Array.isArray(sourceNames) ? sourceNames.filter(Boolean) : [];
-  if (!list.length) {
-    pushContextItem('Message context initialized', 18);
-    return;
-  }
-  for (var i = 0; i < list.length; i++) {
-    pushContextItem('Attached: ' + list[i], 8);
   }
 }
 
@@ -257,10 +213,16 @@ function flushStreamPreview() {
     slot = document.createElement('div');
     slot.id = 'stream-live';
     slot.className = 'msg assistant stream-live';
-    var role = document.createElement('div');
-    role.className = 'role';
-    role.textContent = 'ASI';
-    slot.appendChild(role);
+    var roleLabel = document.createElement('div');
+    roleLabel.className = 'msg-role-label';
+    var roleIcon = document.createElement('span');
+    roleIcon.className = 'msg-role-icon';
+    roleIcon.textContent = 'FC';
+    roleLabel.appendChild(roleIcon);
+    var roleText = document.createElement('span');
+    roleText.textContent = 'Fetch Coder';
+    roleLabel.appendChild(roleText);
+    slot.appendChild(roleLabel);
     var body = document.createElement('div');
     body.className = 'msg-body streaming-body';
     body.id = 'stream-live-body';
@@ -282,7 +244,7 @@ function flushStreamPreview() {
         var step = Math.max(1, Math.ceil((typedTargetText.length - typedCurrentText.length) / 22));
         typedCurrentText = typedTargetText.slice(0, typedCurrentText.length + step);
       }
-      while (b.firstChild) b.removeChild(b.firstChild);
+    while (b.firstChild) b.removeChild(b.firstChild);
       renderAssistantBody(b, typedCurrentText);
       scheduleSyntaxHighlight();
       lastRenderedStreamText = typedCurrentText;
@@ -384,18 +346,43 @@ function render(history, turnMeta) {
   if (list.length === 0) {
     var empty = document.createElement('div');
     empty.className = 'empty-hint';
-    empty.textContent = 'Start a conversation below. Ask for a plan, implementation, or paste code/errors.';
+    empty.innerHTML =
+      '<div class="empty-logo" aria-hidden="true">FC</div>' +
+      '<div class="empty-title">Fetch Coder</div>' +
+      '<div class="empty-sub">AI coding assistant powered by ASI1. Generate code, fix bugs, create files, and run commands — all from your editor.</div>' +
+      '<div class="empty-quick-actions">' +
+        '<button class="empty-action-btn" data-prompt="Create a new project">Create a project</button>' +
+        '<button class="empty-action-btn" data-prompt="Explain my selected code">Explain code</button>' +
+        '<button class="empty-action-btn" data-prompt="Fix the errors in my code">Fix errors</button>' +
+        '<button class="empty-action-btn" data-prompt="Write unit tests for this file">Write tests</button>' +
+      '</div>';
     log.appendChild(empty);
+    empty.querySelectorAll('.empty-action-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var prompt = btn.getAttribute('data-prompt');
+        if (prompt && input) {
+          input.value = prompt;
+          autoResize();
+          send();
+        }
+      });
+    });
     return;
   }
   list.forEach(function (m, idx) {
     var meta = currentTurnMeta[idx] || {};
     var div = document.createElement('div');
     div.className = 'msg ' + (m.role === 'user' ? 'user' : 'assistant');
-    var role = document.createElement('div');
-    role.className = 'role';
-    role.textContent = m.role === 'user' ? 'You' : 'ASI';
-    div.appendChild(role);
+    var roleLabel = document.createElement('div');
+    roleLabel.className = 'msg-role-label';
+    var roleIcon = document.createElement('span');
+    roleIcon.className = 'msg-role-icon';
+    roleIcon.textContent = m.role === 'user' ? 'U' : 'FC';
+    roleLabel.appendChild(roleIcon);
+    var roleText = document.createElement('span');
+    roleText.textContent = m.role === 'user' ? 'You' : 'Fetch Coder';
+    roleLabel.appendChild(roleText);
+    div.appendChild(roleLabel);
     var body = document.createElement('div');
     body.className = 'msg-body';
     if (m.role === 'user') {
@@ -740,10 +727,6 @@ window.addEventListener('message', function (e) {
   if (m.type === 'stream') {
     if (m.reset) removeStreamPreview();
     if (typeof m.text === 'string' && m.text.length) setStreamPreview(m.text);
-    if (m.done) {
-      contextProgress = 100;
-      renderContextGraphs();
-    }
   }
   if (m.type === 'tools') {
     if (m.reset) {
@@ -753,8 +736,6 @@ window.addEventListener('message', function (e) {
     if (m.event) {
       toolEvents.push(m.event);
       renderToolTrace();
-      var label = (m.event.stage || 'tool') + ': ' + (m.event.name || '');
-      pushContextItem(label, 9);
     }
   }
   if (m.type === 'setup') {
@@ -801,12 +782,6 @@ window.addEventListener('message', function (e) {
     }
     loadingEl.style.display = loading ? 'flex' : 'none';
     if (loading) log.scrollTop = log.scrollHeight;
-    if (!loading) {
-      contextProgress = Math.max(contextProgress, 100);
-    } else if (contextProgress < 35) {
-      contextProgress = 35;
-    }
-    renderContextGraphs();
     syncPromptEnhanceButton();
   }
   if (m.type === 'enhanceLoading') {
@@ -824,6 +799,25 @@ window.addEventListener('message', function (e) {
     }
     syncPromptEnhanceButton();
   }
+  if (m.type === 'suggestions' && Array.isArray(m.items) && m.items.length) {
+    removeSuggestions();
+    var box = document.createElement('div');
+    box.id = 'suggestion-chips';
+    box.className = 'suggestion-chips';
+    m.items.forEach(function (text) {
+      var chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'suggestion-chip';
+      chip.textContent = text;
+      chip.addEventListener('click', function () {
+        removeSuggestions();
+        vscode.postMessage({ type: 'clickSuggestion', text: text });
+      });
+      box.appendChild(chip);
+    });
+    log.appendChild(box);
+    log.scrollTop = log.scrollHeight;
+  }
   if (m.type === 'error') {
     var div = document.createElement('div');
     div.className = 'msg user';
@@ -832,9 +826,15 @@ window.addEventListener('message', function (e) {
   }
 });
 
+function removeSuggestions() {
+  var old = document.getElementById('suggestion-chips');
+  if (old) old.remove();
+}
+
 function send() {
   var t = input.value.trim();
   if (!t || loading) return;
+  removeSuggestions();
   if (editTargetIndex >= 0) {
     var editIdx = editTargetIndex;
     clearComposerEdit();
@@ -854,9 +854,6 @@ function send() {
   var mode = modeEl && modeEl.value === 'image' ? 'image' : 'chat';
   var sizeEl = document.getElementById('image-size');
   var imageSize = mode === 'image' && sizeEl && sizeEl.value ? sizeEl.value : undefined;
-  var sourceNames = attachedFiles.map(function (f) { return f.name; })
-    .concat(detectedMentions.map(function (p) { return '@' + p; }));
-  startContextIndexing(sourceNames);
   input.value = '';
   closeSlashMenu();
   closeMentionMenu();
@@ -997,9 +994,6 @@ document.getElementById('clear').addEventListener('click', function () {
   clearComposerEdit();
   toolEvents = [];
   renderToolTrace();
-  contextItems = [];
-  contextProgress = 0;
-  renderContextGraphs();
 });
 var revertBtnEl = document.getElementById('revert');
 if (revertBtnEl) {
@@ -1146,35 +1140,37 @@ log.addEventListener('click', function (ev) {
   onDone();
 });
 
-var btnInstall = document.getElementById('btn-install-vsix');
 var btnApi = document.getElementById('btn-api-key');
-var stepInstall = document.getElementById('step-install');
 var stepApi = document.getElementById('step-api');
 var setupRow = document.getElementById('setup-row');
 
 function applySetup(m) {
   if (!m || typeof m.dev !== 'boolean') return;
-  var dev = m.dev;
   var hasApiKey = !!m.hasApiKey;
-  stepInstall.style.display = dev ? '' : 'none';
-  if (hasApiKey) {
+  if (stepApi && hasApiKey) {
     stepApi.classList.add('setup-done');
+  } else if (stepApi) {
+    stepApi.classList.remove('setup-done');
+  }
+  if (btnApi) {
+    if (hasApiKey) {
     btnApi.textContent = 'Change API key';
   } else {
-    stepApi.classList.remove('setup-done');
     btnApi.textContent = 'Add API key';
   }
+  }
+  if (setupRow) {
   // If API key is already set, hide onboarding completely.
   var hideRow = hasApiKey;
   setupRow.classList.toggle('setup-hidden', hideRow);
+  }
 }
 
-btnInstall.addEventListener('click', function () {
-  vscode.postMessage({ type: 'installVsix' });
-});
+if (btnApi) {
 btnApi.addEventListener('click', function () {
   vscode.postMessage({ type: 'openApiKey' });
 });
+}
 
 vscode.postMessage({ type: 'setupReady' });
 
