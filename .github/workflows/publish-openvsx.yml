@@ -35,4 +35,5 @@ jobs:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           npx ovsx --version
+          npx ovsx create-namespace gautammanak2 --pat "$OVSX_PAT" || true
           npx ovsx publish --pat "$OVSX_PAT"
