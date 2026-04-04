@@ -467,6 +467,47 @@ function render(history, turnMeta) {
         }
       });
       actions.appendChild(copyBtn);
+      var continueBtn = document.createElement('button');
+      continueBtn.type = 'button';
+      continueBtn.className = 'msg-action-btn';
+      continueBtn.textContent = '▶';
+      continueBtn.title = 'Continue generation';
+      continueBtn.addEventListener('click', function () {
+        vscode.postMessage({ type: 'continueGeneration', index: idx });
+      });
+      actions.appendChild(continueBtn);
+
+      var forkBtn = document.createElement('button');
+      forkBtn.type = 'button';
+      forkBtn.className = 'msg-action-btn';
+      forkBtn.textContent = '⑂';
+      forkBtn.title = 'Fork chat from here';
+      forkBtn.addEventListener('click', function () {
+        vscode.postMessage({ type: 'forkChat', index: idx });
+      });
+      actions.appendChild(forkBtn);
+
+      var pinBtn = document.createElement('button');
+      pinBtn.type = 'button';
+      pinBtn.className = 'msg-action-btn';
+      pinBtn.textContent = '📌';
+      pinBtn.title = 'Pin message';
+      pinBtn.addEventListener('click', function () {
+        div.classList.toggle('pinned');
+        pinBtn.classList.toggle('active-action');
+      });
+      actions.appendChild(pinBtn);
+
+      var exportBtn = document.createElement('button');
+      exportBtn.type = 'button';
+      exportBtn.className = 'msg-action-btn';
+      exportBtn.textContent = '↗';
+      exportBtn.title = 'Export message';
+      exportBtn.addEventListener('click', function () {
+        vscode.postMessage({ type: 'exportMessage', content: m.content, role: m.role });
+      });
+      actions.appendChild(exportBtn);
+
       var artifactBtn = document.createElement('button');
       artifactBtn.type = 'button';
       artifactBtn.className = 'msg-action-btn';
@@ -476,6 +517,11 @@ function render(history, turnMeta) {
         openArtifactPanel(m.content || '');
       });
       actions.appendChild(artifactBtn);
+
+      var applyAllBtn = createApplyAllButton(m.content || '');
+      if (applyAllBtn) {
+        actions.appendChild(applyAllBtn);
+      }
     }
     body.appendChild(actions);
     div.appendChild(body);
@@ -483,6 +529,31 @@ function render(history, turnMeta) {
   });
   log.scrollTop = log.scrollHeight;
   scheduleSyntaxHighlight();
+}
+
+function createApplyAllButton(content) {
+  var re = /```(\S+)\s+(\S+\.\w+)\n([\s\S]*?)```/g;
+  var files = [];
+  var match;
+  while ((match = re.exec(content)) !== null) {
+    files.push({ lang: match[1], path: match[2], code: match[3] });
+  }
+  if (files.length < 2) return null;
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'msg-action-btn primary';
+  btn.textContent = 'Apply All (' + files.length + ')';
+  btn.title = 'Apply all ' + files.length + ' file changes';
+  btn.addEventListener('click', function () {
+    vscode.postMessage({
+      type: 'applyAllCodeBlocks',
+      files: files.map(function (f) { return { path: f.path, content: f.code }; })
+    });
+    btn.textContent = 'Applied!';
+    btn.disabled = true;
+    setTimeout(function () { btn.textContent = 'Apply All (' + files.length + ')'; btn.disabled = false; }, 2000);
+  });
+  return btn;
 }
 
 function extractFirstCodeBlock(md) {
@@ -1099,6 +1170,83 @@ artifactSnapBtns.forEach(function (btn) {
 });
 log.addEventListener('click', function (ev) {
   var target = ev.target;
+  if (target instanceof HTMLElement && target.classList.contains('img-download-btn')) {
+    var src = target.getAttribute('data-src') || '';
+    if (!src) return;
+    var a = document.createElement('a');
+    a.href = src;
+    a.download = 'image-' + Date.now() + '.png';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    return;
+  }
+  if (target instanceof HTMLElement && target.classList.contains('code-insert-btn')) {
+    var wrap = target.closest('.code-wrap');
+    var raw = wrap ? wrap.getAttribute('data-raw') : '';
+    var codeEl = wrap ? wrap.querySelector('.code-block code') : null;
+    var codeText = raw || (codeEl ? codeEl.textContent || '' : '');
+    if (codeText) {
+      vscode.postMessage({ type: 'insertAtCursor', text: codeText });
+      target.textContent = 'Inserted';
+      setTimeout(function () { target.textContent = 'Insert'; }, 1200);
+    }
+    return;
+  }
+  if (target instanceof HTMLElement && target.classList.contains('code-replace-btn')) {
+    var wrap = target.closest('.code-wrap');
+    var raw = wrap ? wrap.getAttribute('data-raw') : '';
+    var codeEl = wrap ? wrap.querySelector('.code-block code') : null;
+    var codeText = raw || (codeEl ? codeEl.textContent || '' : '');
+    if (codeText) {
+      vscode.postMessage({ type: 'replaceSelection', text: codeText });
+      target.textContent = 'Replaced';
+      setTimeout(function () { target.textContent = 'Replace'; }, 1200);
+    }
+    return;
+  }
+  if (target instanceof HTMLElement && target.classList.contains('code-apply-btn')) {
+    var wrap = target.closest('.code-wrap');
+    var raw = wrap ? wrap.getAttribute('data-raw') : '';
+    var codeEl = wrap ? wrap.querySelector('.code-block code') : null;
+    var codeText = raw || (codeEl ? codeEl.textContent || '' : '');
+    var filePath = wrap ? wrap.getAttribute('data-file-path') : '';
+    var lang = wrap ? wrap.getAttribute('data-lang') : '';
+    if (codeText) {
+      vscode.postMessage({ type: 'applyCodeBlock', text: codeText, filePath: filePath || '', lang: lang || '' });
+      target.textContent = 'Applied';
+      target.classList.add('applied');
+      setTimeout(function () { target.textContent = 'Apply'; target.classList.remove('applied'); }, 2000);
+    }
+    return;
+  }
+  if (target instanceof HTMLElement && target.classList.contains('code-diff-btn')) {
+    var wrap = target.closest('.code-wrap');
+    var raw = wrap ? wrap.getAttribute('data-raw') : '';
+    var codeEl = wrap ? wrap.querySelector('.code-block code') : null;
+    var codeText = raw || (codeEl ? codeEl.textContent || '' : '');
+    var filePath = wrap ? wrap.getAttribute('data-file-path') : '';
+    if (codeText) {
+      vscode.postMessage({ type: 'openDiffPreview', text: codeText, filePath: filePath || '' });
+      target.textContent = 'Opened';
+      setTimeout(function () { target.textContent = 'Diff'; }, 1200);
+    }
+    return;
+  }
+  if (target instanceof HTMLElement && target.classList.contains('code-save-btn')) {
+    var wrap = target.closest('.code-wrap');
+    var raw = wrap ? wrap.getAttribute('data-raw') : '';
+    var codeEl = wrap ? wrap.querySelector('.code-block code') : null;
+    var codeText = raw || (codeEl ? codeEl.textContent || '' : '');
+    var lang = wrap ? wrap.getAttribute('data-lang') : '';
+    if (codeText) {
+      vscode.postMessage({ type: 'saveSnippet', text: codeText, lang: lang || '' });
+      target.textContent = 'Saved';
+      setTimeout(function () { target.textContent = 'Save'; }, 1200);
+    }
+    return;
+  }
   if (target instanceof HTMLElement && target.classList.contains('code-wrap-btn')) {
     var wrapForWrap = target.closest('.code-wrap');
     if (!wrapForWrap) return;
@@ -1286,6 +1434,14 @@ function readFileAsText(file) {
     reader.readAsText(file);
   });
 }
+function readFileAsDataURL(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onload = function () { resolve(String(reader.result || '')); };
+    reader.onerror = function () { reject(new Error('Failed to read file')); };
+    reader.readAsDataURL(file);
+  });
+}
 async function handleFiles(fileList) {
   var files = Array.prototype.slice.call(fileList || []);
   if (!files.length) return;
@@ -1294,13 +1450,19 @@ async function handleFiles(fileList) {
     var file = files[i];
     if (!file || !file.name) continue;
     try {
-      var text = await readFileAsText(file);
-      if (text.length > MAX_ATTACH_BYTES) {
-        text = text.slice(0, MAX_ATTACH_BYTES) + '\n… [truncated]';
+      var isImage = /^image\/(png|jpe?g|gif|webp|svg)/i.test(file.type);
+      if (isImage) {
+        var dataUrl = await readFileAsDataURL(file);
+        attachedFiles.push({ name: file.name, content: '[Image: ' + file.name + ']', dataUrl: dataUrl, isImage: true });
+      } else {
+        var text = await readFileAsText(file);
+        if (text.length > MAX_ATTACH_BYTES) {
+          text = text.slice(0, MAX_ATTACH_BYTES) + '\n… [truncated]';
+        }
+        attachedFiles.push({ name: file.name, content: text });
       }
-      attachedFiles.push({ name: file.name, content: text });
     } catch (_e) {
-      // ignore unreadable file
+      /* ignore unreadable file */
     }
   }
   renderAttachList();
@@ -1415,6 +1577,50 @@ var slashCommands = [
   { name: 'tools', help: 'Toggle tools', run: function () { toolsBtnEl && toolsBtnEl.click(); } },
   { name: 'files', help: 'Create files from last answer', run: function () { vscode.postMessage({ type: 'createFiles' }); } },
   { name: 'api-key', help: 'Open API key prompt', run: function () { vscode.postMessage({ type: 'openApiKey' }); } },
+  { name: 'fix', help: 'Fix errors in selected code', run: function () {
+    input.value = 'Fix the errors and bugs in the selected code. Explain what was wrong.';
+    autoResize();
+  } },
+  { name: 'tests', help: 'Generate tests', run: function () {
+    input.value = 'Generate comprehensive unit tests for the current file.';
+    autoResize();
+  } },
+  { name: 'review', help: 'Code review', run: function () {
+    input.value = 'Review this code for bugs, security issues, performance problems, and best practices.';
+    autoResize();
+  } },
+  { name: 'refactor', help: 'Refactor code', run: function () {
+    input.value = 'Refactor this code to improve readability, maintainability, and performance.';
+    autoResize();
+  } },
+  { name: 'explain', help: 'Explain code', run: function () {
+    input.value = 'Explain this code step by step. What does it do and how does it work?';
+    autoResize();
+  } },
+  { name: 'optimize', help: 'Optimize performance', run: function () {
+    input.value = 'Optimize this code for better performance. Identify bottlenecks and suggest improvements.';
+    autoResize();
+  } },
+  { name: 'doc', help: 'Generate documentation', run: function () {
+    input.value = 'Generate comprehensive documentation for this code including JSDoc/docstrings.';
+    autoResize();
+  } },
+  { name: 'terminal', help: 'Explain terminal output', run: function () {
+    input.value = 'Explain the terminal output and suggest fixes for any errors.';
+    autoResize();
+  } },
+  { name: 'workspace', help: 'Analyze workspace', run: function () {
+    input.value = 'Analyze the workspace structure, detect the tech stack, and suggest improvements.';
+    autoResize();
+  } },
+  { name: 'commit', help: 'AI commit message', run: function () { vscode.postMessage({ type: 'runCommand', command: 'asiAssistant.aiCommit' }); } },
+  { name: 'pr', help: 'Generate PR description', run: function () { vscode.postMessage({ type: 'runCommand', command: 'asiAssistant.aiPullRequest' }); } },
+  { name: 'scaffold', help: 'Project scaffolding', run: function () { vscode.postMessage({ type: 'runCommand', command: 'asiAssistant.scaffold' }); } },
+  { name: 'composer', help: 'Open Composer mode', run: function () { vscode.postMessage({ type: 'runCommand', command: 'asiAssistant.composerMode' }); } },
+  { name: 'export', help: 'Export chat', run: function () { vscode.postMessage({ type: 'runCommand', command: 'asiAssistant.exportChat' }); } },
+  { name: 'fetchai', help: 'Fetch.ai agent tools', run: function () { vscode.postMessage({ type: 'runCommand', command: 'asiAssistant.fetchaiAgent' }); } },
+  { name: 'instructions', help: 'Custom instructions', run: function () { vscode.postMessage({ type: 'runCommand', command: 'asiAssistant.editCustomInstructions' }); } },
+  { name: 'audit', help: 'Show audit log', run: function () { vscode.postMessage({ type: 'runCommand', command: 'asiAssistant.showAuditLog' }); } },
 ];
 function closeSlashMenu() {
   slashOpen = false;
@@ -1510,6 +1716,7 @@ function setupDropZone(el) {
 }
 setupDropZone(rowEl);
 setupDropZone(composerEl);
+setupDropZone(log);
 syncPromptEnhanceButton();
 document.addEventListener('dragover', function (ev) {
   ev.preventDefault();

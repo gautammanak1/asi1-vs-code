@@ -79,6 +79,20 @@
     return '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" fill="#334155"/><circle cx="12" cy="12" r="3" fill="#93c5fd"/></svg>';
   }
 
+  function extractFilePath(header, body) {
+    var parts = (header || "").trim().split(/\s+/);
+    if (parts.length >= 2) {
+      var last = parts[parts.length - 1];
+      if (/^[\w./-]+\.\w+$/.test(last) && !last.startsWith(".")) return last;
+    }
+    var first = (body || "").split("\n")[0] || "";
+    var m1 = first.match(/^\/\/\s*(?:file:?\s*)?(\S+\.\w+)\s*$/i);
+    if (m1) return m1[1];
+    var m2 = first.match(/^#\s+([\w./-]+\.\w+)\s*$/);
+    if (m2) return m2[1];
+    return null;
+  }
+
   /** Keep content raw; only balance odd fences. */
   function normalizeAssistantContent(raw) {
     var t = String(raw).replace(/\r\n/g, NL).replace(/\r/g, NL);
@@ -113,11 +127,21 @@
             var imgAlt = s.slice(i + 2, imgCloseBracket);
             var imgSrc = s.slice(imgCloseBracket + 2, imgCloseParen);
             if (/^https?:\/\//i.test(imgSrc) || /^data:image\//i.test(imgSrc)) {
+              var imgWrap = document.createElement("span");
+              imgWrap.className = "md-inline-img-wrap";
               var imgEl = document.createElement("img");
               imgEl.src = imgSrc;
               imgEl.alt = imgAlt;
               imgEl.className = "md-inline-img";
-              parent.appendChild(imgEl);
+              imgWrap.appendChild(imgEl);
+              var dlBtn = document.createElement("button");
+              dlBtn.type = "button";
+              dlBtn.className = "img-download-btn";
+              dlBtn.textContent = "Download";
+              dlBtn.setAttribute("aria-label", "Download image");
+              dlBtn.setAttribute("data-src", imgSrc);
+              imgWrap.appendChild(dlBtn);
+              parent.appendChild(imgWrap);
               i = imgCloseParen + 1;
               continue;
             }
@@ -320,6 +344,82 @@
         continue;
       }
 
+      var detailsM = trimmed.match(/^<details>\s*$/i);
+      if (detailsM) {
+        flushParagraph(container, para);
+        para = [];
+        endList();
+        var detailEl = document.createElement("details");
+        detailEl.className = "md-collapsible";
+        var summaryText = "";
+        var bodyLines = [];
+        var j = li + 1;
+        var foundEnd = false;
+        for (; j < lines.length; j++) {
+          var dl = lines[j].trim();
+          if (/^<\/details>\s*$/i.test(dl)) { foundEnd = true; break; }
+          var sm = dl.match(/^<summary>(.*)<\/summary>$/i);
+          if (sm) { summaryText = sm[1]; continue; }
+          bodyLines.push(lines[j]);
+        }
+        var summaryEl = document.createElement("summary");
+        summaryEl.textContent = summaryText || "Details";
+        detailEl.appendChild(summaryEl);
+        var bodyEl = document.createElement("div");
+        bodyEl.className = "md-collapsible-body";
+        renderProse(bodyEl, bodyLines.join(NL));
+        detailEl.appendChild(bodyEl);
+        container.appendChild(detailEl);
+        li = foundEnd ? j : j - 1;
+        continue;
+      }
+
+      if (/^>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/.test(trimmed)) {
+        flushParagraph(container, para);
+        para = [];
+        endList();
+        var calloutType = trimmed.match(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i)[1].toLowerCase();
+        var calloutLines = [];
+        var j2 = li + 1;
+        while (j2 < lines.length && /^>\s*/.test(lines[j2])) {
+          calloutLines.push(lines[j2].replace(/^>\s*/, ""));
+          j2++;
+        }
+        var calloutEl = document.createElement("div");
+        calloutEl.className = "md-callout" +
+          (calloutType === "warning" || calloutType === "caution" ? " md-callout-warn" :
+           calloutType === "important" ? " md-callout-error" : "");
+        var calloutTitle = document.createElement("strong");
+        calloutTitle.textContent = calloutType.charAt(0).toUpperCase() + calloutType.slice(1);
+        calloutEl.appendChild(calloutTitle);
+        if (calloutLines.length) {
+          var calloutBody = document.createElement("div");
+          renderProse(calloutBody, calloutLines.join(NL));
+          calloutEl.appendChild(calloutBody);
+        }
+        container.appendChild(calloutEl);
+        li = j2 - 1;
+        continue;
+      }
+
+      if (/^>\s/.test(trimmed)) {
+        flushParagraph(container, para);
+        para = [];
+        endList();
+        var quoteLines = [trimmed.replace(/^>\s*/, "")];
+        var jq = li + 1;
+        while (jq < lines.length && /^>\s*/.test(lines[jq].trim())) {
+          quoteLines.push(lines[jq].trim().replace(/^>\s*/, ""));
+          jq++;
+        }
+        var bq = document.createElement("blockquote");
+        bq.className = "md-callout";
+        renderProse(bq, quoteLines.join(NL));
+        container.appendChild(bq);
+        li = jq - 1;
+        continue;
+      }
+
       var hm = trimmed.match(/^(#{1,6})\s+(.+)$/);
       if (hm) {
         flushParagraph(container, para);
@@ -449,12 +549,34 @@
           labelActions.appendChild(collapseBtn);
           lbl.appendChild(labelActions);
           wrap.appendChild(lbl);
-          var copyBtn = document.createElement("button");
-          copyBtn.type = "button";
-          copyBtn.className = "code-copy-btn";
-          copyBtn.textContent = "Copy";
-          copyBtn.setAttribute("aria-label", "Copy code block");
-          wrap.appendChild(copyBtn);
+
+          var actionBar = document.createElement("div");
+          actionBar.className = "code-action-bar";
+          var btns = [
+            { cls: "code-copy-btn", text: "Copy", label: "Copy code" },
+            { cls: "code-action-btn code-insert-btn", text: "Insert", label: "Insert at cursor" },
+            { cls: "code-action-btn code-replace-btn", text: "Replace", label: "Replace selection" },
+            { cls: "code-action-btn code-apply-btn", text: "Apply", label: "Apply to workspace" },
+            { cls: "code-action-btn code-diff-btn", text: "Diff", label: "Open diff preview" },
+            { cls: "code-action-btn code-save-btn", text: "Save", label: "Save as file" },
+          ];
+          for (var bi = 0; bi < btns.length; bi++) {
+            var b = document.createElement("button");
+            b.type = "button";
+            b.className = btns[bi].cls;
+            b.textContent = btns[bi].text;
+            b.setAttribute("aria-label", btns[bi].label);
+            actionBar.appendChild(b);
+          }
+          var detectedPath = extractFilePath(headerRaw, inner);
+          if (detectedPath) {
+            wrap.setAttribute("data-file-path", detectedPath);
+            var pathBadge = document.createElement("span");
+            pathBadge.className = "code-path-badge";
+            pathBadge.textContent = detectedPath;
+            actionBar.appendChild(pathBadge);
+          }
+          wrap.appendChild(actionBar);
           var pre = document.createElement("pre");
           pre.className = "code-block";
           var code = document.createElement("code");

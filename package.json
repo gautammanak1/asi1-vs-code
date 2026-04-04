@@ -3,7 +3,7 @@
   "displayName": "Fetch Coder",
   "description": "AI coding assistant for VS Code — chat, inline completions, code actions, inline editing, and terminal help powered by ASI1.",
   "icon": "resources/icon.png",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "publisher": "gautammanak2",
   "license": "MIT",
   "author": "Gautam Manak",
@@ -36,10 +36,7 @@
     "Machine Learning",
     "Programming Languages"
   ],
-  "activationEvents": [
-    "onStartupFinished",
-    "onView:asiAssistant.chatView"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
     "chatParticipants": [
@@ -176,6 +173,135 @@
         "command": "asiAssistant.discardMultiFileEdit",
         "title": "Fetch Coder: Discard Pending Edits",
         "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.previewWorkspaceEdit",
+        "title": "Fetch Coder: Preview Workspace Edit",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.applyWorkspaceEdit",
+        "title": "Fetch Coder: Apply Workspace Edit",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.rejectWorkspaceEdit",
+        "title": "Fetch Coder: Reject Workspace Edit",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.revertLastChange",
+        "title": "Fetch Coder: Revert Last Change",
+        "category": "Fetch Coder",
+        "icon": "$(discard)"
+      },
+      {
+        "command": "asiAssistant.revertFileChange",
+        "title": "Fetch Coder: Revert File Change",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.revertAllChanges",
+        "title": "Fetch Coder: Revert All Changes",
+        "category": "Fetch Coder",
+        "icon": "$(history)"
+      },
+      {
+        "command": "asiAssistant.showWorkspaceChanges",
+        "title": "Fetch Coder: Show Workspace Changes",
+        "category": "Fetch Coder",
+        "icon": "$(git-compare)"
+      },
+      {
+        "command": "asiAssistant.deleteFile",
+        "title": "Fetch Coder: Delete File",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.renameFile",
+        "title": "Fetch Coder: Rename File",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.scanWorkspace",
+        "title": "Fetch Coder: Scan Workspace Files",
+        "category": "Fetch Coder",
+        "icon": "$(search)"
+      },
+      {
+        "command": "asiAssistant.composerMode",
+        "title": "Fetch Coder: Composer Mode",
+        "category": "Fetch Coder",
+        "icon": "$(wand)"
+      },
+      {
+        "command": "asiAssistant.showAuditLog",
+        "title": "Fetch Coder: Show Audit Log",
+        "category": "Fetch Coder",
+        "icon": "$(output)"
+      },
+      {
+        "command": "asiAssistant.clearAuditLog",
+        "title": "Fetch Coder: Clear Audit Log",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.exportChat",
+        "title": "Fetch Coder: Export Chat",
+        "category": "Fetch Coder",
+        "icon": "$(export)"
+      },
+      {
+        "command": "asiAssistant.aiCommit",
+        "title": "Fetch Coder: AI Commit Message",
+        "category": "Fetch Coder",
+        "icon": "$(git-commit)"
+      },
+      {
+        "command": "asiAssistant.aiPullRequest",
+        "title": "Fetch Coder: Generate PR Description",
+        "category": "Fetch Coder",
+        "icon": "$(git-pull-request)"
+      },
+      {
+        "command": "asiAssistant.scaffold",
+        "title": "Fetch Coder: Project Scaffold",
+        "category": "Fetch Coder",
+        "icon": "$(folder-library)"
+      },
+      {
+        "command": "asiAssistant.editCustomInstructions",
+        "title": "Fetch Coder: Edit Custom Instructions",
+        "category": "Fetch Coder",
+        "icon": "$(note)"
+      },
+      {
+        "command": "asiAssistant.addCustomInstruction",
+        "title": "Fetch Coder: Add Custom Instruction",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.clearCustomInstructions",
+        "title": "Fetch Coder: Clear Custom Instructions",
+        "category": "Fetch Coder"
+      },
+      {
+        "command": "asiAssistant.fetchaiAgent",
+        "title": "Fetch Coder: Fetch.ai Agent Tools",
+        "category": "Fetch Coder",
+        "icon": "$(hubot)"
+      },
+      {
+        "command": "asiAssistant.fetchaiDocs",
+        "title": "Fetch Coder: Fetch.ai Documentation",
+        "category": "Fetch Coder",
+        "icon": "$(book)"
+      },
+      {
+        "command": "asiAssistant.fetchaiAgentverse",
+        "title": "Fetch Coder: Open Agentverse",
+        "category": "Fetch Coder",
+        "icon": "$(globe)"
       }
     ],
     "submenus": [
@@ -318,7 +444,7 @@
         },
         "asiAssistant.systemPrompt": {
           "type": "string",
-          "default": "You are a coding assistant in VS Code/Cursor. Use ONLY standard GitHub-flavored markdown with triple-backtick fences and language tags. When the user asks you to edit/fix/change a SPECIFIC part of existing code, show ONLY the changed section (~5-15 lines with context), NOT the entire file. For new files use full code with Save as `path/file.ext`. Tables, lists, and headings are welcome.",
+          "default": "You are a coding assistant in VS Code/Cursor with full workspace access. Use ONLY standard GitHub-flavored markdown with triple-backtick fences and language tags. When the user asks you to edit/fix/change a SPECIFIC part of existing code, show ONLY the changed section (~5-15 lines with context), NOT the entire file. For new files use full code with Save as `path/file.ext`. You can create files, create directories, read files, search the workspace, and run terminal commands (npm, git, mkdir, etc.) directly on the user's system using the available tools. Always prefer using tools to perform actions instead of just showing commands. Tables, lists, and headings are welcome.",
           "description": "System message prepended to every conversation",
           "order": 4
         },

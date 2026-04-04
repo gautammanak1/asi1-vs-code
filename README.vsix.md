@@ -4,7 +4,7 @@
 
 # Fetch Coder
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.7**
+### AI Coding Assistant for VS Code & Cursor · **v0.1.8**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder">
@@ -25,8 +25,8 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.7">
-    <img src="https://img.shields.io/badge/release-v0.1.7-22c55e?style=flat" alt="Version 0.1.7" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.8">
+    <img src="https://img.shields.io/badge/release-v0.1.8-22c55e?style=flat" alt="Version 0.1.8" />
   </a>
 </p>
 
@@ -376,15 +376,28 @@ This **`README.vsix.md`** file is what ships as the Marketplace long description
 
 ---
 
-## What's new in v0.1.7
+## What's new in v0.1.8
 
-- Fixed Open VSX publishing: improved namespace creation workflow  
-- CI/CD reliability improvements for Marketplace and Open VSX  
+- **Composer Mode** — plan multi-file changes, preview diffs, apply all at once  
+- **Code block toolbar** — Copy, Insert, Replace, Apply, Diff, Save on every code block  
+- **AI commit messages & PR generation** — one-click git workflow  
+- **20+ slash commands** — /fix, /tests, /review, /refactor, /explain, /commit, /scaffold  
+- **Project scaffolding** — 7 templates (React, Next.js, Express, FastAPI, SaaS, etc.)  
+- **Custom instructions** — persistent rules always sent to AI  
+- **Stack auto-detection** — framework, ORM, CSS, test framework, package manager  
+- **Fetch.ai integration** — uAgent creation, Agentverse, multi-agent orchestration  
+- **Diff & revert system** — preview changes, revert history, snapshots  
+- **Advanced markdown** — collapsible sections, callouts, blockquotes  
+- **Drag-and-drop** — drop files/images into chat  
+- **Audit logging** — track all tool executions  
+- **Modular architecture** — split into api/, tools/, security/ modules  
 
 ## Roadmap
 
-- Multi-file diff review flow  
-- Chat history export/import  
+- Workspace map view (visual file relationships)  
+- Multi-agent mode (frontend, backend, testing agents)  
+- Live collaboration mode  
+- Voice input support  
 - More model options where the API supports them  
 - VS Code native chat participant (requires VS Code 1.93+)  
 

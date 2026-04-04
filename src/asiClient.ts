@@ -1,7 +1,11 @@
 import * as vscode from "vscode";
-import * as cp from "child_process";
 import { logChatRequest } from "./requestLogger";
 import { EventEmitter } from "events";
+import { fetchWithRetry } from "./api/retries";
+import { ASI_BUILTIN_TOOLS } from "./tools/definitions";
+import { executeBuiltinTool } from "./tools/executor";
+
+export { ASI_BUILTIN_TOOLS, executeBuiltinTool };
 
 EventEmitter.defaultMaxListeners = 30;
 
@@ -85,278 +89,6 @@ function readConfig() {
   return { url, model, webSearch, agenticSession };
 }
 
-/** Built-in tools executed in the extension (workspace). */
-export const ASI_BUILTIN_TOOLS: object[] = [
-  {
-    type: "function",
-    function: {
-      name: "workspace_read_file",
-      description:
-        "Read a UTF-8 text file from the open VS Code workspace. Path is relative to the workspace folder.",
-      parameters: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "Relative path, e.g. src/index.ts or package.json",
-          },
-        },
-        required: ["path"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "workspace_search_files",
-      description:
-        "Find files under the workspace root matching a glob pattern (e.g. **/*.ts, **/README.md).",
-      parameters: {
-        type: "object",
-        properties: {
-          pattern: {
-            type: "string",
-            description: "Glob relative to workspace root",
-          },
-          maxResults: {
-            type: "integer",
-            description: "Max files to return (default 50, max 100)",
-          },
-        },
-        required: ["pattern"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "workspace_list_directory",
-      description:
-        "List files/directories inside a workspace directory path. Path is relative to the workspace root.",
-      parameters: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "Relative directory path, e.g. src or src/components",
-          },
-          maxResults: {
-            type: "integer",
-            description: "Max entries to return (default 100, max 300)",
-          },
-        },
-        required: ["path"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "workspace_write_file",
-      description:
-        "Create or overwrite a UTF-8 text file in the workspace. Creates parent directories automatically.",
-      parameters: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "Relative path, e.g. src/new-file.ts",
-          },
-          content: {
-            type: "string",
-            description: "Full file content to write",
-          },
-        },
-        required: ["path", "content"],
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "run_terminal_command",
-      description:
-        "Execute a shell command in the workspace root directory and return stdout/stderr. Use for npm install, build, test, git, or any CLI task. Commands time out after 60 seconds.",
-      parameters: {
-        type: "object",
-        properties: {
-          command: {
-            type: "string",
-            description: "The shell command to run, e.g. 'npm install' or 'ls -la src/'",
-          },
-        },
-        required: ["command"],
-      },
-    },
-  },
-];
-
-function safeWorkspacePath(raw: unknown): string {
-  const rel = typeof raw === "string" ? raw.trim() : "";
-  if (!rel || rel.includes("..") || rel.startsWith("/")) {
-    return "";
-  }
-  return rel;
-}
-
-async function executeBuiltinTool(name: string, argsJson: string): Promise<string> {
-  let args: Record<string, unknown>;
-  try {
-    args = JSON.parse(argsJson || "{}") as Record<string, unknown>;
-  } catch {
-    return JSON.stringify({ error: "Invalid JSON arguments for tool" });
-  }
-
-  const folders = vscode.workspace.workspaceFolders;
-  if (!folders?.length) {
-    return JSON.stringify({
-      error: "No workspace folder open. Open a folder to use workspace tools.",
-    });
-  }
-  const root = folders[0].uri;
-
-  if (name === "workspace_read_file") {
-    const rel = safeWorkspacePath(args.path);
-    if (!rel) {
-      return JSON.stringify({ error: "Invalid or unsafe path" });
-    }
-    const uri = vscode.Uri.joinPath(root, rel);
-    try {
-      const bytes = await vscode.workspace.fs.readFile(uri);
-      const text = new TextDecoder("utf-8", { fatal: false }).decode(bytes);
-      const max = 200_000;
-      const clipped = text.length > max ? text.slice(0, max) + "\n… [truncated]" : text;
-      return JSON.stringify({ path: rel, content: clipped });
-    } catch (e) {
-      return JSON.stringify({
-        error: e instanceof Error ? e.message : String(e),
-        path: rel,
-      });
-    }
-  }
-
-  if (name === "workspace_search_files") {
-    const pattern =
-      typeof args.pattern === "string" ? args.pattern : "**/*";
-    const maxN = Math.min(
-      100,
-      typeof args.maxResults === "number" && args.maxResults > 0 ? args.maxResults : 50
-    );
-    try {
-      const uris = await vscode.workspace.findFiles(
-        new vscode.RelativePattern(folders[0], pattern),
-        "**/node_modules/**",
-        maxN
-      );
-      const rels = uris.map((u) => vscode.workspace.asRelativePath(u, false));
-      return JSON.stringify({ pattern, files: rels, count: rels.length });
-    } catch (e) {
-      return JSON.stringify({
-        error: e instanceof Error ? e.message : String(e),
-        pattern,
-      });
-    }
-  }
-
-  if (name === "workspace_list_directory") {
-    const rel = safeWorkspacePath(args.path);
-    if (!rel) {
-      return JSON.stringify({ error: "Invalid or unsafe path" });
-    }
-    const maxN = Math.min(
-      300,
-      typeof args.maxResults === "number" && args.maxResults > 0 ? args.maxResults : 100
-    );
-    const dirUri = vscode.Uri.joinPath(root, rel);
-    try {
-      const entries = await vscode.workspace.fs.readDirectory(dirUri);
-      const mapped = entries
-        .slice(0, maxN)
-        .map(([name, type]) => ({
-          name,
-          type:
-            type === vscode.FileType.Directory
-              ? "directory"
-              : type === vscode.FileType.File
-                ? "file"
-                : "other",
-        }));
-      return JSON.stringify({ path: rel, entries: mapped, count: mapped.length });
-    } catch (e) {
-      return JSON.stringify({
-        error: e instanceof Error ? e.message : String(e),
-        path: rel,
-      });
-    }
-  }
-
-  if (name === "workspace_write_file") {
-    const rel = safeWorkspacePath(args.path);
-    const content = typeof args.content === "string" ? args.content : "";
-    if (!rel) {
-      return JSON.stringify({ error: "Invalid or unsafe path" });
-    }
-    const maxBytes = 300_000;
-    if (content.length > maxBytes) {
-      return JSON.stringify({
-        error: `Content too large (${content.length} chars). Max ${maxBytes}.`,
-        path: rel,
-      });
-    }
-    const fileUri = vscode.Uri.joinPath(root, rel);
-    try {
-      const parent = vscode.Uri.joinPath(root, rel.split("/").slice(0, -1).join("/"));
-      if (rel.includes("/")) {
-        await vscode.workspace.fs.createDirectory(parent);
-      }
-      const bytes = new TextEncoder().encode(content);
-      await vscode.workspace.fs.writeFile(fileUri, bytes);
-      return JSON.stringify({
-        path: rel,
-        writtenChars: content.length,
-        ok: true,
-      });
-    } catch (e) {
-      return JSON.stringify({
-        error: e instanceof Error ? e.message : String(e),
-        path: rel,
-      });
-    }
-  }
-
-  if (name === "run_terminal_command") {
-    const command = typeof args.command === "string" ? args.command.trim() : "";
-    if (!command) {
-      return JSON.stringify({ error: "No command provided" });
-    }
-    const dangerous = /^\s*(rm\s+-rf\s+\/|sudo\s+rm|mkfs|dd\s+if=|:\(\)\{)/i;
-    if (dangerous.test(command)) {
-      return JSON.stringify({ error: "Command blocked for safety" });
-    }
-    const cwd = root.fsPath;
-    const timeout = 60_000;
-    try {
-      const result = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-        cp.exec(command, { cwd, timeout, maxBuffer: 1024 * 1024 }, (err, stdout, stderr) => {
-          if (err && !stdout && !stderr) {
-            reject(err);
-          } else {
-            resolve({ stdout: stdout ?? "", stderr: stderr ?? "" });
-          }
-        });
-      });
-      const out = result.stdout.slice(0, 50_000);
-      const err = result.stderr.slice(0, 10_000);
-      return JSON.stringify({ command, stdout: out, stderr: err, ok: true });
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
-      return JSON.stringify({ command, error: msg.slice(0, 5_000) });
-    }
-  }
-
-  return JSON.stringify({ error: `Unknown tool: ${name}` });
-}
-
 export interface RunChatWithToolsResult {
   /** Full API thread including this turn (no system message). */
   apiThread: ApiChatMessage[];
@@ -410,12 +142,11 @@ export async function runChatWithTools(
     };
     body.web_search = webSearch;
     body.extra_body = { web_search: webSearch };
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
-      signal: options.signal,
-    });
+    }, options.signal);
     const text = await res.text();
     let json: unknown;
     try {
@@ -594,12 +325,11 @@ export async function completeChat(
 
   const _logStartTime = Date.now();
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
-    signal,
-  });
+  }, signal);
 
   const text = await res.text();
   let json: unknown;
