@@ -15,6 +15,14 @@ import { registerMultiFileEditCommands } from "./multiFileEditManager";
 import { registerRequestLoggerCommands } from "./requestLogger";
 import { startTrackingEdits } from "./workspaceEditTracker";
 import { setExtensionPath } from "./workspaceFiles";
+import { registerWorkspaceCommands } from "./workspaceCommands";
+import { registerComposerCommands } from "./composerMode";
+import { registerAuditCommands } from "./security/auditLogger";
+import { registerChatExportCommand } from "./chatExport";
+import { registerGitCommands } from "./gitCommands";
+import { registerScaffoldingCommands } from "./scaffolding";
+import { registerCustomInstructionsCommands } from "./customInstructions";
+import { registerFetchaiCommands } from "./fetchaiIntegration";
 
 const SECRET_KEY = "asiAssistant.storedApiKey";
 
@@ -156,11 +164,44 @@ export function activate(context: vscode.ExtensionContext): void {
   // --- Multi-File Edit Manager ---
   registerMultiFileEditCommands(context);
 
+  // --- Advanced Workspace Editing (diff preview, revert, live decorations) ---
+  registerWorkspaceCommands(context);
+
+  // --- Composer Mode ---
+  registerComposerCommands(context);
+
+  // --- Audit Logger ---
+  registerAuditCommands(context);
+
+  // --- Chat Export ---
+  registerChatExportCommand(context, provider);
+
+  // --- Git AI Commands (commit messages, PR generation) ---
+  registerGitCommands(context);
+
+  // --- Project Scaffolding ---
+  registerScaffoldingCommands(context);
+
+  // --- Custom Instructions / Memory ---
+  registerCustomInstructionsCommands(context);
+
+  // --- Fetch.ai Agent Integration ---
+  registerFetchaiCommands(context);
+
   // --- Request Logger (debug/inspect AI API calls) ---
   registerRequestLoggerCommands(context);
 
   // --- Workspace Edit Tracker (recent user edits for context) ---
   startTrackingEdits(context);
+
+  // --- Background Workspace Indexing ---
+  setTimeout(async () => {
+    try {
+      const { getProjectContext, indexWorkspaceSymbols } = await import("./contextIndexer");
+      await getProjectContext();
+      await indexWorkspaceSymbols(80);
+    } catch { /* non-critical */ }
+  }, 3000);
 }
 
 export function deactivate(): void {}

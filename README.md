@@ -4,7 +4,7 @@
 
 # Fetch Coder
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.7**
+### AI Coding Assistant for VS Code & Cursor · **v0.1.8**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder">
@@ -25,8 +25,8 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.7">
-    <img src="https://img.shields.io/badge/release-v0.1.7-22c55e?style=flat" alt="Version 0.1.7" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.8">
+    <img src="https://img.shields.io/badge/release-v0.1.8-22c55e?style=flat" alt="Version 0.1.8" />
   </a>
 </p>
 
@@ -83,6 +83,16 @@ Building with **ASI1** should not mean juggling browser tabs and copy-pasted sni
 | **Web** | `web_search` via ASI1 (when enabled) |
 | **Files** | Fenced code + “Save as” hints; optional auto-apply |
 | **Image** | Image generation via chat (`/v1/image/generate`) |
+| **Code Actions** | Copy, Insert, Replace, Apply, Diff, Save — toolbar on every code block |
+| **Composer Mode** | Multi-file AI generation with plan, preview, apply flow |
+| **Diff & Revert** | Side-by-side diff preview, revert history, snapshot before every change |
+| **AI Git** | AI-generated commit messages, PR descriptions with one click |
+| **Scaffolding** | 7 project templates (React, Next.js, Express, FastAPI, Chrome Ext, VS Code Ext, SaaS) |
+| **Fetch.ai** | uAgent creation, Agentverse deploy, multi-agent orchestration, docs lookup |
+| **Custom Rules** | Persistent custom instructions (always use TS, prefer Tailwind, etc.) |
+| **20+ Slash Cmds** | /fix, /tests, /review, /refactor, /explain, /commit, /pr, /scaffold, and more |
+| **Stack Detection** | Auto-detects framework, ORM, CSS, test framework, package manager |
+| **Security** | Path validation, command allowlist, audit logging, SecretStorage API keys |
 
 ### AI chat inside VS Code
 
@@ -161,7 +171,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./fetch-coder-0.1.7.vsix
+code --install-extension ./fetch-coder-0.1.8.vsix
 ```
 
 Or:
@@ -225,6 +235,14 @@ Cmd + Shift + ;   (Mac)
 | `ASI: Ask About Selection` | Ask about selected code (or file) |
 | `ASI: Set API Key` | Save your API key securely |
 | `ASI: Install Extension from .vsix` | Install extension from a `.vsix` file |
+| `Fetch Coder: Composer Mode` | Multi-file AI code generation |
+| `Fetch Coder: AI Commit Message` | Generate commit message from staged changes |
+| `Fetch Coder: Generate PR Description` | Generate PR title, summary, test plan |
+| `Fetch Coder: Project Scaffold` | Create project from template |
+| `Fetch Coder: Edit Custom Instructions` | Edit persistent AI rules |
+| `Fetch Coder: Fetch.ai Agent Tools` | Build Fetch.ai agents |
+| `Fetch Coder: Export Chat` | Export chat to Markdown or JSON |
+| `Fetch Coder: Show Audit Log` | View tool execution audit log |
 
 ---
 
@@ -298,16 +316,41 @@ All settings use the `asiAssistant.*` prefix.
 ```text
 asi1-vs-code/
 ├── src/
-│   ├── extension.ts           # activation, commands
-│   ├── chatViewProvider.ts    # webview chat UI
-│   ├── asiClient.ts           # ASI1 API, tools, web_search
-│   └── workspaceFiles.ts      # extract/write files from replies
-├── media/                     # chat.css, chatPanel.js, markdown + highlight
+│   ├── extension.ts              # activation, all command registration
+│   ├── chatViewProvider.ts       # webview chat UI, tabs, streaming
+│   ├── asiClient.ts              # ASI1 API, tool loop orchestration
+│   ├── api/
+│   │   ├── config.ts             # API configuration
+│   │   ├── retries.ts            # fetchWithRetry + exponential backoff
+│   │   ├── models.ts             # shared type definitions
+│   │   └── streaming.ts          # SSE stream consumer
+│   ├── tools/
+│   │   ├── definitions.ts        # tool schemas (12 tools)
+│   │   └── executor.ts           # tool execution with audit logging
+│   ├── security/
+│   │   ├── commandAllowlist.ts   # terminal command validation
+│   │   └── auditLogger.ts        # audit log with show/clear
+│   ├── composerMode.ts           # multi-file Composer flow
+│   ├── contextIndexer.ts         # framework detection + symbol extraction
+│   ├── customInstructions.ts     # persistent custom rules
+│   ├── fetchaiIntegration.ts     # Fetch.ai agent tools
+│   ├── gitCommands.ts            # AI commit + PR generation
+│   ├── scaffolding.ts            # 7 project templates
+│   ├── chatExport.ts             # chat export to md/json
+│   ├── safePath.ts               # path security validation
+│   ├── workspaceManager.ts       # file operations manager
+│   ├── diffPreview.ts            # diff preview system
+│   ├── revertManager.ts          # revert/undo system
+│   ├── fileHistory.ts            # edit history tracking
+│   ├── liveDecorations.ts        # live change highlighting
+│   ├── workspaceCommands.ts      # workspace edit commands
+│   └── workspaceFiles.ts         # extract/write files from replies
+├── media/                        # chat.css, chatPanel.js, markdown + highlight
 ├── resources/
 │   ├── icon.png, logo.png, readme-banner.png
 ├── package.json
 ├── README.md
-├── README.vsix.md             # Marketplace readme (VSIX packaging)
+├── README.vsix.md
 ├── CHANGELOG.md
 ├── CONTRIBUTING.md
 ├── SECURITY.md
@@ -376,15 +419,35 @@ The VSIX uses **`README.vsix.md`** for the Marketplace listing (`vscode:prepubli
 
 ---
 
-## What's new in v0.1.7
+## What's new in v0.1.8
 
-- Fixed Open VSX publishing: improved namespace creation workflow  
-- CI/CD reliability improvements for Marketplace and Open VSX  
+- **Composer Mode** — plan multi-file changes, preview diffs, apply all at once  
+- **Code block toolbar** — Copy, Insert, Replace, Apply, Diff, Save buttons on every code block  
+- **Chat message actions** — Retry, Continue, Fork, Pin, Export on every message  
+- **Apply All Changes** — one-click apply when response contains multiple files  
+- **AI commit messages** — analyze staged diff and generate conventional commit messages  
+- **PR generation** — auto-generate PR title, summary, test plan, changelog  
+- **20+ slash commands** — /fix, /tests, /review, /refactor, /explain, /commit, /pr, /scaffold  
+- **Project scaffolding** — 7 templates: React, Next.js, Express, FastAPI, Chrome Ext, VS Code Ext, SaaS  
+- **Custom instructions** — persistent rules always sent to AI (e.g. "Always use TypeScript")  
+- **Stack auto-detection** — detects framework, ORM, CSS, test framework, package manager  
+- **Symbol extraction** — indexes classes, functions, interfaces, components, routes  
+- **Fetch.ai integration** — uAgent creation, Agentverse deploy, multi-agent, docs lookup  
+- **Advanced markdown** — collapsible sections, GitHub callouts, blockquotes  
+- **Drag-and-drop files** — drop files/images into chat for context  
+- **Diff & revert system** — side-by-side diff preview, revert history, snapshots  
+- **Search-and-replace patching** — `workspace_patch_file` tool for targeted edits  
+- **Content search** — `workspace_search_text` tool for full-text search across workspace  
+- **Audit logging** — track all tool executions with show/clear commands  
+- **Modular architecture** — split into api/, tools/, security/ modules  
+- **Background indexing** — auto-indexes workspace on activation  
 
 ## Roadmap
 
-- Multi-file diff review flow  
-- Chat history export/import  
+- Workspace map view (visual file relationships)  
+- Multi-agent mode (frontend, backend, testing agents)  
+- Live collaboration mode  
+- Voice input support  
 - More model options where the API supports them  
 - VS Code native chat participant (requires VS Code 1.93+)  
 

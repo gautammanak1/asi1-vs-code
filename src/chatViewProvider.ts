@@ -299,6 +299,10 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         await vscode.commands.executeCommand("asiAssistant.insertApiKey");
         return;
       }
+      if (msg.type === "runCommand" && typeof msg.command === "string") {
+        await vscode.commands.executeCommand(msg.command);
+        return;
+      }
       if (msg.type === "setupReady") {
         await this.refreshSetupState();
         await this._postModelState();
@@ -484,6 +488,130 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       if (msg.type === "copyToClipboard" && typeof msg.text === "string") {
         await vscode.env.clipboard.writeText(msg.text);
       }
+      if (msg.type === "insertAtCursor" && typeof msg.text === "string") {
+        const editor = vscode.window.activeTextEditor;
+        if (editor) {
+          await editor.edit((eb) => {
+            eb.insert(editor.selection.active, msg.text);
+          });
+        } else {
+          vscode.window.showWarningMessage("No active editor to insert into.");
+        }
+      }
+      if (msg.type === "replaceSelection" && typeof msg.text === "string") {
+        const editor = vscode.window.activeTextEditor;
+        if (editor && !editor.selection.isEmpty) {
+          await editor.edit((eb) => {
+            eb.replace(editor.selection, msg.text);
+          });
+        } else {
+          vscode.window.showWarningMessage("Select code in the editor first.");
+        }
+      }
+      if (msg.type === "applyCodeBlock" && typeof msg.text === "string") {
+        const filePath = typeof msg.filePath === "string" ? msg.filePath : "";
+        if (filePath) {
+          const folder = vscode.workspace.workspaceFolders?.[0];
+          if (folder) {
+            await vscode.commands.executeCommand("asiAssistant.applyWorkspaceEdit", {
+              relativePath: filePath,
+              content: msg.text,
+              skipPreview: false,
+            });
+          }
+        } else {
+          const choice = await vscode.window.showQuickPick(
+            ["Insert at Cursor", "Replace Selection", "Save as New File…"],
+            { title: "Apply Code Block" }
+          );
+          if (choice === "Insert at Cursor") {
+            const editor = vscode.window.activeTextEditor;
+            if (editor) {
+              await editor.edit((eb) => eb.insert(editor.selection.active, msg.text));
+            }
+          } else if (choice === "Replace Selection") {
+            const editor = vscode.window.activeTextEditor;
+            if (editor && !editor.selection.isEmpty) {
+              await editor.edit((eb) => eb.replace(editor.selection, msg.text));
+            }
+          } else if (choice === "Save as New File…") {
+            const name = await vscode.window.showInputBox({
+              title: "File path",
+              placeHolder: "src/components/Example.tsx",
+            });
+            if (name) {
+              await vscode.commands.executeCommand("asiAssistant.applyWorkspaceEdit", {
+                relativePath: name,
+                content: msg.text,
+                skipPreview: false,
+              });
+            }
+          }
+        }
+      }
+      if (msg.type === "openDiffPreview" && typeof msg.text === "string") {
+        const filePath = typeof msg.filePath === "string" ? msg.filePath : "";
+        if (filePath) {
+          await vscode.commands.executeCommand("asiAssistant.previewWorkspaceEdit", {
+            relativePath: filePath,
+            content: msg.text,
+          });
+        } else {
+          const doc = await vscode.workspace.openTextDocument({ content: msg.text });
+          await vscode.window.showTextDocument(doc, { preview: true });
+        }
+      }
+      if (msg.type === "saveSnippet" && typeof msg.text === "string") {
+        const uri = await vscode.window.showSaveDialog({
+          defaultUri: vscode.Uri.file(`snippet.${msg.lang || "txt"}`),
+        });
+        if (uri) {
+          await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(msg.text));
+          vscode.window.showInformationMessage(`Saved to ${uri.fsPath}`);
+        }
+      }
+      if (msg.type === "continueGeneration" && typeof msg.index === "number") {
+        await this._handleUserMessage("Continue from where you left off.");
+      }
+      if (msg.type === "forkChat" && typeof msg.index === "number") {
+        const upTo = this._history.slice(0, msg.index + 1);
+        this._newChatTab();
+        this._history = [...upTo];
+        this._turnMeta = upTo.map(() => ({}));
+        this._apiThread = [];
+        this._syncActiveIntoTabs();
+        this._postState();
+        vscode.window.showInformationMessage("Chat forked into new tab.");
+      }
+      if (msg.type === "exportMessage" && typeof msg.content === "string") {
+        const doc = await vscode.workspace.openTextDocument({ content: msg.content, language: "markdown" });
+        await vscode.window.showTextDocument(doc, { preview: true });
+      }
+      if (msg.type === "applyAllCodeBlocks" && Array.isArray(msg.files)) {
+        const folder = vscode.workspace.workspaceFolders?.[0];
+        if (!folder) {
+          vscode.window.showErrorMessage("No workspace open.");
+          return;
+        }
+        let applied = 0;
+        for (const file of msg.files as Array<{ path: string; content: string }>) {
+          try {
+            const uri = vscode.Uri.joinPath(folder.uri, file.path);
+            const segments = file.path.split("/").filter(Boolean);
+            if (segments.length > 1) {
+              const parentUri = vscode.Uri.joinPath(folder.uri, ...segments.slice(0, -1));
+              await vscode.workspace.fs.createDirectory(parentUri);
+            }
+            await vscode.workspace.fs.writeFile(uri, new TextEncoder().encode(file.content));
+            applied++;
+          } catch { /* skip */ }
+        }
+        vscode.window.showInformationMessage(`Applied ${applied}/${msg.files.length} files.`);
+      }
+  }
+
+  public getHistory(): ChatMessage[] {
+    return [...this._history];
   }
 
   /**
@@ -729,6 +857,16 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         "Assistant mode is ASK. Focus on explanations and answers. Avoid code changes unless the user explicitly requests implementation.",
     };
     sys = sys.trim() ? `${sys.trim()}\n\n${modeHints[this._assistantMode]}` : modeHints[this._assistantMode];
+    try {
+      const { getCustomInstructionsPrompt } = require("./customInstructions");
+      const ci = getCustomInstructionsPrompt();
+      if (ci) sys += ci;
+    } catch { /* ignore */ }
+    try {
+      const { getProjectContextSummary } = require("./contextIndexer");
+      const ctx = getProjectContextSummary();
+      if (ctx && ctx !== "Project not yet indexed.") sys += `\n\nProject context: ${ctx}`;
+    } catch { /* ignore */ }
     const messages: ApiChatMessage[] = [];
     if (sys.trim()) {
       messages.push({ role: "system", content: sys });

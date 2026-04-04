@@ -11,6 +11,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.8] - 2026-04-04
+
+### Added
+
+- **Composer Mode**: Multi-file AI code generation with plan → preview → apply flow.
+- **Code block toolbar**: Copy, Insert at Cursor, Replace Selection, Apply, Open Diff, Save buttons on every code block.
+- **Chat message actions**: Continue generation, Fork chat, Pin message, Export message, Apply All Changes.
+- **AI Git commands**: AI-generated commit messages from staged diff; AI-generated PR descriptions.
+- **20+ slash commands**: /fix, /tests, /review, /refactor, /explain, /optimize, /doc, /terminal, /workspace, /commit, /pr, /scaffold, /composer, /export, /fetchai, /instructions, /audit.
+- **Project scaffolding**: 7 templates — React, Next.js, Express, FastAPI, Chrome Extension, VS Code Extension, SaaS Starter.
+- **Custom instructions**: Persistent rules editor, auto-injected into every API call.
+- **Stack auto-detection** (`contextIndexer.ts`): Detects framework, package manager, test framework, linter, formatter, database, ORM, CSS framework, UI library, deployment platform.
+- **Symbol extraction**: Indexes classes, functions, interfaces, types, components, routes from workspace files.
+- **Fetch.ai integration**: uAgent creation, Agent Communication, Agentverse Deploy, Agent Transaction, MCP Integration, Multi-Agent System, Docs Lookup.
+- **Advanced markdown**: Collapsible `<details>` sections, GitHub-style callouts (`[!NOTE]`, `[!WARNING]`), blockquotes.
+- **Drag-and-drop**: Drop files and images into chat for context; images read as data URLs.
+- **Diff & revert system**: Side-by-side diff preview, revert history, file snapshots before changes.
+- **Search-and-replace patching**: `workspace_patch_file` tool for targeted edits without full overwrite.
+- **Content search**: `workspace_search_text` tool for full-text/regex search across workspace.
+- **Audit logging** (`security/auditLogger.ts`): Track all tool executions with show/clear commands.
+- **Background workspace indexing**: Auto-indexes project context 3s after activation.
+- **Chat export**: Export chat history to Markdown or JSON.
+
+### Changed
+
+- **Modular architecture**: Split `asiClient.ts` into `api/` (config, retries, models, streaming), `tools/` (definitions, executor), `security/` (commandAllowlist, auditLogger).
+- Terminal security integrated via dedicated `security/commandAllowlist.ts` module.
+- Custom instructions and project context auto-injected into system prompt.
+- Version bump to **0.1.8**.
+
+---
+
 ## [0.1.7] - 2026-04-04
 
 ### Fixed
