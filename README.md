@@ -8,7 +8,7 @@
 
 # Fetch Coder
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.6**
+### AI Coding Assistant for VS Code & Cursor · **v0.1.7**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder">
@@ -29,8 +29,8 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.6">
-    <img src="https://img.shields.io/badge/release-v0.1.6-22c55e?style=flat" alt="Version 0.1.6" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.7">
+    <img src="https://img.shields.io/badge/release-v0.1.7-22c55e?style=flat" alt="Version 0.1.7" />
   </a>
 </p>
 
@@ -165,7 +165,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./fetch-coder-0.1.6.vsix
+code --install-extension ./fetch-coder-0.1.7.vsix
 ```
 
 Or:
@@ -380,17 +380,10 @@ The VSIX uses **`README.vsix.md`** for the Marketplace listing (`vscode:prepubli
 
 ---
 
-## What's new in v0.1.6
+## What's new in v0.1.7
 
-- New Fetch Coder logo and branding  
-- Auto-apply: generated files are written to workspace automatically  
-- Terminal tool: AI can run shell commands (npm, git, node, etc.)  
-- Follow-up suggestions after every AI response  
-- Inline edit (Cmd+I / Ctrl+I) with language context  
-- Fixed `_broadcast` infinite recursion crash  
-- Fixed VS Code 1.91 compatibility (engine requirement lowered)  
-- Fixed EventEmitter memory leak in inline completions  
-- Quick action buttons on empty chat screen  
+- Fixed Open VSX publishing: improved namespace creation workflow  
+- CI/CD reliability improvements for Marketplace and Open VSX  
 
 ## Roadmap
 
