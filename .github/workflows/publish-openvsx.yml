@@ -30,10 +30,19 @@ jobs:
       - run: npm ci
       - run: npm run compile
 
-      - name: Publish to Open VSX
+      - name: Create Open VSX namespace (if needed)
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
           npx ovsx --version
-          npx ovsx create-namespace gautammanak2 --pat "$OVSX_PAT" || true
-          npx ovsx publish --pat "$OVSX_PAT"
+          echo "Creating namespace 'gautammanak2' (will fail gracefully if it already exists)..."
+          if npx ovsx create-namespace gautammanak2 --pat "$OVSX_PAT" 2>&1; then
+            echo "✅ Namespace created or already exists"
+          else
+            echo "⚠️  create-namespace returned non-zero — namespace may already exist, continuing…"
+          fi
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx publish --pat "$OVSX_PAT"

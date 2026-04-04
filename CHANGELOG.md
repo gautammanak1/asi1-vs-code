@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.7] - 2026-04-04
+
+### Fixed
+
+- Open VSX publish workflow: split `create-namespace` into its own step with proper error reporting instead of silently suppressing failures with `|| true`.
+
+### Changed
+
+- Version bump to **0.1.7** with updated README and Marketplace metadata.
+
+---
+
 ## [0.1.5] - 2026-04-02
 
 ### Changed
@@ -99,7 +111,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.1.5...HEAD  
+[Unreleased]: https://github.com/gautammanak1/asi1-vs-code/compare/v0.1.7...HEAD  
+[0.1.7]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.7  
 [0.1.5]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.5  
 [0.1.4]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.4  
 [0.1.3]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.3  

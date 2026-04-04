@@ -3,7 +3,7 @@
   "displayName": "Fetch Coder",
   "description": "AI coding assistant for VS Code — chat, inline completions, code actions, inline editing, and terminal help powered by ASI1.",
   "icon": "resources/icon.png",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "publisher": "gautammanak2",
   "license": "MIT",
   "author": "Gautam Manak",
