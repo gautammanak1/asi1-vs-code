@@ -1,9 +1,5 @@
 <div align="center">
 
-<p align="center">
-  <img src="./resources/icon.png" alt="Fetch Coder" width="96" height="96" />
-</p>
-
 <img src="./resources/readme-banner.png" alt="Fetch Coder Banner" width="100%" />
 
 # Fetch Coder
