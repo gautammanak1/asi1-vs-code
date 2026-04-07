@@ -80,6 +80,21 @@ async function resolveApiKey(): Promise<string | undefined> {
   return process.env.ASI_ONE_API_KEY?.trim() || undefined;
 }
 
+function extractApiErrorMessage(json: unknown, rawText: string): string {
+  if (typeof json === "object" && json !== null && "error" in json) {
+    const errObj = (json as { error: unknown }).error;
+    if (typeof errObj === "object" && errObj !== null && "message" in errObj) {
+      return String((errObj as { message: unknown }).message);
+    }
+    return JSON.stringify(errObj);
+  }
+  const clean = rawText.replace(/<[^>]*>/g, "").trim();
+  if (clean.length > 200) {
+    return clean.slice(0, 200) + "…";
+  }
+  return clean || "Unknown error";
+}
+
 function readConfig() {
   const config = vscode.workspace.getConfiguration("asiAssistant");
   const url = config.get<string>("baseUrl") ?? "https://api.asi1.ai/v1/chat/completions";
@@ -152,14 +167,14 @@ export async function runChatWithTools(
     try {
       json = JSON.parse(text);
     } catch {
-      throw new Error(`ASI API returned non-JSON (${res.status}): ${text.slice(0, 500)}`);
+      throw new Error(
+        `The ASI API returned an unexpected response (HTTP ${res.status}). ` +
+        `The service may be temporarily unavailable — please try again in a moment.`
+      );
     }
     if (!res.ok) {
-      const errMsg =
-        typeof json === "object" && json !== null && "error" in json
-          ? JSON.stringify((json as { error: unknown }).error)
-          : text.slice(0, 500);
-      throw new Error(`ASI API error ${res.status}: ${errMsg}`);
+      const errMsg = extractApiErrorMessage(json, text);
+      throw new Error(`ASI API error (${res.status}): ${errMsg}`);
     }
     const obj = json as {
       choices?: Array<{ message?: { content?: string | null } }>;
@@ -195,27 +210,26 @@ export async function runChatWithTools(
     // Compatibility: some OpenAI-compatible gateways read this nested form.
     body.extra_body = { web_search: webSearch };
 
-    const res = await fetch(url, {
+    const res = await fetchWithRetry(url, {
       method: "POST",
       headers,
       body: JSON.stringify(body),
-      signal: options.signal,
-    });
+    }, options.signal);
 
     const text = await res.text();
     let json: unknown;
     try {
       json = JSON.parse(text);
     } catch {
-      throw new Error(`ASI API returned non-JSON (${res.status}): ${text.slice(0, 500)}`);
+      throw new Error(
+        `The ASI API returned an unexpected response (HTTP ${res.status}). ` +
+        `The service may be temporarily unavailable — please try again in a moment.`
+      );
     }
 
     if (!res.ok) {
-      const errMsg =
-        typeof json === "object" && json !== null && "error" in json
-          ? JSON.stringify((json as { error: unknown }).error)
-          : text.slice(0, 500);
-      throw new Error(`ASI API error ${res.status}: ${errMsg}`);
+      const errMsg = extractApiErrorMessage(json, text);
+      throw new Error(`ASI API error (${res.status}): ${errMsg}`);
     }
 
     const obj = json as {
@@ -242,10 +256,13 @@ export async function runChatWithTools(
     msgs.push(assistantMsg);
 
     const finish = choice?.finish_reason ?? "";
-    if (finish === "tool_calls" && message.tool_calls?.length) {
-      for (const tc of message.tool_calls) {
+    const hasToolCalls = message.tool_calls?.length;
+    if (hasToolCalls && (finish === "tool_calls" || finish === "tool_use" || finish === "stop")) {
+      for (const tc of message.tool_calls!) {
         const fn = tc.function?.name ?? "";
-        const args = tc.function?.arguments ?? "{}";
+        const args = tc.function?.arguments
+          ?? (tc as unknown as Record<string, unknown>).arguments as string
+          ?? "{}";
         options.onToolEvent?.({
           phase: "start",
           round: round + 1,
@@ -344,14 +361,14 @@ export async function completeChat(
       status: "error",
       error: `Non-JSON response (${res.status})`,
     });
-    throw new Error(`ASI API returned non-JSON (${res.status}): ${text.slice(0, 500)}`);
+    throw new Error(
+      `The ASI API returned an unexpected response (HTTP ${res.status}). ` +
+      `The service may be temporarily unavailable — please try again in a moment.`
+    );
   }
 
   if (!res.ok) {
-    const errMsg =
-      typeof json === "object" && json !== null && "error" in json
-        ? JSON.stringify((json as { error: unknown }).error)
-        : text.slice(0, 500);
+    const errMsg = extractApiErrorMessage(json, text);
     logChatRequest({
       model,
       messages: messages.map(m => ({ role: m.role, content: m.content })),
@@ -360,7 +377,7 @@ export async function completeChat(
       status: "error",
       error: errMsg,
     });
-    throw new Error(`ASI API error ${res.status}: ${errMsg}`);
+    throw new Error(`ASI API error (${res.status}): ${errMsg}`);
   }
 
   const obj = json as {
@@ -428,12 +445,11 @@ export async function completeChatStreaming(
 
   const _logStartTime = Date.now();
 
-  const res = await fetch(url, {
+  const res = await fetchWithRetry(url, {
     method: "POST",
     headers,
     body: JSON.stringify(body),
-    signal,
-  });
+  }, signal);
 
   const ct = res.headers.get("content-type") ?? "";
 
@@ -445,7 +461,10 @@ export async function completeChatStreaming(
     } catch {
       err = text;
     }
-    const errMsg = `ASI API error ${res.status}: ${typeof err === "object" ? JSON.stringify(err) : String(err).slice(0, 500)}`;
+    const errDetail = typeof err === "object" && err !== null && "error" in err
+      ? extractApiErrorMessage(err, "")
+      : String(err).replace(/<[^>]*>/g, "").slice(0, 200);
+    const errMsg = `ASI API error (${res.status}): ${errDetail || "The service may be temporarily unavailable."}`;
     logChatRequest({
       model,
       messages: messages.map(m => ({ role: m.role, content: typeof m.content === "string" ? m.content : "" })),
@@ -524,7 +543,10 @@ export async function completeChatStreaming(
       status: "error",
       error: "Non-JSON response",
     });
-    throw new Error(`ASI API returned non-JSON: ${text.slice(0, 500)}`);
+    throw new Error(
+      `The ASI API returned an unexpected response. ` +
+      `The service may be temporarily unavailable — please try again in a moment.`
+    );
   }
   const obj = json as {
     choices?: Array<{ message?: { content?: string }; text?: string }>;
@@ -659,15 +681,15 @@ export async function generateImage(options: {
   try {
     json = JSON.parse(text);
   } catch {
-    throw new Error(`Image API returned non-JSON (${res.status}): ${text.slice(0, 500)}`);
+    throw new Error(
+      `The Image API returned an unexpected response (HTTP ${res.status}). ` +
+      `The service may be temporarily unavailable — please try again.`
+    );
   }
 
   if (!res.ok) {
-    const errMsg =
-      typeof json === "object" && json !== null && "error" in json
-        ? JSON.stringify((json as { error: unknown }).error)
-        : text.slice(0, 500);
-    throw new Error(`Image API error ${res.status}: ${errMsg}`);
+    const errMsg = extractApiErrorMessage(json, text);
+    throw new Error(`Image API error (${res.status}): ${errMsg}`);
   }
 
   const obj = json as {

@@ -378,6 +378,9 @@ This **`README.vsix.md`** file is what ships as the Marketplace long description
 
 ## What's new in v0.1.8
 
+- **Advanced agent system prompt** — diff preview mode, terminal safety, multi-step autonomous execution  
+- **ASI:One function calling alignment** — tool schemas use `strict: true` per [ASI:One docs](https://innovationlab.fetch.ai/resources/docs/asione/build/function-calling)  
+- **Robust error handling** — API 500 errors retry 3× with backoff; clean error messages  
 - **Composer Mode** — plan multi-file changes, preview diffs, apply all at once  
 - **Code block toolbar** — Copy, Insert, Replace, Apply, Diff, Save on every code block  
 - **AI commit messages & PR generation** — one-click git workflow  
