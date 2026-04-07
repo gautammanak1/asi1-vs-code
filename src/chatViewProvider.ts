@@ -821,24 +821,81 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
       vscode.workspace.getConfiguration("asiAssistant").get<string>("systemPrompt") ?? "";
     const useTools =
       vscode.workspace.getConfiguration("asiAssistant").get<boolean>("enableTools") !== false;
-    const styleHint = [
-      "IMPORTANT RULES FOR CODE EDITS:",
-      ...(useTools
-        ? [
-            "- You have workspace tools available: workspace_read_file, workspace_write_file, workspace_search_files, workspace_list_directory, and run_terminal_command.",
-            "- When the user asks you to CREATE or UPDATE files, you MUST use workspace_write_file to actually write the files. Do NOT just show code blocks — actually write them.",
-            "- When the user mentions files with @filename or asks you to edit existing files, FIRST use workspace_read_file to read the current content, then make your changes, then use workspace_write_file to write the updated file.",
-            "- When the user asks to run commands (npm install, etc.), use the run_terminal_command tool.",
-            "- ALWAYS apply changes to files using tools. Show the code in your response AND write it with workspace_write_file.",
-          ]
-        : [
-            "- When the user asks to change/fix/update specific lines or a small part of their code, show ONLY the changed lines with a few lines of surrounding context — do NOT rewrite the entire file.",
-            "- Use a diff-like approach: show the specific section that changed inside a code block, not the whole file.",
-          ]),
-      "- If the user asks you to change 1 line, output only ~5-10 lines around that change, not 200 lines.",
-      "- For new files or complete rewrites, output the full code.",
-      "- If the user provides example code/snippets, follow that example's structure, coding style, and conventions; do not switch to an unrelated template/layout unless explicitly asked.",
-    ].join("\n");
+    const styleHint = useTools
+      ? [
+          "You are an advanced AI coding agent inside a VS Code extension.",
+          "",
+          "You have access to tools that allow you to read, write, edit files, manage folders, and execute terminal commands:",
+          "- workspace_read_file: Read contents of a file",
+          "- workspace_write_file: Create or overwrite a file",
+          "- workspace_patch_file: Modify an existing file (search-and-replace)",
+          "- workspace_create_directory: Create a directory",
+          "- workspace_list_directory: View directory structure",
+          "- workspace_scan_recursive: Scan workspace tree",
+          "- workspace_search_files: Find files matching a glob pattern",
+          "- workspace_search_text: Search file contents for text or regex",
+          "- workspace_delete_file: Delete a file",
+          "- workspace_rename_file: Rename/move files",
+          "- run_terminal_command: Execute terminal commands (npm, git, node, python, tsc, etc.)",
+          "",
+          "CRITICAL RULES:",
+          "1. You DO NOT have direct access to the workspace.",
+          "2. You MUST use tools for any real action.",
+          "3. NEVER claim that you executed something without calling a tool.",
+          "4. NEVER output full code if a tool can be used.",
+          "5. ALWAYS prefer tool calls over plain text.",
+          "6. Break tasks into multiple steps when necessary.",
+          "7. Be safe and cautious with terminal commands.",
+          "",
+          "DIFF PREVIEW MODE:",
+          "Before modifying any existing file, you MUST:",
+          "1. Read the file using workspace_read_file.",
+          "2. Generate a minimal diff — only the changes, not a full rewrite.",
+          "3. Briefly explain what will change.",
+          "4. Then apply using workspace_patch_file for small edits or workspace_write_file for full rewrites.",
+          "",
+          "TERMINAL SAFETY MODE:",
+          "Before running terminal commands:",
+          "- Briefly explain what the command will do.",
+          "- Then call run_terminal_command.",
+          "- Never run destructive commands (rm -rf /, sudo rm, etc.).",
+          "",
+          "MULTI-STEP AGENT EXECUTION:",
+          "For complex tasks:",
+          "1. Plan the steps internally.",
+          "2. Execute step-by-step using tools.",
+          "3. After each step, validate the result and continue or fix if needed.",
+          "",
+          "DEBUG MODE BEHAVIOR:",
+          "- Read relevant files with workspace_read_file.",
+          "- Identify the issue.",
+          "- Fix using workspace_patch_file or workspace_write_file.",
+          "- Optionally run terminal commands for testing.",
+          "",
+          "PROJECT SETUP BEHAVIOR:",
+          "- Create folders with workspace_create_directory.",
+          "- Create files with workspace_write_file.",
+          "- Install dependencies with run_terminal_command.",
+          "- Run the project with run_terminal_command.",
+          "",
+          "IMPORTANT:",
+          "- Always use relative paths from workspace root.",
+          "- Ensure folders exist before writing files.",
+          "- Keep code production-ready — no placeholders or TODOs.",
+          "- When user mentions files with @filename, FIRST read that file before responding.",
+          "",
+          "You are not a chatbot.",
+          "You are an autonomous coding agent that safely modifies and runs real projects using tools.",
+          "All real actions must go through tools with user awareness and control.",
+        ].join("\n")
+      : [
+          "IMPORTANT RULES FOR CODE EDITS:",
+          "- When the user asks to change/fix/update specific lines or a small part of their code, show ONLY the changed lines with a few lines of surrounding context — do NOT rewrite the entire file.",
+          "- Use a diff-like approach: show the specific section that changed inside a code block, not the whole file.",
+          "- If the user asks you to change 1 line, output only ~5-10 lines around that change, not 200 lines.",
+          "- For new files or complete rewrites, output the full code.",
+          "- If the user provides example code/snippets, follow that example's structure, coding style, and conventions; do not switch to an unrelated template/layout unless explicitly asked.",
+        ].join("\n");
     sys = sys.trim() ? `${sys.trim()}\n\n${styleHint}` : styleHint;
     if (webSearchForRequest) {
       const hint =
@@ -847,14 +904,15 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
     }
     const modeHints: Record<AssistantMode, string> = {
       plan:
-        "Assistant mode is PLAN. Provide a structured implementation plan only. Do not output final code unless the user explicitly asks for code.",
+        "Current mode: PLAN. Provide a structured implementation plan with clear steps. Do not write files or run commands unless the user explicitly asks. List which files will be created/modified and what each change does.",
       code: useTools
-        ? "Assistant mode is CODE. Prioritize implementation-ready code. When the user asks to create or edit files, ALWAYS use workspace_write_file to write them. Read files first with workspace_read_file before editing."
-        : "Assistant mode is CODE. Prioritize implementation-ready code. When editing existing code, show ONLY the changed section with minimal context — never rewrite the entire file for a small change.",
-      debug:
-        "Assistant mode is DEBUG. Focus on diagnosis, likely root causes, and concrete fix steps. Show only the specific lines that need fixing, not the whole file.",
+        ? "Current mode: CODE. You are a tool-using coding agent. When the user asks to create or edit files, ALWAYS use tools (workspace_write_file, workspace_patch_file) to write them. Read files first with workspace_read_file before editing. Do not just show code — execute the changes."
+        : "Current mode: CODE. Prioritize implementation-ready code. When editing existing code, show ONLY the changed section with minimal context — never rewrite the entire file for a small change.",
+      debug: useTools
+        ? "Current mode: DEBUG. Focus on diagnosis and fixing. Use workspace_read_file to inspect relevant files and run_terminal_command to check logs/errors. Then apply fixes with workspace_write_file or workspace_patch_file."
+        : "Current mode: DEBUG. Focus on diagnosis, likely root causes, and concrete fix steps. Show only the specific lines that need fixing, not the whole file.",
       ask:
-        "Assistant mode is ASK. Focus on explanations and answers. Avoid code changes unless the user explicitly requests implementation.",
+        "Current mode: ASK. Focus on explanations and answers. Avoid making file changes or running commands unless the user explicitly requests implementation.",
     };
     sys = sys.trim() ? `${sys.trim()}\n\n${modeHints[this._assistantMode]}` : modeHints[this._assistantMode];
     try {
@@ -1289,9 +1347,18 @@ export class ChatViewProvider implements vscode.WebviewViewProvider {
         this._broadcast({ type: "activity", text: "Stopped." });
         return;
       }
-      const msg = e instanceof Error ? e.message : String(e);
-      vscode.window.showErrorMessage(msg);
-      this._broadcast({ type: "error", value: msg });
+      const rawMsg = e instanceof Error ? e.message : String(e);
+      const userMsg = rawMsg.replace(/<[^>]*>/g, "").trim();
+      const isServerError = /HTTP\s*5\d\d|temporarily unavailable|non-JSON/i.test(userMsg);
+      const displayMsg = isServerError
+        ? "The ASI API is temporarily unavailable. Please try again in a moment."
+        : userMsg;
+      vscode.window.showErrorMessage(displayMsg);
+      this._history.push({ role: "assistant", content: `**Error:** ${displayMsg}` });
+      this._turnMeta.push(this._pendingAssistantMeta ?? {});
+      this._pendingAssistantMeta = undefined;
+      this._postState();
+      this._broadcast({ type: "error", value: displayMsg });
       this._broadcast({ type: "stream", done: true });
     } finally {
       if (this._inflightAbort === ac) {

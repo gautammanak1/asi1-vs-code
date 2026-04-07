@@ -4,7 +4,7 @@
 
 # Fetch Coder
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.8**
+### AI Coding Assistant for VS Code & Cursor · **v0.1.9**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder">
@@ -25,8 +25,8 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.8">
-    <img src="https://img.shields.io/badge/release-v0.1.8-22c55e?style=flat" alt="Version 0.1.8" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.9">
+    <img src="https://img.shields.io/badge/release-v0.1.9-22c55e?style=flat" alt="Version 0.1.9" />
   </a>
 </p>
 
@@ -171,7 +171,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./fetch-coder-0.1.8.vsix
+code --install-extension ./fetch-coder-0.1.9.vsix
 ```
 
 Or:
@@ -419,8 +419,11 @@ The VSIX uses **`README.vsix.md`** for the Marketplace listing (`vscode:prepubli
 
 ---
 
-## What's new in v0.1.8
+## What's new in v0.1.9
 
+- **Advanced agent system prompt** — diff preview mode, terminal safety, multi-step execution, autonomous coding agent behavior  
+- **ASI:One function calling alignment** — tool schemas use `strict: true` and `additionalProperties: false` per [ASI:One docs](https://innovationlab.fetch.ai/resources/docs/asione/build/function-calling)  
+- **Robust error handling** — API 500 errors now retry 3× with exponential backoff (1s, 3s, 8s); user-friendly error messages instead of raw HTML dumps  
 - **Composer Mode** — plan multi-file changes, preview diffs, apply all at once  
 - **Code block toolbar** — Copy, Insert, Replace, Apply, Diff, Save buttons on every code block  
 - **Chat message actions** — Retry, Continue, Fork, Pin, Export on every message  
