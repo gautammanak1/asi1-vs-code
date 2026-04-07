@@ -95,6 +95,56 @@ function extractApiErrorMessage(json: unknown, rawText: string): string {
   return clean || "Unknown error";
 }
 
+/**
+ * Parse tool calls from text content when the model outputs them as
+ * `<tool_call>name<arg_key>k</arg_key><arg_value>v</arg_value></tool_call>` tags
+ * instead of structured tool_calls in the API response.
+ */
+function parseTextToolCalls(content: string): ToolCall[] {
+  const toolCalls: ToolCall[] = [];
+  const tagRegex = /<tool_call>([\s\S]*?)<\/tool_call>/g;
+  let match: RegExpExecArray | null;
+  let callIndex = 0;
+
+  while ((match = tagRegex.exec(content)) !== null) {
+    const block = match[1].trim();
+    const argKeyRegex = /<arg_key>([\s\S]*?)<\/arg_key>\s*<arg_value>([\s\S]*?)<\/arg_value>/g;
+    const args: Record<string, string> = {};
+    let argMatch: RegExpExecArray | null;
+    let fnName = "";
+
+    const firstTagPos = block.indexOf("<arg_key>");
+    if (firstTagPos > 0) {
+      fnName = block.slice(0, firstTagPos).trim();
+    } else {
+      fnName = block.split(/\s/)[0] ?? "";
+    }
+
+    while ((argMatch = argKeyRegex.exec(block)) !== null) {
+      const key = argMatch[1].trim();
+      const value = argMatch[2].trim();
+      args[key] = value;
+    }
+
+    if (fnName) {
+      toolCalls.push({
+        id: `text_call_${callIndex++}_${Date.now()}`,
+        type: "function",
+        function: {
+          name: fnName,
+          arguments: JSON.stringify(args),
+        },
+      });
+    }
+  }
+
+  return toolCalls;
+}
+
+function stripToolCallTags(text: string): string {
+  return text.replace(/<tool_call>[\s\S]*?<\/tool_call>/g, "").trim();
+}
+
 function readConfig() {
   const config = vscode.workspace.getConfiguration("asiAssistant");
   const url = config.get<string>("baseUrl") ?? "https://api.asi1.ai/v1/chat/completions";
@@ -248,17 +298,21 @@ export async function runChatWithTools(
       throw new Error("ASI API: empty choices[0].message");
     }
 
+    let toolCalls: ToolCall[] = message.tool_calls ?? [];
+
+    if (!toolCalls.length && message.content) {
+      toolCalls = parseTextToolCalls(message.content);
+    }
+
     const assistantMsg: ApiChatMessage = {
       role: "assistant",
       content: message.content ?? null,
-      ...(message.tool_calls?.length ? { tool_calls: message.tool_calls } : {}),
+      ...(toolCalls.length ? { tool_calls: toolCalls } : {}),
     };
     msgs.push(assistantMsg);
 
-    const finish = choice?.finish_reason ?? "";
-    const hasToolCalls = message.tool_calls?.length;
-    if (hasToolCalls && (finish === "tool_calls" || finish === "tool_use" || finish === "stop")) {
-      for (const tc of message.tool_calls!) {
+    if (toolCalls.length) {
+      for (const tc of toolCalls) {
         const fn = tc.function?.name ?? "";
         const args = tc.function?.arguments
           ?? (tc as unknown as Record<string, unknown>).arguments as string
@@ -296,6 +350,9 @@ export async function runChatWithTools(
       lastAssistantText = last.content;
     }
   }
+
+  lastAssistantText = stripToolCallTags(lastAssistantText);
+
   if (lastAssistantText === "") {
     throw new Error("ASI:One returned no assistant text (tool loop may have exceeded max rounds).");
   }

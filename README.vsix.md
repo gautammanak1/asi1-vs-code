@@ -4,7 +4,7 @@
 
 # Fetch Coder
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.9**
+### AI Coding Assistant for VS Code & Cursor · **v0.2.0**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder">
@@ -376,7 +376,7 @@ This **`README.vsix.md`** file is what ships as the Marketplace long description
 
 ---
 
-## What's new in v0.1.9
+## What's new in v0.2.0
 
 - **Advanced agent system prompt** — diff preview mode, terminal safety, multi-step autonomous execution  
 - **ASI:One function calling alignment** — tool schemas use `strict: true` per [ASI:One docs](https://innovationlab.fetch.ai/resources/docs/asione/build/function-calling)  

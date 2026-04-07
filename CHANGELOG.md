@@ -11,6 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-04-07
+
+### Added
+
+- **Text-based tool call parser**: Fallback parser for ASI:One responses that return tool calls as `<tool_call>` XML tags in text content instead of structured `tool_calls` in the API response. The extension now detects, parses, and executes these automatically.
+- **Tool call tag stripping**: Raw `<tool_call>` XML tags are stripped from displayed chat text so users see clean output.
+
+### Fixed
+
+- Tool calls from ASI:One API that arrive as text content are now properly executed instead of being displayed as raw XML in the chat.
+
+---
+
 ## [0.1.9] - 2026-04-07
 
 ### Added

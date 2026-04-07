@@ -4,7 +4,7 @@
 
 # Fetch Coder
 
-### AI Coding Assistant for VS Code & Cursor · **v0.1.9**
+### AI Coding Assistant for VS Code & Cursor · **v0.2.0**
 
 <p align="center">
   <a href="https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder">
@@ -25,8 +25,8 @@
   <a href="https://www.fetch.ai/">
     <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
   </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.1.9">
-    <img src="https://img.shields.io/badge/release-v0.1.9-22c55e?style=flat" alt="Version 0.1.9" />
+  <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.0">
+    <img src="https://img.shields.io/badge/release-v0.2.0-22c55e?style=flat" alt="Version 0.2.0" />
   </a>
 </p>
 
@@ -171,7 +171,7 @@ npm run package
 Then install:
 
 ```bash
-code --install-extension ./fetch-coder-0.1.9.vsix
+code --install-extension ./fetch-coder-0.2.0.vsix
 ```
 
 Or:
@@ -419,7 +419,7 @@ The VSIX uses **`README.vsix.md`** for the Marketplace listing (`vscode:prepubli
 
 ---
 
-## What's new in v0.1.9
+## What's new in v0.2.0
 
 - **Advanced agent system prompt** — diff preview mode, terminal safety, multi-step execution, autonomous coding agent behavior  
 - **ASI:One function calling alignment** — tool schemas use `strict: true` and `additionalProperties: false` per [ASI:One docs](https://innovationlab.fetch.ai/resources/docs/asione/build/function-calling)  
