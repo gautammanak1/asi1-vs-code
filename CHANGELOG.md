@@ -11,6 +11,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.1.9] - 2026-04-07
+
+### Added
+
+- **Advanced agent system prompt**: Diff preview mode (read before edit), terminal safety mode (explain before run), multi-step agent execution with validation, debug mode, project setup mode.
+- **ASI:One function calling alignment**: All 11 tool schemas now include `strict: true` and `additionalProperties: false` per [ASI:One docs](https://innovationlab.fetch.ai/resources/docs/asione/build/function-calling).
+- **Robust API error handling**: All API paths use `fetchWithRetry` with 3× retry and exponential backoff (1s, 3s, 8s) for HTTP 429/500/502/503/504. Clean user-friendly error messages instead of raw HTML dumps.
+
+### Changed
+
+- Tool calling loop accepts `finish_reason` of `tool_calls`, `tool_use`, or `stop` with tool calls present for broader ASI:One compatibility.
+- Handles `arguments` at both `tc.function.arguments` and `tc.arguments` levels.
+- Retries module now covers 502/503/504 in addition to 429/500, with proper response body drain before retry.
+- Version bump to **0.1.9**.
+
+---
+
 ## [0.1.8] - 2026-04-04
 
 ### Added
