@@ -17,7 +17,7 @@ if ! "$BUF" format -w --exit-code; then
 fi
 
 if grep -rn "rpc .*[A-Z][A-Z].*[(]" --include="*.proto" proto/; then
-	# See https://github.com/Asi/Asi/pull/7054
+	# See https://github.com/gautammanak1/asi1-vs-code/pull/7054
 	echo Error: Proto RPC names cannot contain repeated capital letters
 	exit 1
 fi

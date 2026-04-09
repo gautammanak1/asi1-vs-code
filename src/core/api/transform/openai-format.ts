@@ -225,7 +225,7 @@ export function convertToOpenAiMessages(
 							// For Gemini: reasoning details must be linkable back to the tool call.
 							// Sometimes OpenRouter/Gemini returns entries without `id`; those poison the next request.
 							// Keep only entries with an id matching the tool call id.
-							// See: https://github.com/asi/Asi/issues/8214
+							// See: https://github.com/gautammanak1/asi1-vs-code/issues/8214
 							const validDetails = toolDetails.filter((detail: any) => detail?.id === toolId)
 							if (validDetails.length > 0) {
 								reasoningDetails.push(...validDetails)
@@ -307,7 +307,7 @@ function consolidateReasoningDetails(reasoningDetails: ReasoningDetail[]): Reaso
 	for (const detail of reasoningDetails) {
 		// Drop corrupted encrypted reasoning blocks that would otherwise trigger:
 		// "Invalid input: expected string, received undefined" for reasoning_details.*.data
-		// See: https://github.com/asi/Asi/issues/8214
+		// See: https://github.com/gautammanak1/asi1-vs-code/issues/8214
 		if (detail.type === "reasoning.encrypted" && !detail.data) continue
 
 		const index = detail.index ?? 0

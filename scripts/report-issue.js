@@ -63,7 +63,7 @@ const checkGitHubAuth = async () => {
 
 const createIssueUrl = (systemInfo, issueTitle) => {
 	return (
-		`https://github.com/Asi/Asi/issues/new?template=bug_report.yml` +
+		`https://github.com/gautammanak1/asi1-vs-code/issues/new?template=bug_report.yml` +
 		`&title=${issueTitle}` +
 		`&operating-system=${systemInfo.os}` +
 		`&Asi-version=${systemInfo.AsiVersion}` +

@@ -8,7 +8,7 @@ We actively patch only the most recent minor release of Asi. Older versions rece
 
 We appreciate your efforts to responsibly disclose your findings and will make every effort to acknowledge your contributions.
 
-To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/Asi/Asi/security/advisories/new) tab.
+To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/gautammanak1/asi1-vs-code/security/advisories/new) tab.
 
 The team will send a response indicating the next steps in handling your report. After the initial reply, the security team will keep you informed of the progress towards a fix and full announcement, and may ask for additional information or guidance.
 

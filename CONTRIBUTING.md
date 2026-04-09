@@ -4,10 +4,10 @@ We're thrilled you're interested in contributing to Asi. Whether you're fixing a
 
 ## Reporting Bugs or Issues
 
-Bug reports help make Asi better for everyone! Before creating a new issue, please [search existing ones](https://github.com/Asi/Asi/issues) to avoid duplicates. When you're ready to report a bug, head over to our [issues page](https://github.com/Asi/Asi/issues/new/choose) where you'll find a template to help you with filling out the relevant information.
+Bug reports help make Asi better for everyone! Before creating a new issue, please [search existing ones](https://github.com/gautammanak1/asi1-vs-code/issues) to avoid duplicates. When you're ready to report a bug, head over to our [issues page](https://github.com/gautammanak1/asi1-vs-code/issues/new/choose) where you'll find a template to help you with filling out the relevant information.
 
 <blockquote class='warning-note'>
-     🔐 <b>Important:</b> If you discover a security vulnerability, please use the <a href="https://github.com/Asi/Asi/security/advisories/new">Github security tool to report it privately</a>.
+     🔐 <b>Important:</b> If you discover a security vulnerability, please use the <a href="https://github.com/gautammanak1/asi1-vs-code/security/advisories/new">Github security tool to report it privately</a>.
 </blockquote>
 
 
@@ -15,7 +15,7 @@ Bug reports help make Asi better for everyone! Before creating a new issue, plea
 
 All contributions must begin with a GitHub Issue, unless the change is for small bug fixes, typo corrections, minor wording improvements, or simple type fixes that don't change functionality.
 **For features and contributions**:
-- First check the [Feature Requests discussions board](https://github.com/Asi/Asi/discussions/categories/feature-requests) for similar ideas
+- First check the [Feature Requests discussions board](https://github.com/gautammanak1/asi1-vs-code/discussions/categories/feature-requests) for similar ideas
 - If your idea is new, create a new feature request  
 - Wait for approval from core maintainers before starting implementation
 - Once approved, feel free to begin working on a PR with the help of our community!
@@ -25,9 +25,9 @@ All contributions must begin with a GitHub Issue, unless the change is for small
 
 ## Deciding What to Work On
 
-Looking for a good first contribution? Check out issues labeled ["good first issue"](https://github.com/Asi/Asi/labels/good%20first%20issue) or ["help wanted"](https://github.com/Asi/Asi/labels/help%20wanted). These are specifically curated for new contributors and areas where we'd love some help!
+Looking for a good first contribution? Check out issues labeled ["good first issue"](https://github.com/gautammanak1/asi1-vs-code/labels/good%20first%20issue) or ["help wanted"](https://github.com/gautammanak1/asi1-vs-code/labels/help%20wanted). These are specifically curated for new contributors and areas where we'd love some help!
 
-We also welcome contributions to our [documentation](https://github.com/Asi/Asi/tree/main/docs)! Whether it's fixing typos, improving existing guides, or creating new educational content - we'd love to build a community-driven repository of resources that helps everyone get the most out of Asi. You can start by diving into `/docs` and looking for areas that need improvement.
+We also welcome contributions to our [documentation](https://github.com/gautammanak1/asi1-vs-code/tree/main/docs)! Whether it's fixing typos, improving existing guides, or creating new educational content - we'd love to build a community-driven repository of resources that helps everyone get the most out of Asi. You can start by diving into `/docs` and looking for areas that need improvement.
 
 ## Development Setup
 
@@ -36,7 +36,7 @@ We also welcome contributions to our [documentation](https://github.com/Asi/Asi/
 
 1. Clone the repository _(Requires [git-lfs](https://git-lfs.com/))_:
     ```bash
-    git clone https://github.com/Asi/Asi.git
+    git clone https://github.com/gautammanak1/asi1-vs-code.git
     ```
 2. Open the project in VSCode:
     ```bash

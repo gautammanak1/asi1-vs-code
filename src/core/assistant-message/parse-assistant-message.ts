@@ -1,8 +1,8 @@
-import { AsiDefaultTool, getToolUseNames } from "@shared/tools"
-import { nanoid } from "nanoid"
+import { AsiDefaultTool, getToolUseNames } from "@shared/tools";
+import { nanoid } from "nanoid";
 import { AssistantMessageContent, TextStreamContent, ToolParamName, ToolUse, toolParamNames } from "."; // Assuming types are defined in index.ts or a similar file
 
-// parseAssistantmessageV1 removed in https://github.com/asi/Asi/pull/5425
+// parseAssistantmessageV1 removed in https://github.com/gautammanak1/asi1-vs-code/pull/5425
 
 /**
  * @description **Version 2**
