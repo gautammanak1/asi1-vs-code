@@ -8,12 +8,7 @@ function traverse(container, output, prefix = "") {
 
 		if (kind === SyntaxKind.ModuleDeclaration) {
 			const name = node.getName().replace(/^['"]|['"]$/g, "")
-			var fullPrefix
-			if (prefix) {
-				fullPrefix = `${prefix}.${name}`
-			} else {
-				fullPrefix = name
-			}
+			const fullPrefix = prefix ? `${prefix}.${name}` : name
 			output.push(`${fullPrefix} = {};`)
 			const body = node.getBody()
 			if (body && body.getKind() === SyntaxKind.ModuleBlock) {

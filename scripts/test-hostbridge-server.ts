@@ -61,12 +61,13 @@ function createMockService<T extends grpc.UntypedServiceImplementation>(serviceN
 
 				// Special cases that need specific return values
 				switch (prop) {
-					case "getWorkspacePaths":
+					case "getWorkspacePaths": {
 						const workspaceDir = process.env.TEST_HOSTBRIDGE_WORKSPACE_DIR || "/test-workspace"
 						callback(null, {
 							paths: [workspaceDir],
 						})
 						return
+					}
 
 					case "getMachineId":
 						callback(null, {
