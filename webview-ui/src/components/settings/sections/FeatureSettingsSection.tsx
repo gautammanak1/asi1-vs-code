@@ -105,7 +105,7 @@ const editorFeatures: FeatureToggle[] = [
 		label: "Asi Web Tools",
 		description: "Access web browsing and search capabilities",
 		stateKey: "AsiWebToolsEnabled",
-		settingKey: "AsiWebToolsEnabled",
+		settingKey: "clineWebToolsEnabled",
 	},
 	{
 		id: "worktrees",

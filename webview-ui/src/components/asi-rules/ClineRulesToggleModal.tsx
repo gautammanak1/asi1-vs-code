@@ -1,11 +1,12 @@
 import { EmptyRequest } from "@shared/proto/Asi/common"
 import {
-    AsiRulesToggles,
+    ClineRulesToggles,
     RefreshedRules,
     RuleScope,
     SkillInfo,
     ToggleAgentsRuleRequest,
-    ToggleAsiRuleRequest,
+    ToggleClineRuleRequest,
+    ToggleClineRules,
     ToggleCursorRuleRequest,
     ToggleSkillRequest,
     ToggleWindsurfRuleRequest,
@@ -80,11 +81,11 @@ const AsiRulesToggleModal: React.FC = () => {
 			FileServiceClient.refreshRules({} as EmptyRequest)
 				.then((response: RefreshedRules) => {
 					// Update state with the response data using all available setters
-					if (response.globalAsiRulesToggles?.toggles) {
-						setGlobalAsiRulesToggles(response.globalAsiRulesToggles.toggles)
+					if (response.globalClineRulesToggles?.toggles) {
+						setGlobalAsiRulesToggles(response.globalClineRulesToggles.toggles)
 					}
-					if (response.localAsiRulesToggles?.toggles) {
-						setLocalAsiRulesToggles(response.localAsiRulesToggles.toggles)
+					if (response.localClineRulesToggles?.toggles) {
+						setLocalAsiRulesToggles(response.localClineRulesToggles.toggles)
 					}
 					if (response.localCursorRulesToggles?.toggles) {
 						setLocalCursorRulesToggles(response.localCursorRulesToggles.toggles)
@@ -231,8 +232,8 @@ const AsiRulesToggleModal: React.FC = () => {
 
 	// Handle toggle rule using gRPC
 	const toggleRule = (isGlobal: boolean, rulePath: string, enabled: boolean) => {
-		FileServiceClient.toggleAsiRule(
-			ToggleAsiRuleRequest.create({
+		FileServiceClient.toggleClineRule(
+			ToggleClineRuleRequest.create({
 				scope: isGlobal ? RuleScope.GLOBAL : RuleScope.LOCAL,
 				rulePath,
 				enabled,
@@ -240,11 +241,11 @@ const AsiRulesToggleModal: React.FC = () => {
 		)
 			.then((response) => {
 				// Update the local state with the response
-				if (response.globalAsiRulesToggles?.toggles) {
-					setGlobalAsiRulesToggles(response.globalAsiRulesToggles.toggles)
+				if (response.globalClineRulesToggles?.toggles) {
+					setGlobalAsiRulesToggles(response.globalClineRulesToggles.toggles)
 				}
-				if (response.localAsiRulesToggles?.toggles) {
-					setLocalAsiRulesToggles(response.localAsiRulesToggles.toggles)
+				if (response.localClineRulesToggles?.toggles) {
+					setLocalAsiRulesToggles(response.localClineRulesToggles.toggles)
 				}
 				if (response.remoteRulesToggles?.toggles) {
 					setRemoteRulesToggles(response.remoteRulesToggles.toggles)
@@ -280,7 +281,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				enabled,
 			} as ToggleWindsurfRuleRequest),
 		)
-			.then((response: AsiRulesToggles) => {
+			.then((response: ClineRulesToggles) => {
 				if (response.toggles) {
 					setLocalWindsurfRulesToggles(response.toggles)
 				}
@@ -297,7 +298,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				enabled,
 			} as ToggleAgentsRuleRequest),
 		)
-			.then((response: AsiRulesToggles) => {
+			.then((response: ClineRulesToggles) => {
 				if (response.toggles) {
 					setLocalAgentsRulesToggles(response.toggles)
 				}
@@ -349,8 +350,8 @@ const AsiRulesToggleModal: React.FC = () => {
 
 	// Handle toggle for remote rules
 	const toggleRemoteRule = (ruleName: string, enabled: boolean) => {
-		FileServiceClient.toggleAsiRule(
-			ToggleAsiRuleRequest.create({
+		FileServiceClient.toggleClineRule(
+			ToggleClineRuleRequest.create({
 				scope: RuleScope.REMOTE,
 				rulePath: ruleName,
 				enabled,

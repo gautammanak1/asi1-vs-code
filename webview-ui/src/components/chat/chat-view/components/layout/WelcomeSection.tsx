@@ -166,7 +166,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 					break
 
 				case BannerActionType.InstallCli:
-					StateServiceClient.installAsiCli({}).catch((error) =>
+					StateServiceClient.installClineCli({}).catch((error: Error) =>
 						console.error("Failed to initiate CLI installation:", error),
 					)
 					break

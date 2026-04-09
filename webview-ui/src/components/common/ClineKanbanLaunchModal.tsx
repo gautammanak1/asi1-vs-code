@@ -38,7 +38,7 @@ export const AsiKanbanLaunchModal: React.FC<AsiKanbanLaunchModalProps> = ({ open
 		if (isVsCode) {
 			setIsInstalling(true)
 			try {
-				await StateServiceClient.installAsiCli({})
+				await StateServiceClient.installClineCli({})
 			} catch (error) {
 				console.error("Failed to run CLI install command:", error)
 			} finally {

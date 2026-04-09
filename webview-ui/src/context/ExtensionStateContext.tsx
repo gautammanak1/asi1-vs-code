@@ -766,7 +766,7 @@ export const ExtensionStateContextProvider: React.FC<{
 
 	// Refresh Asi models function
 	const refreshClineModels = useCallback(() => {
-		ModelsServiceClient.refreshAsiModelsRpc(EmptyRequest.create({}))
+		ModelsServiceClient.refreshClineModelsRpc(EmptyRequest.create({}))
 			.then((response: OpenRouterCompatibleModelInfo) => {
 				const models = fromProtobufModels(response.models)
 				setAsiModels((prev) => (Object.keys(models).length > 0 ? models : (prev ?? null)))
