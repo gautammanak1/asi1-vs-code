@@ -44,7 +44,7 @@ const ReportBugPreview: React.FC<ReportBugPreviewProps> = ({ data }) => {
 
 				{bugData.provider_and_model && (
 					<div>
-						<div className="font-semibold">Provider/Model</div>
+						<div className="font-semibold">Model</div>
 						<MarkdownBlock markdown={bugData.provider_and_model} />
 					</div>
 				)}

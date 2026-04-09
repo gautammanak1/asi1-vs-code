@@ -1072,7 +1072,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			if (!apiConfiguration) {
 				return "unknown"
 			}
-			return `openai-compat:${selectedModelId}`
+			return `ASI:One · ${selectedModelId}`
 		}, [apiConfiguration, mode])
 
 		// Function to show error message for unsupported files for drag and drop

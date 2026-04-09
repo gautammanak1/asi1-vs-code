@@ -1,0 +1,14 @@
+{
+	"all": true,
+	"extension": [".ts"],
+	"include": ["src/**/*.ts"],
+	"exclude": [
+		"**/*.d.ts",
+		"**/node_modules/**",
+		"src/test/**",
+		"src/**/__tests__/**",
+		"src/**/*.test.ts"
+	],
+	"reporter": ["lcov", "text-summary"],
+	"report-dir": "./coverage-unit"
+}

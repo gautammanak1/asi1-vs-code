@@ -40,7 +40,7 @@ const WelcomeView = memo(() => {
 					<VSCodeLink className="inline" href="https://docs.asi1.ai/documentation/getting-started/overview">
 						ASI:One
 					</VSCodeLink>{" "}
-					API. Add your API key and confirm base URL / model below (defaults work with the ASI:One chat API).
+					API. Add your API key below — endpoint and model are fixed for ASI:One.
 				</p>
 
 				<div className="mt-4.5">

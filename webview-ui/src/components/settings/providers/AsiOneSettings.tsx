@@ -6,7 +6,7 @@ import { ApiKeyField } from "../common/ApiKeyField"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers"
 
-/** ASI:One — matches the official OpenAI SDK usage (baseURL + model `asi1`). */
+/** ASI:One — `baseURL` + model `asi1` (same shape as OpenAI client config). */
 export const ASI_ONE_BASE_URL = "https://api.asi1.ai/v1"
 export const ASI_ONE_MODEL_ID = "asi1"
 
@@ -18,14 +18,14 @@ const ASI_ONE_MODEL_INFO: OpenAiCompatibleModelInfo = {
 	description: undefined,
 }
 
-interface OpenAICompatibleProviderProps {
+interface AsiOneSettingsProps {
 	currentMode: Mode
 }
 
 /**
- * OpenAI-compatible provider fixed to ASI:One: single model, free (no extension-side billing).
+ * ASI:One only: fixed endpoint and model; user supplies API key (or env `ASI_ONE_API_KEY`).
  */
-export const OpenAICompatibleProvider = ({ currentMode: _currentMode }: OpenAICompatibleProviderProps) => {
+export const AsiOneSettings = ({ currentMode: _currentMode }: AsiOneSettingsProps) => {
 	const { apiConfiguration, remoteConfigSettings } = useExtensionState()
 	const { handleFieldChange, handleFieldsChange } = useApiConfigurationHandlers()
 	const remoteLocksBase = remoteConfigSettings?.openAiBaseUrl !== undefined
@@ -83,10 +83,8 @@ export const OpenAICompatibleProvider = ({ currentMode: _currentMode }: OpenAICo
 		<div>
 			<div className="mb-2.5">
 				<div className="flex items-center gap-2 mb-1">
-					<span style={{ fontWeight: 500 }}>Base URL</span>
-					{remoteConfigSettings?.openAiBaseUrl !== undefined && (
-						<i className="codicon codicon-lock text-description text-sm" />
-					)}
+					<span style={{ fontWeight: 500 }}>Endpoint</span>
+					{remoteLocksBase && <i className="codicon codicon-lock text-description text-sm" />}
 				</div>
 				<div
 					className="px-2 py-1.5 rounded text-sm"
@@ -98,7 +96,7 @@ export const OpenAICompatibleProvider = ({ currentMode: _currentMode }: OpenAICo
 						{(remoteLocksBase ? apiConfiguration?.openAiBaseUrl : ASI_ONE_BASE_URL) || ASI_ONE_BASE_URL}
 					</code>
 				</div>
-				<p className="text-description text-xs mt-1 mb-0">Fixed for ASI:One (same as OpenAI SDK <code>baseURL</code>).</p>
+				<p className="text-description text-xs mt-1 mb-0">ASI:One chat API — fixed for this extension.</p>
 			</div>
 
 			<ApiKeyField
@@ -118,7 +116,7 @@ export const OpenAICompatibleProvider = ({ currentMode: _currentMode }: OpenAICo
 						opacity: 0.95,
 					}}>
 					<code className="text-xs">{ASI_ONE_MODEL_ID}</code>
-					<span className="text-description text-xs ml-2">· 128k context · free (not billed in Fetch Coder)</span>
+					<span className="text-description text-xs ml-2">· 128k context</span>
 				</div>
 			</div>
 		</div>

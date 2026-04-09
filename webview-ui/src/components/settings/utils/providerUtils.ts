@@ -8,7 +8,7 @@ export function supportsReasoningEffortForModelId(modelId?: string, _allowShortO
 }
 
 export interface NormalizedApiConfig {
-	selectedProvider: ApiProvider
+	/** Always ASI:One (`asi1`) in Fetch Coder; kept for call-site compatibility. */
 	selectedModelId: string
 	selectedModelInfo: ModelInfo
 }
@@ -35,7 +35,6 @@ export function normalizeApiConfiguration(
 		currentMode === "plan" ? apiConfiguration?.planModeOpenAiModelInfo : apiConfiguration?.actModeOpenAiModelInfo
 	const base = openAiModelInfo || openAiModelInfoSaneDefaults
 	return {
-		selectedProvider: "openai",
 		selectedModelId: openAiModelId || "asi1",
 		selectedModelInfo: {
 			...base,
@@ -138,7 +137,7 @@ export function getModeSpecificFields(apiConfiguration: ApiConfiguration | undef
 	}
 }
 
-/** When Plan/Act share one profile, copy the active mode’s OpenAI-compatible fields to both. */
+/** When Plan/Act share one profile, copy the active mode’s ASI:One fields to both. */
 export async function syncModeConfigurations(
 	apiConfiguration: ApiConfiguration | undefined,
 	sourceMode: Mode,
@@ -148,12 +147,9 @@ export async function syncModeConfigurations(
 		return
 	}
 	const sourceFields = getModeSpecificFields(apiConfiguration, sourceMode)
-	if (!sourceFields.apiProvider) {
-		return
-	}
 	const updates: Partial<ApiConfiguration> = {
-		planModeApiProvider: sourceFields.apiProvider,
-		actModeApiProvider: sourceFields.apiProvider,
+		planModeApiProvider: sourceFields.apiProvider ?? "openai",
+		actModeApiProvider: sourceFields.apiProvider ?? "openai",
 		planModeThinkingBudgetTokens: sourceFields.thinkingBudgetTokens,
 		actModeThinkingBudgetTokens: sourceFields.thinkingBudgetTokens,
 		planModeReasoningEffort: sourceFields.reasoningEffort,
@@ -167,23 +163,3 @@ export async function syncModeConfigurations(
 }
 
 export { filterOpenRouterModelIds } from "@shared/utils/model-filters"
-
-export const getProviderInfo = (
-	provider: ApiProvider,
-	apiConfiguration: ApiConfiguration,
-	effectiveMode: "plan" | "act",
-): { modelId?: string; baseUrl?: string; helpText: string } => {
-	if (provider === "openai") {
-		return {
-			modelId:
-				effectiveMode === "plan" ? apiConfiguration.planModeOpenAiModelId : apiConfiguration.actModeOpenAiModelId,
-			baseUrl: apiConfiguration.openAiBaseUrl,
-			helpText: "Add your ASI:One API key and use base URL https://api.asi1.ai/v1",
-		}
-	}
-	return {
-		modelId: undefined,
-		baseUrl: undefined,
-		helpText: "Configure API in settings",
-	}
-}

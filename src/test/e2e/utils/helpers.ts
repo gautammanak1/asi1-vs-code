@@ -84,7 +84,7 @@ export class E2ETestHelper {
 
 				try {
 					const title = await frame.title()
-					if (title.startsWith("Asi")) {
+					if (/^(Asi|Fetch Coder)/i.test(title)) {
 						this.cachedFrame = frame
 						return frame
 					}
@@ -119,16 +119,31 @@ export class E2ETestHelper {
 	}
 
 	public async signin(webview: Frame): Promise<void> {
-		await webview.getByRole("button", { name: "Login to Asi" }).click({ delay: 100 })
+		const welcomeHeading = webview.getByRole("heading", { name: "Welcome to Fetch Coder" })
+		try {
+			await welcomeHeading.waitFor({ state: "visible", timeout: 20_000 })
+			const apiKey = webview.getByRole("textbox", { name: "ASI:One API Key" })
+			await apiKey.fill("e2e-test-api-key")
+			const letsGo = webview.getByRole("button", { name: "Let's go!" })
+			await expect(letsGo).toBeEnabled({ timeout: 20_000 })
+			await letsGo.click({ delay: 50 })
+		} catch {
+			// Welcome already completed for this profile
+		}
 
-		// Verify start up page is no longer visible
-		await expect(webview.getByRole("button", { name: "Login to Asi" })).not.toBeVisible()
+		const whatsNew = webview.getByRole("heading", { name: /^New in v/ })
+		try {
+			await whatsNew.waitFor({ state: "visible", timeout: 8_000 })
+			await webview.getByRole("button", { name: "Close" }).first().click({ delay: 50 })
+		} catch {
+			// Optional announcement
+		}
 
-		await webview.getByRole("button", { name: "Close" }).click({ delay: 50 })
+		await expect(webview.getByTestId("chat-input")).toBeVisible({ timeout: 45_000 })
 	}
 
 	public static async openAsiSidebar(page: Page): Promise<void> {
-		await page.getByRole("tab", { name: /asi/ }).locator("a").click()
+		await page.getByRole("tab", { name: /Fetch Coder/i }).locator("a").click()
 	}
 
 	public static async runCommandPalette(page: Page, command: string): Promise<void> {

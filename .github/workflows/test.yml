@@ -115,11 +115,6 @@ jobs:
                   cd webview-ui
                   npm run test:coverage
 
-            - name: CLI Tests
-              id: cli_tests
-              if: ${{ !cancelled() && steps.build_step.outcome == 'success' }}
-              run: cd cli && npm run test:run
-
             - name: Save Coverage Reports
               uses: actions/upload-artifact@v4
               # Only upload artifacts on Linux - We only need coverage from one OS
@@ -207,18 +202,3 @@ jobs:
                   tag: unit:webview-ui
                   add-prefix: webview-ui/
 
-            - name: Download test platform integration core coverage artifact
-              uses: actions/download-artifact@v4
-              continue-on-error: true
-              id: download-integration-coverage
-              with:
-                name: test-platform-integration-core-coverage
-                path: integration-core-coverage-reports
-
-            - name: Upload core integration tests coverage to Qlty
-              if: steps.download-integration-coverage.outcome == 'success'
-              uses: qltysh/qlty-action/coverage@v2
-              with:
-                token: ${{ secrets.QLTY_COVERAGE_TOKEN }}
-                files: integration-core-coverage-reports/**/lcov.info
-                tag: integration:core

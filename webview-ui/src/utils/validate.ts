@@ -2,7 +2,7 @@ import type { ApiConfiguration } from "@shared/api"
 import { Mode } from "@shared/storage/types"
 import { getModeSpecificFields } from "@/components/settings/utils/providerUtils"
 
-/** Fetch Coder / ASI:One — validate OpenAI-compatible settings. */
+/** Fetch Coder / ASI:One — validate API key, endpoint, and model. */
 export function validateApiConfiguration(currentMode: Mode, apiConfiguration?: ApiConfiguration): string | undefined {
 	if (!apiConfiguration) {
 		return undefined
