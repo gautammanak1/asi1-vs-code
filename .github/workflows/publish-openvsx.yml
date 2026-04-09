@@ -1,0 +1,49 @@
+name: Publish to Open VSX
+
+on:
+  push:
+    tags:
+      - "v*"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish-openvsx:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Check OVSX_PAT secret
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::error title=Missing secret::Add repository secret OVSX_PAT (Open VSX access token). Repo -> Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run protos
+      - run: npm run build:webview
+
+      - name: Create Open VSX namespace (if needed)
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          npx ovsx --version
+          echo "Creating namespace 'gautammanak2' (will fail gracefully if it already exists)..."
+          if npx ovsx create-namespace gautammanak2 --pat "$OVSX_PAT" 2>&1; then
+            echo "Namespace created or already exists"
+          else
+            echo "create-namespace returned non-zero — namespace may already exist, continuing..."
+          fi
+
+      - name: Publish to Open VSX
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx publish --pat "$OVSX_PAT"

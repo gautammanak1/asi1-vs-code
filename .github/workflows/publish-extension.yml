@@ -1,0 +1,50 @@
+# Publishes Fetch Coder to the Visual Studio Marketplace.
+#
+# Repo Settings → Secrets → Actions → VSCE_PAT = Azure DevOps PAT (Marketplace → Manage)
+# from the SAME Microsoft account that owns publisher "gautammanak2".
+#
+# Flow (pick one):
+#   A) Tag push:  bump "version" in package.json → commit + push main →
+#                 git tag v0.2.1 && git push origin v0.2.1   (tag must match version)
+#   B) Release:   GitHub → Releases → Draft release → tag v0.2.1 → Publish release
+#   C) Manual:    Actions → "Publish Extension" → Run workflow
+
+name: Publish Extension
+
+on:
+  push:
+    tags:
+      - "v*"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Check VSCE_PAT secret
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error title=Missing secret::Add repository secret VSCE_PAT — Azure DevOps PAT with scope Marketplace → Manage (same Microsoft account as publisher gautammanak2). Repo → Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+
+      - run: npm ci
+      - run: npm run protos
+      - run: npm run build:webview
+
+      - name: Publish to VS Code Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          npx @vscode/vsce --version
+          npx @vscode/vsce publish --no-dependencies

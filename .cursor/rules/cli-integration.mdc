@@ -1,0 +1,78 @@
+---
+description: Guide for adding the Fetch Coder CLI back into the project
+globs:
+  - cli/**
+  - package.json
+alwaysApply: false
+---
+
+# Fetch Coder CLI Integration
+
+## Overview
+
+The CLI was removed from this project to keep the VS Code extension focused.
+A backup lives at `~/Desktop/fetch-coder-cli/`.
+
+## How to Add CLI Back
+
+### 1. Copy CLI folder back
+
+```bash
+cp -r ~/Desktop/fetch-coder-cli ./cli
+```
+
+### 2. Add CLI to package.json workspaces
+
+```json
+"workspaces": [
+  ".",
+  "cli"
+]
+```
+
+### 3. Add CLI scripts to package.json
+
+```json
+"cli:link": "cd cli && npm run link",
+"cli:build": "npm run protos && cd cli && npm run build",
+"cli:run": "node cli/dist/cli.mjs",
+"cli:build:production": "cd cli && npm run build:production",
+"cli:watch": "cd cli && npm run watch",
+"cli:test": "cd cli && npm run test",
+"cli:dev": "cd cli && npm run dev",
+"cli:unlink": "cd cli && npm run unlink"
+```
+
+### 4. Update check-types script
+
+```json
+"check-types": "npm run protos && npx tsc --noEmit && cd webview-ui && npx tsc --noEmit && cd ../cli && npx tsc --noEmit"
+```
+
+### 5. Install dependencies
+
+```bash
+npm install
+```
+
+### 6. Build and test
+
+```bash
+npm run cli:build
+npm run cli:test
+```
+
+## CLI Architecture
+
+- **Entry:** `cli/src/index.ts` — Commander.js commands
+- **UI:** React Ink TUI (terminal UI)
+- **Agent:** Same core agent as VS Code extension (`src/core/`)
+- **API:** Same ASI:One API (`https://api.asi1.ai/v1`, model `asi1`)
+- **Storage:** File-based (same pattern as extension, different host)
+
+## Key Points
+
+- CLI does NOT affect VS Code extension — they are independent
+- CLI shares `src/core/` and `src/shared/` code with the extension
+- CLI has its own `cli/package.json` with separate dependencies
+- CLI needs `npm run protos` before building (same as extension)
