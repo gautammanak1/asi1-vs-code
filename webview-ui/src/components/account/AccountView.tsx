@@ -1,4 +1,4 @@
-import type { UserOrganization } from "@shared/proto/asi/account"
+import type { UserOrganization } from "@shared/proto/Asi/account"
 import type { RemoteConfigFields } from "@shared/storage/state-keys"
 import { VSCodeButton, VSCodeDropdown, VSCodeOption, VSCodeTag } from "@vscode/webview-ui-toolkit/react"
 import { memo, useCallback, useEffect, useState } from "react"

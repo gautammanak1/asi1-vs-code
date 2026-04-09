@@ -103,7 +103,7 @@ import {
     AsiToolResponseContent,
     AsiUserContent,
 } from "@/shared/messages"
-import { ApiFormat } from "@/shared/proto/asi/models"
+import { ApiFormat } from "@/shared/proto/Asi/models"
 import { ShowMessageType } from "@/shared/proto/index.host"
 import { Logger } from "@/shared/services/Logger"
 import { Session } from "@/shared/services/Session"
@@ -1870,7 +1870,7 @@ export class Task {
 		const providerInfo = this.getCurrentProviderInfo()
 		const host = await HostProvider.env.getHostVersion({})
 		const ide = host?.platform || "Unknown"
-		const isCliEnvironment = host.AsiType === AsiClient.Cli
+		const isCliEnvironment = host.clineType === AsiClient.Cli
 		const browserSettings = this.stateManager.getGlobalSettingsKey("browserSettings")
 		const disableBrowserTool = browserSettings.disableToolUse ?? false
 		// Asi browser tool uses image recognition for navigation (requires model image support).

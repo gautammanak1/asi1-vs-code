@@ -12,7 +12,7 @@ import { toggleHook } from "../core/controller/file/toggleHook"
 import { HookDiscoveryCache } from "../core/hooks/HookDiscoveryCache"
 import { StateManager } from "../core/storage/StateManager"
 import { HostProvider } from "../hosts/host-provider"
-import { CreateHookRequest, DeleteHookRequest, ToggleHookRequest } from "../shared/proto/asi/file"
+import { CreateHookRequest, DeleteHookRequest, ToggleHookRequest } from "../shared/proto/Asi/file"
 import { hookFileName } from "../core/hooks/__tests__/test-utils"
 
 /**

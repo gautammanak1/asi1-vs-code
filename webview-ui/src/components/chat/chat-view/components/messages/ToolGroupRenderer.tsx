@@ -1,5 +1,5 @@
 import { AsiMessage, AsiSayTool } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import { memo, useCallback, useMemo, useState } from "react"
 import { TypewriterText } from "@/components/chat/TypewriterText"
 import { cleanPathPrefix } from "@/components/common/CodeAccordian"

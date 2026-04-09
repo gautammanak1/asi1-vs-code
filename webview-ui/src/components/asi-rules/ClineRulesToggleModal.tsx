@@ -1,4 +1,4 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
+import { EmptyRequest } from "@shared/proto/Asi/common"
 import {
     AsiRulesToggles,
     RefreshedRules,
@@ -10,7 +10,7 @@ import {
     ToggleSkillRequest,
     ToggleWindsurfRuleRequest,
     ToggleWorkflowRequest,
-} from "@shared/proto/asi/file"
+} from "@shared/proto/Asi/file"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import React, { useEffect, useRef, useState } from "react"
 import { useClickAway, useWindowSize } from "react-use"

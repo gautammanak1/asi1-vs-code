@@ -9,7 +9,7 @@ import {
     AsiSayTool,
     COMPLETION_RESULT_CHANGES_FLAG,
 } from "@shared/ExtensionMessage"
-import { BooleanRequest, StringRequest } from "@shared/proto/asi/common"
+import { BooleanRequest, StringRequest } from "@shared/proto/Asi/common"
 import { Mode } from "@shared/storage/types"
 import deepEqual from "fast-deep-equal"
 import {

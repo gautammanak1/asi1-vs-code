@@ -1,5 +1,5 @@
 import { AsiMessage } from "@shared/ExtensionMessage"
-import { EmptyRequest } from "@shared/proto/asi/common"
+import { EmptyRequest } from "@shared/proto/Asi/common"
 import { memo, useMemo, useState } from "react"
 import { TaskServiceClient } from "@/services/grpc-client"
 import { CHAT_ROW_EXPANDED_BG_COLOR } from "../common/CodeBlock"

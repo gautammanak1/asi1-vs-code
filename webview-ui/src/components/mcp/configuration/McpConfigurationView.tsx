@@ -1,6 +1,6 @@
 import { McpViewTab } from "@shared/mcp"
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { McpServers } from "@shared/proto/asi/mcp"
+import { EmptyRequest } from "@shared/proto/Asi/common"
+import { McpServers } from "@shared/proto/Asi/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { useEffect, useState } from "react"
 import styled from "styled-components"

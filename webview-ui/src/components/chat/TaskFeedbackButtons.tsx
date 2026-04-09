@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import { TaskFeedbackType } from "@shared/WebviewMessage"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import React, { useEffect, useState } from "react"

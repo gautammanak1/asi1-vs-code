@@ -1,7 +1,7 @@
 import { isMultiRootWorkspace } from "@/core/workspace/utils/workspace-detection"
 import { HostProvider } from "@/hosts/host-provider"
 import { ExtensionRegistryInfo } from "@/registry"
-import { EmptyRequest } from "@/shared/proto/asi/common"
+import { EmptyRequest } from "@/shared/proto/Asi/common"
 import { Logger } from "@/shared/services/Logger"
 
 // Canonical header names for extra client/host context
@@ -27,8 +27,8 @@ export async function buildBasicAsiHeaders(): Promise<Record<string, string>> {
 		const host = await HostProvider.env.getHostVersion(EmptyRequest.create({}))
 		headers[AsiHeaders.PLATFORM] = host.platform || "unknown"
 		headers[AsiHeaders.PLATFORM_VERSION] = host.version || "unknown"
-		headers[AsiHeaders.CLIENT_TYPE] = host.AsiType || "unknown"
-		headers[AsiHeaders.CLIENT_VERSION] = host.AsiVersion || "unknown"
+		headers[AsiHeaders.CLIENT_TYPE] = host.clineType || "unknown"
+		headers[AsiHeaders.CLIENT_VERSION] = host.clineVersion || "unknown"
 	} catch (error) {
 		Logger.log("Failed to get IDE/platform info via HostBridge EnvService.getHostVersion", error)
 		headers[AsiHeaders.PLATFORM] = "unknown"

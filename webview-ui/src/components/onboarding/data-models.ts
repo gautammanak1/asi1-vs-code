@@ -1,5 +1,5 @@
-import type { OpenRouterModelInfo } from "@shared/proto/asi/models"
-import type { OnboardingModel, OnboardingModelGroup } from "@shared/proto/asi/state"
+import type { OpenRouterModelInfo } from "@shared/proto/Asi/models"
+import type { OnboardingModel, OnboardingModelGroup } from "@shared/proto/Asi/state"
 
 export interface OnboardingModelsByGroup {
 	free: ModelGroup[]

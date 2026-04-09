@@ -427,7 +427,7 @@ console.log(JSON.stringify({ cancel: false }))`
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const hasConcreteModelContext = input.model?.provider === 'openai' && input.model?.slug === 'gpt-5';
-const hasAllFields = input.AsiVersion && input.hookName && input.timestamp && 
+const hasAllFields = input.clineVersion && input.hookName && input.timestamp && 
                      input.taskId && input.workspaceRoots !== undefined &&
                      hasConcreteModelContext;
 console.log(JSON.stringify({

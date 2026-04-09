@@ -1,5 +1,5 @@
-import { AuthState, UserInfo } from "@shared/proto/asi/account"
-import { type EmptyRequest, String } from "@shared/proto/asi/common"
+import { AuthState, UserInfo } from "@shared/proto/Asi/account"
+import { type EmptyRequest, String } from "@shared/proto/Asi/common"
 import { AsiEnv } from "@/config"
 import { Controller } from "@/core/controller"
 import { getRequestRegistry, type StreamingResponseHandler } from "@/core/controller/grpc-handler"

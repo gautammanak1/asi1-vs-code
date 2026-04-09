@@ -1,4 +1,4 @@
-import { String } from "@shared/proto/asi/common"
+import { String } from "@shared/proto/Asi/common"
 import { AsiEnv } from "@/config"
 import { Controller } from "@/core/controller"
 import { setWelcomeViewCompleted } from "@/core/controller/state/setWelcomeViewCompleted"

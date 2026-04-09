@@ -1,4 +1,4 @@
-import { McpDisplayMode, UpdateSettingsRequest } from "@shared/proto/asi/state"
+import { McpDisplayMode, UpdateSettingsRequest } from "@shared/proto/Asi/state"
 import { StateServiceClient } from "@/services/grpc-client"
 
 /**

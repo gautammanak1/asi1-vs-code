@@ -1,5 +1,5 @@
 import { ApiConfiguration } from "@shared/api"
-import { UpdateApiConfigurationRequest } from "@shared/proto/asi/models"
+import { UpdateApiConfigurationRequest } from "@shared/proto/Asi/models"
 import { convertApiConfigurationToProto } from "@shared/proto-conversions/models/api-configuration-conversion"
 import { Mode } from "@shared/storage/types"
 import { useExtensionState } from "@/context/ExtensionStateContext"

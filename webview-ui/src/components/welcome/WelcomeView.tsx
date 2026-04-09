@@ -1,4 +1,4 @@
-import { BooleanRequest } from "@shared/proto/asi/common"
+import { BooleanRequest } from "@shared/proto/Asi/common"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { memo, useEffect, useState } from "react"
 import AsiLogoWhite from "@/assets/ClineLogoWhite"

@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import { WebServiceClient } from "@/services/grpc-client"
 
 // Represents a URL found in the text with its position and metadata

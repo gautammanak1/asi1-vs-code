@@ -1,5 +1,5 @@
-import { StringRequest } from "@shared/proto/asi/common"
-import { DeleteHookRequest, HooksToggles } from "@shared/proto/asi/file"
+import { StringRequest } from "@shared/proto/Asi/common"
+import { DeleteHookRequest, HooksToggles } from "@shared/proto/Asi/file"
 import { PenIcon, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"

@@ -1,5 +1,5 @@
-import type { UserOrganization } from "@shared/proto/asi/account"
-import { EmptyRequest } from "@shared/proto/asi/common"
+import type { UserOrganization } from "@shared/proto/Asi/account"
+import { EmptyRequest } from "@shared/proto/Asi/common"
 import deepEqual from "fast-deep-equal"
 import type React from "react"
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"

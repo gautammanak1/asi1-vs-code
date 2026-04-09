@@ -1,4 +1,4 @@
-import { ApiFormat } from "@shared/proto/asi/models"
+import { ApiFormat } from "@shared/proto/Asi/models"
 import * as assert from "assert"
 import type { ITelemetryProvider, TelemetryProperties, TelemetrySettings } from "../providers/ITelemetryProvider"
 import { TelemetryMetadata, TelemetryService } from "../TelemetryService"

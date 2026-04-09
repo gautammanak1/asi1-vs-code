@@ -1,4 +1,4 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
+import { EmptyRequest } from "@shared/proto/Asi/common"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { McpServiceClient } from "@/services/grpc-client"

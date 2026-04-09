@@ -1,4 +1,4 @@
-import { UpdateSettingsRequest } from "@shared/proto/asi/state"
+import { UpdateSettingsRequest } from "@shared/proto/Asi/state"
 import { memo, type ReactNode, useCallback } from "react"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

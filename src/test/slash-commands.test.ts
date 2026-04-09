@@ -3,7 +3,7 @@ import "should"
 import * as sinon from "sinon"
 import { Controller } from "../core/controller"
 import { getAvailableSlashCommands } from "../core/controller/slash/getAvailableSlashCommands"
-import { EmptyRequest } from "../shared/proto/asi/common"
+import { EmptyRequest } from "../shared/proto/Asi/common"
 import { BASE_SLASH_COMMANDS } from "../shared/slashCommands"
 
 /**

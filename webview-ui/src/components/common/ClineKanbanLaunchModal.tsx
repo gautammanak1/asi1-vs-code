@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import React, { useEffect, useMemo, useState } from "react"
 import kanbanDemoVideoMp4 from "@/assets/cline_kanban_demo.mp4"

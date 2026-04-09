@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { CreateWorktreeRequest, SwitchWorktreeRequest } from "@shared/proto/asi/worktree"
+import { EmptyRequest } from "@shared/proto/Asi/common"
+import { CreateWorktreeRequest, SwitchWorktreeRequest } from "@shared/proto/Asi/worktree"
 import { VSCodeButton, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import { AlertCircle, AlertTriangle, Loader2, X } from "lucide-react"
 import { memo, useCallback, useEffect, useState } from "react"

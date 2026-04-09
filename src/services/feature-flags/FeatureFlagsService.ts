@@ -1,5 +1,5 @@
 import { clearOnboardingModelsCache, getClineOnboardingModels } from "@/core/controller/models/getClineOnboardingModels"
-import type { OnboardingModel } from "@/shared/proto/asi/state"
+import type { OnboardingModel } from "@/shared/proto/Asi/state"
 import { FEATURE_FLAGS, FeatureFlag, FeatureFlagDefaultValue } from "@/shared/services/feature-flags/feature-flags"
 import { Logger } from "@/shared/services/Logger"
 import { telemetryService } from "../telemetry"

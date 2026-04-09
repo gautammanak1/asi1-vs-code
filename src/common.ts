@@ -140,7 +140,7 @@ async function checkWorktreeAutoOpen(stateManager: StateManager): Promise<void> 
 			// Clear the state first to prevent re-triggering
 			stateManager.setGlobalState("worktreeAutoOpenPath", undefined)
 			// Open the Asi sidebar
-			await HostProvider.workspace.openAsiSidebarPanel({})
+			await HostProvider.workspace.openClineSidebarPanel({})
 		}
 	} catch (error) {
 		Logger.error("Error checking worktree auto-open", error)

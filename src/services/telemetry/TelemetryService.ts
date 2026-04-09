@@ -1,6 +1,6 @@
 import { HostProvider } from "@hosts/host-provider"
 import type { BrowserSettings } from "@shared/BrowserSettings"
-import { ApiFormat, apiFormatToJSON } from "@shared/proto/asi/models"
+import { ApiFormat, apiFormatToJSON } from "@shared/proto/Asi/models"
 import { ShowMessageType } from "@shared/proto/host/window"
 import type { TaskFeedbackType } from "@shared/WebviewMessage"
 import * as os from "os"
@@ -359,7 +359,7 @@ export class TelemetryService {
 			extension_version: extensionVersion,
 			platform: hostVersion.platform || "unknown",
 			platform_version: hostVersion.version || "unknown",
-			Asi_type: hostVersion.AsiType || "unknown",
+			Asi_type: hostVersion.clineType || "unknown",
 			os_type: os.platform(),
 			os_version: os.version(),
 			// `remoteName` is normalized by the host bridge to `undefined` for local workspaces.

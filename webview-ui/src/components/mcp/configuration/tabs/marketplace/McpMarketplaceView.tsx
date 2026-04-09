@@ -1,4 +1,4 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
+import { EmptyRequest } from "@shared/proto/Asi/common"
 import {
     VSCodeButton,
     VSCodeDropdown,

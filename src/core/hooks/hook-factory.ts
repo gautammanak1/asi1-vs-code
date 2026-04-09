@@ -17,7 +17,7 @@ import {
     TaskResumeData,
     TaskStartData,
     UserPromptSubmitData,
-} from "../../shared/proto/asi/hooks"
+} from "../../shared/proto/Asi/hooks"
 import { getAllHooksDirs } from "../storage/disk"
 import { StateManager } from "../storage/StateManager"
 import { HookExecutionError } from "./HookError"
@@ -207,7 +207,7 @@ export abstract class HookRunner<Name extends HookName> {
 		}
 
 		return {
-			AsiVersion,
+			clineVersion: AsiVersion,
 			hookName: this.hookName,
 			timestamp: Date.now().toString(),
 			workspaceRoots,

@@ -13,7 +13,7 @@ import { hookFileName, withPlatform } from "../core/hooks/__tests__/test-utils"
 import { HookDiscoveryCache } from "../core/hooks/HookDiscoveryCache"
 import { StateManager } from "../core/storage/StateManager"
 import { HostProvider } from "../hosts/host-provider"
-import { CreateHookRequest, DeleteHookRequest, ToggleHookRequest } from "../shared/proto/asi/file"
+import { CreateHookRequest, DeleteHookRequest, ToggleHookRequest } from "../shared/proto/Asi/file"
 
 /**
  * Unit tests for hook management operations

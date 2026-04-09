@@ -1,6 +1,6 @@
 import type { HookOutputStreamMeta } from "@shared/ExtensionMessage"
 import { AsiMessage } from "@shared/ExtensionMessage"
-import type { HookOutput } from "@shared/proto/asi/hooks"
+import type { HookOutput } from "@shared/proto/Asi/hooks"
 import { Logger } from "@/shared/services/Logger"
 import { MessageStateHandler } from "../task/message-state"
 import { HookExecutionError } from "./HookError"

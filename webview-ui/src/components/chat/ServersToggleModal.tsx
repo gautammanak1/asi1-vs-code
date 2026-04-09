@@ -1,5 +1,5 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { McpServers } from "@shared/proto/asi/mcp"
+import { EmptyRequest } from "@shared/proto/Asi/common"
+import { McpServers } from "@shared/proto/Asi/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import React, { useEffect, useRef, useState } from "react"

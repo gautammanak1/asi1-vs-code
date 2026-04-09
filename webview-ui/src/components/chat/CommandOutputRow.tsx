@@ -1,6 +1,6 @@
 import { COMMAND_OUTPUT_STRING, COMMAND_REQ_APP_STRING } from "@shared/combineCommandSequences"
 import { AsiMessage } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import { memo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"

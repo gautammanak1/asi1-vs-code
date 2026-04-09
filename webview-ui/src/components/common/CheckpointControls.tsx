@@ -1,5 +1,5 @@
-import { CheckpointRestoreRequest } from "@shared/proto/asi/checkpoints"
-import { Int64Request } from "@shared/proto/asi/common"
+import { CheckpointRestoreRequest } from "@shared/proto/Asi/checkpoints"
+import { Int64Request } from "@shared/proto/Asi/common"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useEffect, useRef, useState } from "react"
 import { useClickAway } from "react-use"

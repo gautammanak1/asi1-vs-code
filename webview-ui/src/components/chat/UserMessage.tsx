@@ -1,4 +1,4 @@
-import { CheckpointRestoreRequest } from "@shared/proto/asi/checkpoints"
+import { CheckpointRestoreRequest } from "@shared/proto/Asi/checkpoints"
 import { AsiCheckpointRestore } from "@shared/WebviewMessage"
 import React, { forwardRef, useMemo, useRef, useState } from "react"
 import DynamicTextArea from "react-textarea-autosize"

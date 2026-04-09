@@ -1,4 +1,4 @@
-import type { Boolean, EmptyRequest } from "@shared/proto/asi/common"
+import type { Boolean, EmptyRequest } from "@shared/proto/Asi/common"
 import { useCallback, useEffect } from "react"
 import ChatView from "./components/chat/ChatView"
 // Kanban promo modal disabled for POC (ASI:One focus — no extra modal on startup).

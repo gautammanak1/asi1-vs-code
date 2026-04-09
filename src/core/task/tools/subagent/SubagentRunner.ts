@@ -15,7 +15,7 @@ import { checkContextWindowExceededError } from "@/core/context/context-manageme
 import { getContextWindowInfo } from "@/core/context/context-management/context-window-utils"
 import { HostRegistryInfo } from "@/registry"
 import { AsiError, AsiErrorType } from "@/services/error"
-import { ApiFormat } from "@/shared/proto/asi/models"
+import { ApiFormat } from "@/shared/proto/Asi/models"
 import { calculateApiCostAnthropic } from "@/utils/cost"
 import { isNextGenModelFamily } from "@/utils/model-utils"
 import { TaskState } from "../../TaskState"

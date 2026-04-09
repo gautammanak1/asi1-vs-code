@@ -1,5 +1,5 @@
 import type { UsageTransaction as AsiAccountUsageTransaction } from "@shared/ClineAccount"
-import type { UsageTransaction as ProtoUsageTransaction, UserOrganization } from "@shared/proto/asi/account"
+import type { UsageTransaction as ProtoUsageTransaction, UserOrganization } from "@shared/proto/Asi/account"
 
 export const getMainRole = (roles?: string[]) => {
 	if (!roles) {

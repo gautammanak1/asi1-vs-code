@@ -1,12 +1,12 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { NewTaskRequest } from "@shared/proto/asi/task"
-import type { MergeWorktreeResult, Worktree as WorktreeProto } from "@shared/proto/asi/worktree"
+import { EmptyRequest } from "@shared/proto/Asi/common"
+import { NewTaskRequest } from "@shared/proto/Asi/task"
+import type { MergeWorktreeResult, Worktree as WorktreeProto } from "@shared/proto/Asi/worktree"
 import {
     CreateWorktreeIncludeRequest,
     DeleteWorktreeRequest,
     MergeWorktreeRequest,
     SwitchWorktreeRequest,
-} from "@shared/proto/asi/worktree"
+} from "@shared/proto/Asi/worktree"
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { AlertCircle, Check, ExternalLink, FolderOpen, GitBranch, GitMerge, Loader2, Plus, Trash2, X } from "lucide-react"
 import { memo, useCallback, useEffect, useState } from "react"

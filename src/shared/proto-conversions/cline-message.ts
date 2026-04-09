@@ -1,5 +1,10 @@
 import { AsiAsk as AppAsiAsk, AsiMessage as AppAsiMessage, AsiSay as AppAsiSay } from "@shared/ExtensionMessage"
-import { AsiAsk, AsiMessageType, AsiSay, AsiMessage as ProtoAsiMessage } from "@shared/proto/asi/ui"
+import {
+	ClineAsk as AsiAsk,
+	ClineMessageType as AsiMessageType,
+	ClineSay as AsiSay,
+	ClineMessage as ProtoAsiMessage,
+} from "@shared/proto/Asi/ui"
 
 // Helper function to convert AsiAsk string to enum
 function convertAsiAskToProtoEnum(ask: AppAsiAsk | undefined): AsiAsk | undefined {
@@ -95,7 +100,7 @@ function convertAsiSayToProtoEnum(say: AppAsiSay | undefined): AsiSay | undefine
 		use_mcp_server: AsiSay.USE_MCP_SERVER_SAY,
 		diff_error: AsiSay.DIFF_ERROR,
 		deleted_api_reqs: AsiSay.DELETED_API_REQS,
-		Asiignore_error: AsiSay.AsiIGNORE_ERROR,
+		Asiignore_error: AsiSay.CLINEIGNORE_ERROR,
 		command_permission_denied: AsiSay.COMMAND_PERMISSION_DENIED,
 		checkpoint_created: AsiSay.CHECKPOINT_CREATED,
 		load_mcp_documentation: AsiSay.LOAD_MCP_DOCUMENTATION,
@@ -146,7 +151,7 @@ function convertProtoEnumToAsiSay(say: AsiSay): AppAsiSay | undefined {
 		[AsiSay.USE_MCP_SERVER_SAY]: "use_mcp_server",
 		[AsiSay.DIFF_ERROR]: "diff_error",
 		[AsiSay.DELETED_API_REQS]: "deleted_api_reqs",
-		[AsiSay.AsiIGNORE_ERROR]: "Asiignore_error",
+		[AsiSay.CLINEIGNORE_ERROR]: "Asiignore_error",
 		[AsiSay.COMMAND_PERMISSION_DENIED]: "command_permission_denied",
 		[AsiSay.CHECKPOINT_CREATED]: "checkpoint_created",
 		[AsiSay.LOAD_MCP_DOCUMENTATION]: "load_mcp_documentation",

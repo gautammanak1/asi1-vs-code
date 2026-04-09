@@ -53,7 +53,7 @@ function getTaskStartTemplate(): string {
 # 
 # Executes when a new task begins.
 # 
-# Input: { taskId, taskStart: { task: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, taskStart: { task: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -97,7 +97,7 @@ function getTaskResumeTemplate(): string {
 # 
 # Executes when a task is resumed after being interrupted.
 # 
-# Input: { taskId, taskResume: { task: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, taskResume: { task: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -129,7 +129,7 @@ function getTaskCancelTemplate(): string {
 # 
 # Executes when a task is cancelled by the user.
 # 
-# Input: { taskId, taskCancel: { task: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, taskCancel: { task: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -161,7 +161,7 @@ function getTaskCompleteTemplate(): string {
 # 
 # Executes when a task completes successfully.
 # 
-# Input: { taskId, taskComplete: { task: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, taskComplete: { task: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -286,7 +286,7 @@ function getUserPromptSubmitTemplate(): string {
 # 
 # Executes when the user submits a prompt to Asi.
 # 
-# Input: { taskId, userPromptSubmit: { prompt: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, userPromptSubmit: { prompt: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -335,7 +335,7 @@ function getNotificationTemplate(): string {
 #     requiresUserAction: boolean,
 #     severity: string
 #   },
-#   AsiVersion,
+#   clineVersion,
 #   timestamp,
 #   ...
 # }

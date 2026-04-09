@@ -1,4 +1,4 @@
-import { FileInfo } from "@shared/proto/asi/file";
+import { FileInfo } from "@shared/proto/Asi/file";
 
 /**
  * Converts domain search result objects to proto FileInfo objects

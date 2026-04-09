@@ -1,4 +1,4 @@
-import { ApiFormat } from "./proto/asi/models"
+import { ApiFormat } from "./proto/Asi/models"
 import type { ApiHandlerSettings } from "./storage/state-keys"
 
 export type ApiProvider =

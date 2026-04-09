@@ -1,11 +1,11 @@
 import { DEFAULT_MCP_TIMEOUT_SECONDS, McpServer } from "@shared/mcp"
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import {
     McpServers,
     ToggleMcpServerRequest,
     ToggleToolAutoApproveRequest,
     UpdateMcpTimeoutRequest,
-} from "@shared/proto/asi/mcp"
+} from "@shared/proto/Asi/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import {
     VSCodeCheckbox,

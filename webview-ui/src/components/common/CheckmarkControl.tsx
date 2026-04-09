@@ -1,6 +1,6 @@
 import { flip, offset, shift, useFloating } from "@floating-ui/react"
-import { CheckpointRestoreRequest } from "@shared/proto/asi/checkpoints"
-import { Int64Request } from "@shared/proto/asi/common"
+import { CheckpointRestoreRequest } from "@shared/proto/Asi/checkpoints"
+import { Int64Request } from "@shared/proto/Asi/common"
 import { AsiCheckpointRestore } from "@shared/WebviewMessage"
 import { BookmarkIcon } from "lucide-react"
 import { useCallback, useEffect, useRef, useState } from "react"

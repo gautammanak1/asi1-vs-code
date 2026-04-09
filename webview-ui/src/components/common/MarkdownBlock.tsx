@@ -1,5 +1,5 @@
-import { StringRequest } from "@shared/proto/asi/common"
-import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/asi/state"
+import { StringRequest } from "@shared/proto/Asi/common"
+import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/Asi/state"
 import { SquareArrowOutUpRightIcon } from "lucide-react"
 import { marked } from "marked"
 import type { ComponentProps } from "react"

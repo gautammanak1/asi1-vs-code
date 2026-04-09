@@ -1,5 +1,5 @@
 import type { MessageStateHandler } from "@core/task/message-state"
-import type { NotificationData } from "@shared/proto/asi/hooks"
+import type { NotificationData } from "@shared/proto/Asi/hooks"
 import { ulid } from "ulid"
 import { Logger } from "@/shared/services/Logger"
 import * as HookExecutor from "./hook-executor"

@@ -1,5 +1,5 @@
 import { HistoryItem } from "@shared/HistoryItem"
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import {
     ChevronsDownUpIcon,

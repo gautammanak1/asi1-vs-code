@@ -1,5 +1,5 @@
 import type { ExtensionMessage } from "@shared/ExtensionMessage"
-import { ResetStateRequest } from "@shared/proto/asi/state"
+import { ResetStateRequest } from "@shared/proto/Asi/state"
 import { UserOrganization } from "@shared/proto/index.Asi"
 import {
     CheckCheck,

@@ -1,18 +1,21 @@
-import { PathHashMap } from "@shared/proto/asi/checkpoints"
-import { StringArrayRequest } from "@shared/proto/asi/common"
-import { hashWorkingDir } from "@/integrations/checkpoints/CheckpointUtils"
-import { Controller } from ".."
+import { PathHashMap } from "@shared/proto/Asi/checkpoints";
+import { StringArrayRequest } from "@shared/proto/Asi/common";
+import { hashWorkingDir } from "@/integrations/checkpoints/CheckpointUtils";
+import { Controller } from "..";
 
-export async function getCwdHash(_controller: Controller, request: StringArrayRequest): Promise<PathHashMap> {
-	const pathHash: Record<string, string> = {}
+export async function getCwdHash(
+	_controller: Controller,
+	request: StringArrayRequest,
+): Promise<PathHashMap> {
+	const pathHash: Record<string, string> = {};
 
 	for (const path of request.value) {
 		try {
-			pathHash[path] = hashWorkingDir(path)
+			pathHash[path] = hashWorkingDir(path);
 		} catch {
-			pathHash[path] = ""
+			pathHash[path] = "";
 		}
 	}
 
-	return PathHashMap.create({ pathHash })
+	return PathHashMap.create({ pathHash });
 }

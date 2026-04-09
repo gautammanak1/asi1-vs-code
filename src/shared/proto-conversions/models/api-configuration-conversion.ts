@@ -6,7 +6,7 @@ import {
     ApiProvider as ProtoApiProvider,
     OcaModelInfo as ProtoOcaModelInfo,
     ThinkingConfig,
-} from "@shared/proto/asi/models"
+} from "@shared/proto/Asi/models"
 import {
     ApiConfiguration,
     ApiProvider,
@@ -279,7 +279,7 @@ function convertApiProviderToProto(provider: string | undefined): ProtoApiProvid
 		case "vscode-lm":
 			return ProtoApiProvider.VSCODE_LM
 		case "Asi":
-			return ProtoApiProvider.Asi
+			return ProtoApiProvider.CLINE
 		case "litellm":
 			return ProtoApiProvider.LITELLM
 		case "moonshot":
@@ -370,7 +370,7 @@ export function convertProtoToApiProvider(provider: ProtoApiProvider): ApiProvid
 			return "mistral"
 		case ProtoApiProvider.VSCODE_LM:
 			return "vscode-lm"
-		case ProtoApiProvider.Asi:
+		case ProtoApiProvider.CLINE:
 			return "Asi"
 		case ProtoApiProvider.LITELLM:
 			return "litellm"
@@ -430,7 +430,7 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 	return {
 		// Global configuration fields
 		apiKey: config.apiKey,
-		AsiAccountId: config.AsiAccountId,
+		clineAccountId: config.AsiAccountId,
 		ulid: config.ulid,
 		liteLlmBaseUrl: config.liteLlmBaseUrl,
 		liteLlmApiKey: config.liteLlmApiKey,
@@ -507,7 +507,7 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 		minimaxApiKey: config.minimaxApiKey,
 		minimaxApiLine: config.minimaxApiLine,
 		nousResearchApiKey: config.nousResearchApiKey,
-		AsiApiKey: config.AsiApiKey,
+		clineApiKey: config.AsiApiKey,
 		ocaMode: config.ocaMode,
 		aihubmixApiKey: config.aihubmixApiKey,
 		aihubmixBaseUrl: config.aihubmixBaseUrl,
@@ -526,8 +526,8 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 		planModeAwsBedrockCustomModelBaseId: config.planModeAwsBedrockCustomModelBaseId as string | undefined,
 		planModeOpenRouterModelId: config.planModeOpenRouterModelId,
 		planModeOpenRouterModelInfo: convertModelInfoToProtoOpenRouter(config.planModeOpenRouterModelInfo),
-		planModeAsiModelId: config.planModeAsiModelId,
-		planModeAsiModelInfo: convertModelInfoToProtoOpenRouter(config.planModeAsiModelInfo),
+		planModeClineModelId: config.planModeAsiModelId,
+		planModeClineModelInfo: convertModelInfoToProtoOpenRouter(config.planModeAsiModelInfo),
 		planModeOpenAiModelId: config.planModeOpenAiModelId,
 		planModeOpenAiModelInfo: convertOpenAiCompatibleModelInfoToProto(config.planModeOpenAiModelInfo),
 		planModeOllamaModelId: config.planModeOllamaModelId,
@@ -570,8 +570,8 @@ export function convertApiConfigurationToProto(config: ApiConfiguration): ProtoA
 		actModeAwsBedrockCustomModelBaseId: config.actModeAwsBedrockCustomModelBaseId as string | undefined,
 		actModeOpenRouterModelId: config.actModeOpenRouterModelId,
 		actModeOpenRouterModelInfo: convertModelInfoToProtoOpenRouter(config.actModeOpenRouterModelInfo),
-		actModeAsiModelId: config.actModeAsiModelId,
-		actModeAsiModelInfo: convertModelInfoToProtoOpenRouter(config.actModeAsiModelInfo),
+		actModeClineModelId: config.actModeAsiModelId,
+		actModeClineModelInfo: convertModelInfoToProtoOpenRouter(config.actModeAsiModelInfo),
 		actModeOpenAiModelId: config.actModeOpenAiModelId,
 		actModeOpenAiModelInfo: convertOpenAiCompatibleModelInfoToProto(config.actModeOpenAiModelInfo),
 		actModeOllamaModelId: config.actModeOllamaModelId,
@@ -610,7 +610,7 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 	return {
 		// Global configuration fields
 		apiKey: protoConfig.apiKey,
-		AsiAccountId: protoConfig.AsiAccountId,
+		AsiAccountId: protoConfig.clineAccountId,
 		ulid: protoConfig.ulid,
 		liteLlmBaseUrl: protoConfig.liteLlmBaseUrl,
 		liteLlmApiKey: protoConfig.liteLlmApiKey,
@@ -693,7 +693,7 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		hicapApiKey: protoConfig.hicapApiKey,
 		hicapModelId: protoConfig.hicapModelId,
 		nousResearchApiKey: protoConfig.nousResearchApiKey,
-		AsiApiKey: protoConfig.AsiApiKey,
+		AsiApiKey: protoConfig.clineApiKey,
 
 		// Plan mode configurations
 		planModeApiProvider:
@@ -709,8 +709,8 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		planModeAwsBedrockCustomModelBaseId: protoConfig.planModeAwsBedrockCustomModelBaseId as BedrockModelId | undefined,
 		planModeOpenRouterModelId: protoConfig.planModeOpenRouterModelId,
 		planModeOpenRouterModelInfo: convertProtoToModelInfo(protoConfig.planModeOpenRouterModelInfo),
-		planModeAsiModelId: protoConfig.planModeAsiModelId,
-		planModeAsiModelInfo: convertProtoToModelInfo(protoConfig.planModeAsiModelInfo),
+		planModeAsiModelId: protoConfig.planModeClineModelId,
+		planModeAsiModelInfo: convertProtoToModelInfo(protoConfig.planModeClineModelInfo),
 		planModeOpenAiModelId: protoConfig.planModeOpenAiModelId,
 		planModeOpenAiModelInfo: convertProtoToOpenAiCompatibleModelInfo(protoConfig.planModeOpenAiModelInfo),
 		planModeOllamaModelId: protoConfig.planModeOllamaModelId,
@@ -754,8 +754,8 @@ export function convertProtoToApiConfiguration(protoConfig: ProtoApiConfiguratio
 		actModeAwsBedrockCustomModelBaseId: protoConfig.actModeAwsBedrockCustomModelBaseId as BedrockModelId | undefined,
 		actModeOpenRouterModelId: protoConfig.actModeOpenRouterModelId,
 		actModeOpenRouterModelInfo: convertProtoToModelInfo(protoConfig.actModeOpenRouterModelInfo),
-		actModeAsiModelId: protoConfig.actModeAsiModelId,
-		actModeAsiModelInfo: convertProtoToModelInfo(protoConfig.actModeAsiModelInfo),
+		actModeAsiModelId: protoConfig.actModeClineModelId,
+		actModeAsiModelInfo: convertProtoToModelInfo(protoConfig.actModeClineModelInfo),
 		actModeOpenAiModelId: protoConfig.actModeOpenAiModelId,
 		actModeOpenAiModelInfo: convertProtoToOpenAiCompatibleModelInfo(protoConfig.actModeOpenAiModelInfo),
 		actModeOllamaModelId: protoConfig.actModeOllamaModelId,

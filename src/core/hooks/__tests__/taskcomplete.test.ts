@@ -3,7 +3,7 @@ import "should"
 import fs from "fs/promises"
 import path from "path"
 import sinon from "sinon"
-import { HookOutput } from "../../../shared/proto/asi/hooks"
+import { HookOutput } from "../../../shared/proto/Asi/hooks"
 import { HookFactory } from "../hook-factory"
 import { createHookTestEnv, HookTestEnv, stubHookDirs, withFixtureRunner, writeHookScriptForPlatform } from "./test-utils"
 
@@ -101,7 +101,7 @@ console.log(JSON.stringify({
 			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskComplete")
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
-const hasAllFields = input.AsiVersion && input.hookName === 'TaskComplete' && 
+const hasAllFields = input.clineVersion && input.hookName === 'TaskComplete' && 
                      input.timestamp && input.taskId && 
                      input.workspaceRoots !== undefined &&
                      input.model && input.model.provider && input.model.slug;

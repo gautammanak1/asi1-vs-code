@@ -1,4 +1,4 @@
-import { EmptyRequest, StringRequest } from "@shared/proto/asi/common"
+import { EmptyRequest, StringRequest } from "@shared/proto/Asi/common"
 import { ShowMessageType } from "@shared/proto/host/window"
 import { HostProvider } from "@/hosts/host-provider"
 import { Logger } from "@/shared/services/Logger"

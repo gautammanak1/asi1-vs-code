@@ -1,8 +1,8 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { OcaAuthState } from "@shared/proto/asi/oca_account"
-import { OcaAuthService } from "@/services/auth/oca/OcaAuthService"
-import { Controller } from ".."
-import { StreamingResponseHandler } from "../grpc-handler"
+import { EmptyRequest } from "@shared/proto/Asi/common";
+import { OcaAuthState } from "@shared/proto/Asi/oca_account";
+import { OcaAuthService } from "@/services/auth/oca/OcaAuthService";
+import { Controller } from "..";
+import { StreamingResponseHandler } from "../grpc-handler";
 
 export async function ocaSubscribeToAuthStatusUpdate(
 	_controller: Controller,
@@ -10,5 +10,9 @@ export async function ocaSubscribeToAuthStatusUpdate(
 	responseStream: StreamingResponseHandler<OcaAuthState>,
 	requestId?: string,
 ): Promise<void> {
-	return OcaAuthService.getInstance().subscribeToAuthStatusUpdate(request, responseStream, requestId)
+	return OcaAuthService.getInstance().subscribeToAuthStatusUpdate(
+		request,
+		responseStream,
+		requestId,
+	);
 }

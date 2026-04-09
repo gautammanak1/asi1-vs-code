@@ -1,4 +1,4 @@
-import { UpdateSettingsRequest } from "@shared/proto/asi/state"
+import { UpdateSettingsRequest } from "@shared/proto/Asi/state"
 import { Mode } from "@shared/storage/types"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useState } from "react"

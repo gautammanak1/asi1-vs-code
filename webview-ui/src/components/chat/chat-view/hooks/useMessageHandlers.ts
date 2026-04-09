@@ -1,6 +1,6 @@
 import type { AsiMessage } from "@shared/ExtensionMessage"
-import { EmptyRequest, StringRequest } from "@shared/proto/asi/common"
-import { AskResponseRequest, NewTaskRequest } from "@shared/proto/asi/task"
+import { EmptyRequest, StringRequest } from "@shared/proto/Asi/common"
+import { AskResponseRequest, NewTaskRequest } from "@shared/proto/Asi/task"
 import { useCallback, useRef } from "react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { SlashServiceClient, TaskServiceClient } from "@/services/grpc-client"

@@ -1,5 +1,5 @@
 import { McpTool } from "@shared/mcp"
-import { ToggleToolAutoApproveRequest } from "@shared/proto/asi/mcp"
+import { ToggleToolAutoApproveRequest } from "@shared/proto/Asi/mcp"
 import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"

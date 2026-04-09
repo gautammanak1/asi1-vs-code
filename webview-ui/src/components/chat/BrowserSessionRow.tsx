@@ -1,6 +1,6 @@
 import { BROWSER_VIEWPORT_PRESETS } from "@shared/BrowserSettings"
 import { BrowserAction, BrowserActionResult, AsiMessage, AsiSayBrowserAction } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import deepEqual from "fast-deep-equal"
 import { ChevronDownIcon, ChevronRightIcon } from "lucide-react"

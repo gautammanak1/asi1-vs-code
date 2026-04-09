@@ -1,4 +1,4 @@
-import { StringRequest } from "@shared/proto/asi/common"
+import { StringRequest } from "@shared/proto/Asi/common"
 import DOMPurify from "dompurify"
 import React from "react"
 import ChatErrorBoundary from "@/components/chat/ChatErrorBoundary"
