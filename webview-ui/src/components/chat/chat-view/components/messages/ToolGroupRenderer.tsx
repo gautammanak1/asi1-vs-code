@@ -449,5 +449,5 @@ export function getToolGroupSummaryFromParsedTools(
 		);
 	}
 
-	return parts.length === 0 ? "Context" : "Asi" + action + parts.join(", ");
+	return parts.length === 0 ? "Context" : "Fetch Coder" + action + parts.join(", ");
 }

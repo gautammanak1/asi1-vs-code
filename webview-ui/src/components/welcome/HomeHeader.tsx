@@ -28,25 +28,13 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 
 	return (
 		<div className="flex flex-col items-center mb-5 relative">
-			{/* Ambient glow behind logo */}
-			<div
-				className="absolute top-4 w-40 h-40 rounded-full animate-glow-pulse pointer-events-none"
-				style={{ background: "radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%)", filter: "blur(30px)" }}
-			/>
-
 			<div className="my-7 animate-float relative z-10">
-				<LogoComponent className="size-20 drop-shadow-lg" environment={environment} />
+				<LogoComponent className="size-16 drop-shadow-lg" environment={environment} />
 			</div>
 			<div className="text-center flex items-center justify-center px-4">
 				<h1
-					className="m-0 font-bold text-xl"
-					style={{
-						fontFamily: "'Lexend', sans-serif",
-						letterSpacing: "-0.03em",
-						background: "linear-gradient(135deg, #e2e8f0, #ffffff, #cbd5e1)",
-						WebkitBackgroundClip: "text",
-						WebkitTextFillColor: "transparent",
-					}}
+					className="m-0 font-extrabold text-xl tracking-tight"
+					style={{ fontFamily: "'Lexend', sans-serif", color: "#ffffff", letterSpacing: "-0.03em" }}
 				>
 					{headingText}
 				</h1>
@@ -54,13 +42,18 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 			{shouldShowQuickWins && (
 				<div className="mt-4 animate-fade-in-up">
 					<button
-						className="glass glow-border flex items-center gap-2 px-5 py-2 rounded-full cursor-pointer text-sm font-medium transition-all duration-200 hover:scale-105"
+						className="flex items-center gap-2 px-5 py-2 rounded-full cursor-pointer text-sm font-medium transition-all duration-200 hover:scale-105 border-0"
 						onClick={handleTakeATour}
 						type="button"
-						style={{ fontFamily: "'Lexend', sans-serif", color: "var(--vscode-foreground)", background: "transparent", border: "none" }}
+						style={{
+							fontFamily: "'Lexend', sans-serif",
+							background: "#18181b",
+							border: "1px solid #27272a",
+							color: "#d4d4d8",
+						}}
 					>
 						Take a Tour
-						<span className="codicon codicon-play scale-90" style={{ color: "#06b6d4" }} />
+						<span className="codicon codicon-play scale-90" style={{ color: "#a3e635" }} />
 					</button>
 				</div>
 			)}

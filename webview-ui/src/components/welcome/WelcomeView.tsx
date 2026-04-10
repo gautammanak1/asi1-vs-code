@@ -33,82 +33,66 @@ const WelcomeView = memo(() => {
 	}, [apiConfiguration, mode]);
 
 	return (
-		<div className="fixed inset-0 p-0 flex flex-col" style={{ background: "var(--vscode-sideBar-background)" }}>
-			{/* Ambient glow */}
-			<div
-				className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 rounded-full animate-glow-pulse pointer-events-none"
-				style={{ background: "radial-gradient(circle, rgba(6,182,212,0.12) 0%, transparent 70%)", filter: "blur(40px)" }}
-			/>
-
+		<div className="fixed inset-0 p-0 flex flex-col" style={{ background: "#0a0a0a" }}>
 			<div className="h-full px-5 overflow-auto flex flex-col gap-3 relative z-10">
 				{/* Logo + Title */}
-				<div className="flex flex-col items-center mt-8 mb-3 animate-fade-in-up">
-					<div className="animate-float">
-						<AsiLogoWhite className="size-16 mb-3 drop-shadow-lg" />
+				<div className="flex flex-col items-center mt-10 mb-4 animate-fade-in-up">
+					<div className="animate-float mb-4">
+						<AsiLogoWhite className="size-14 drop-shadow-lg" />
 					</div>
 					<h2
-						className="text-2xl font-bold m-0"
-						style={{
-							fontFamily: "'Lexend', sans-serif",
-							letterSpacing: "-0.03em",
-							background: "linear-gradient(135deg, #06b6d4, #a78bfa, #06b6d4)",
-							backgroundSize: "200% 200%",
-							WebkitBackgroundClip: "text",
-							WebkitTextFillColor: "transparent",
-							animation: "gradient-shift 4s ease infinite",
-						}}
+						className="text-3xl font-extrabold m-0 tracking-tight"
+						style={{ fontFamily: "'Lexend', sans-serif", color: "#ffffff", letterSpacing: "-0.04em" }}
 					>
 						Fetch Coder
 					</h2>
-					<p className="text-xs m-0 mt-1.5 tracking-widest uppercase" style={{ color: "var(--vscode-descriptionForeground)", fontFamily: "'Lexend', sans-serif", fontWeight: 300 }}>
-						AI Coding Agent · Powered by ASI:One
+					<p className="text-sm m-0 mt-2 max-w-[280px] text-center leading-relaxed" style={{ color: "#a1a1aa", fontFamily: "'Lexend', sans-serif", fontWeight: 300 }}>
+						Your AI coding partner. It writes code so you can ship faster.
 					</p>
 				</div>
 
-				{/* Glass info card */}
+				{/* Feature card */}
 				<div
-					className="glass rounded-xl px-4 py-3.5 my-1 glow-border"
-					style={{ animationDelay: "0.1s" }}
+					className="rounded-xl px-4 py-3 my-1 text-center"
+					style={{ background: "#18181b", border: "1px solid #27272a" }}
 				>
-					<p className="text-sm m-0 leading-relaxed" style={{ fontFamily: "'Lexend', sans-serif", fontWeight: 300 }}>
+					<p className="text-xs m-0 leading-relaxed" style={{ color: "#a1a1aa", fontFamily: "'Lexend', sans-serif" }}>
 						Build{" "}
 						<VSCodeLink className="inline" href="https://innovationlab.fetch.ai/resources/docs/agent-creation/uagent-creation">
 							uAgents
 						</VSCodeLink>
-						, connect to{" "}
+						{" · "}
 						<VSCodeLink className="inline" href="https://agentverse.ai">
 							Agentverse
 						</VSCodeLink>
-						, generate images, search the web, and code <strong>any project</strong> with the world&apos;s first Web3-native LLM.
+						{" · "}React{" · "}Next.js{" · "}Python{" · "}any stack
 					</p>
 				</div>
 
 				{/* Doc pills */}
-				<div className="flex gap-2 my-1 flex-wrap justify-center animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-					<DocPill href="https://innovationlab.fetch.ai/resources/docs/intro" label="Docs" icon="book" />
-					<DocPill href="https://asi1.ai/dashboard/api-keys" label="API Key" icon="key" />
-					<DocPill href="https://innovationlab.fetch.ai/resources/docs/agent-creation/uagent-creation" label="uAgents" icon="hubot" />
-					<DocPill href="https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp" label="MCP" icon="server" />
+				<div className="flex gap-2 my-1 flex-wrap justify-center animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+					<Pill href="https://innovationlab.fetch.ai/resources/docs/intro" label="Docs" />
+					<Pill href="https://asi1.ai/dashboard/api-keys" label="API Key" />
+					<Pill href="https://agentverse.ai" label="Agentverse" />
+					<Pill href="https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp" label="MCP" />
 				</div>
 
 				{/* API key input + Go button */}
-				<div className="mt-2 animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+				<div className="mt-2 animate-fade-in-up" style={{ animationDelay: "0.25s" }}>
 					<ApiOptions currentMode={mode} showModelOptions={false} />
 					<button
-						className="w-full mt-2 py-2.5 rounded-lg text-sm font-semibold cursor-pointer border-0 transition-all duration-300"
+						className="w-full mt-2.5 py-3 rounded-xl text-sm font-bold cursor-pointer border-0 transition-all duration-200"
 						disabled={disableLetsGoButton}
 						onClick={handleSubmit}
 						style={{
 							fontFamily: "'Lexend', sans-serif",
-							background: disableLetsGoButton
-								? "var(--vscode-button-secondaryBackground)"
-								: "linear-gradient(135deg, #06b6d4, #8b5cf6)",
-							color: disableLetsGoButton ? "var(--vscode-button-secondaryForeground)" : "#fff",
-							opacity: disableLetsGoButton ? 0.5 : 1,
-							boxShadow: disableLetsGoButton ? "none" : "0 4px 20px rgba(6,182,212,0.3)",
+							background: disableLetsGoButton ? "#27272a" : "#a3e635",
+							color: disableLetsGoButton ? "#71717a" : "#0a0a0a",
+							opacity: disableLetsGoButton ? 0.6 : 1,
+							letterSpacing: "-0.01em",
 						}}
 					>
-						Get Started
+						Get Started &rarr;
 					</button>
 				</div>
 			</div>
@@ -116,17 +100,18 @@ const WelcomeView = memo(() => {
 	);
 });
 
-const DocPill = ({ href, label, icon }: { href: string; label: string; icon: string }) => (
+const Pill = ({ href, label }: { href: string; label: string }) => (
 	<a
 		href={href}
-		className="glass glow-border flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full no-underline transition-all duration-200 hover:scale-105"
+		className="flex items-center text-xs px-3 py-1.5 rounded-full no-underline transition-all duration-200 hover:scale-105"
 		style={{
-			color: "var(--vscode-foreground)",
+			background: "#18181b",
+			border: "1px solid #27272a",
+			color: "#d4d4d8",
 			fontFamily: "'Lexend', sans-serif",
 			fontWeight: 400,
 		}}
 	>
-		<i className={`codicon codicon-${icon} text-xs`} style={{ color: "#06b6d4" }} />
 		{label}
 	</a>
 );

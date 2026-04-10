@@ -18,16 +18,11 @@ export const SuggestedTasks: React.FC<{ shouldShowQuickWins: boolean }> = ({
 			<div className="px-4 pt-1 pb-3 select-none animate-fade-in-up">
 				<h2
 					className="text-sm font-medium mb-3 text-center"
-					style={{
-						fontFamily: "'Lexend', sans-serif",
-						background: "linear-gradient(90deg, var(--vscode-descriptionForeground), var(--vscode-foreground), var(--vscode-descriptionForeground))",
-						WebkitBackgroundClip: "text",
-						WebkitTextFillColor: "transparent",
-					}}
+					style={{ fontFamily: "'Lexend', sans-serif", color: "#71717a" }}
 				>
-					Get Started with Fetch Coder
+					Get Started with <span style={{ color: "#ffffff" }}>Fetch Coder</span>
 				</h2>
-				<div className="flex flex-col space-y-1.5">
+				<div className="flex flex-col space-y-1">
 					{quickWinTasks.map((task: QuickWinTask, i: number) => (
 						<div key={task.id} style={{ animationDelay: `${i * 0.08}s` }} className="animate-fade-in-up">
 							<QuickWinCard

@@ -1184,16 +1184,44 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			disableTextInputs: false,
 		}); // important that we don't disable the text input here
 
-		const handleEnhancePrompt = useCallback(() => {
+		const handleEnhancePrompt = useCallback(async () => {
 			const text = inputValue.trim();
 			if (!text || isEnhancing) return;
 			setIsEnhancing(true);
-
-			const enhanced = `${text}\n\nPlease provide a detailed, well-structured solution with code examples, clear explanations, and best practices. Think step by step.`;
-			setInputValue(enhanced);
-
-			setTimeout(() => setIsEnhancing(false), 400);
-		}, [inputValue, isEnhancing, setInputValue]);
+			try {
+				const apiKey = apiConfiguration?.openAiApiKey;
+				const baseUrl = apiConfiguration?.openAiBaseUrl || "https://api.asi1.ai/v1";
+				if (!apiKey) {
+					setInputValue(`${text}\n\nPlease provide a detailed, well-structured solution with code examples and best practices. Think step by step.`);
+					return;
+				}
+				const res = await fetch(`${baseUrl}/chat/completions`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+					body: JSON.stringify({
+						model: "asi1",
+						messages: [
+							{ role: "system", content: "You are a prompt engineer. Rewrite the user's prompt to be clearer, more specific, and more likely to produce excellent results from an AI coding assistant. Keep the same intent but make it detailed and well-structured. Return ONLY the improved prompt text, nothing else." },
+							{ role: "user", content: text },
+						],
+						temperature: 0.3,
+						max_tokens: 500,
+						stream: false,
+					}),
+				});
+				if (res.ok) {
+					const data = await res.json();
+					const enhanced = data.choices?.[0]?.message?.content?.trim();
+					if (enhanced) {
+						setInputValue(enhanced);
+					}
+				}
+			} catch {
+				setInputValue(`${text}\n\nPlease provide a detailed, well-structured solution with code examples and best practices. Think step by step.`);
+			} finally {
+				setIsEnhancing(false);
+			}
+		}, [inputValue, isEnhancing, setInputValue, apiConfiguration]);
 
 		const handleContextButtonClick = useCallback(() => {
 			// Focus the textarea first

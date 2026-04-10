@@ -383,14 +383,14 @@ export const ChatRowContent = memo(
 					return [
 						<CircleXIcon className="text-error size-2" />,
 						<span className="text-error font-bold">
-							Asi is having trouble...
+							Fetch Coder is having trouble...
 						</span>,
 					];
 				case "command":
 					return [
 						<TerminalIcon className="text-foreground size-2" />,
 						<span className="font-bold text-foreground">
-							Asi wants to execute this command:
+							Fetch Coder wants to execute this command:
 						</span>,
 					];
 				case "use_mcp_server":
@@ -404,7 +404,7 @@ export const ChatRowContent = memo(
 							<span className="codicon codicon-server text-foreground mb-[-1.5px]" />
 						),
 						<span className="ph-no-capture font-bold text-foreground break-words">
-							Asi wants to{" "}
+							Fetch Coder wants to{" "}
 							{mcpServerUse.type === "use_mcp_tool"
 								? "use a tool"
 								: "access a resource"}{" "}
@@ -431,7 +431,7 @@ export const ChatRowContent = memo(
 					return [
 						<span className="codicon codicon-question text-foreground mb-[-1.5px]" />,
 						<span className="font-bold text-foreground">
-							Asi has a question:
+							Fetch Coder has a question:
 						</span>,
 					];
 				default:
@@ -531,8 +531,8 @@ export const ChatRowContent = memo(
 						content?.startsWith("%%bash") &&
 						!content.endsWith("*** End Patch\nEOF");
 					const editToolTitle = isApplyingPatch
-						? "Asi is creating patches to edit this file:"
-						: "Asi wants to edit this file:";
+						? "Fetch Coder is creating patches to edit this file:"
+						: "Fetch Coder wants to edit this file:";
 					return (
 						<div>
 							<div className={HEADER_CLASSNAMES}>
@@ -577,7 +577,7 @@ export const ChatRowContent = memo(
 										"This file is outside of your workspace",
 									)}
 								<span style={{ fontWeight: "bold" }}>
-									Asi wants to delete this file:
+									Fetch Coder wants to delete this file:
 								</span>
 							</div>
 							<CodeAccordian
@@ -602,7 +602,7 @@ export const ChatRowContent = memo(
 										"This file is outside of your workspace",
 									)}
 								<span className="font-bold">
-									Asi wants to create a new file:
+									Fetch Coder wants to create a new file:
 								</span>
 							</div>
 							{backgroundEditEnabled && tool.path && tool.content ? (
@@ -639,7 +639,7 @@ export const ChatRowContent = memo(
 										-90,
 										"This file is outside of your workspace",
 									)}
-								<span className="font-bold">Asi wants to read this file:</span>
+								<span className="font-bold">Fetch Coder wants to read this file:</span>
 							</div>
 							<div className="bg-code rounded-sm overflow-hidden border border-editor-group-border">
 								<div
@@ -690,8 +690,8 @@ export const ChatRowContent = memo(
 									)}
 								<span style={{ fontWeight: "bold" }}>
 									{message.type === "ask"
-										? "Asi wants to view the top level files in this directory:"
-										: "Asi viewed the top level files in this directory:"}
+										? "Fetch Coder wants to view the top level files in this directory:"
+										: "Fetch Coder viewed the top level files in this directory:"}
 								</span>
 							</div>
 							<CodeAccordian
@@ -717,8 +717,8 @@ export const ChatRowContent = memo(
 									)}
 								<span style={{ fontWeight: "bold" }}>
 									{message.type === "ask"
-										? "Asi wants to recursively view all files in this directory:"
-										: "Asi recursively viewed all files in this directory:"}
+										? "Fetch Coder wants to recursively view all files in this directory:"
+										: "Fetch Coder recursively viewed all files in this directory:"}
 								</span>
 							</div>
 							<CodeAccordian
@@ -744,8 +744,8 @@ export const ChatRowContent = memo(
 									)}
 								<span style={{ fontWeight: "bold" }}>
 									{message.type === "ask"
-										? "Asi wants to view source code definition names used in this directory:"
-										: "Asi viewed source code definition names used in this directory:"}
+										? "Fetch Coder wants to view source code definitions in this directory:"
+										: "Fetch Coder viewed source code definitions in this directory:"}
 								</span>
 							</div>
 							<CodeAccordian
@@ -769,7 +769,7 @@ export const ChatRowContent = memo(
 										"This is outside of your workspace",
 									)}
 								<span className="font-bold">
-									Asi wants to search this directory for{" "}
+									Fetch Coder wants to search this directory for{" "}
 									<code className="break-all">{tool.regex}</code>:
 								</span>
 							</div>
@@ -788,7 +788,7 @@ export const ChatRowContent = memo(
 							<div className={HEADER_CLASSNAMES}>
 								<FoldVerticalIcon className="size-2" />
 								<span className="font-bold">
-									Asi is condensing the conversation:
+									Fetch Coder is condensing the conversation:
 								</span>
 							</div>
 							<div className="bg-code overflow-hidden border border-editor-group-border rounded-[3px]">
@@ -839,8 +839,8 @@ export const ChatRowContent = memo(
 									toolIcon("sign-out", "yellow", -90, "This URL is external")}
 								<span className="font-bold">
 									{message.type === "ask"
-										? "Asi wants to fetch content from this URL:"
-										: "Asi fetched content from this URL:"}
+										? "Fetch Coder wants to fetch content from this URL:"
+										: "Fetch Coder fetched content from this URL:"}
 								</span>
 							</div>
 							<div
@@ -876,8 +876,8 @@ export const ChatRowContent = memo(
 									)}
 								<span className="font-bold">
 									{message.type === "ask"
-										? "Asi wants to search the web for:"
-										: "Asi searched the web for:"}
+										? "Fetch Coder wants to search the web for:"
+										: "Fetch Coder searched the web for:"}
 								</span>
 							</div>
 							<div className="bg-code border border-editor-group-border overflow-hidden rounded-xs select-text py-[9px] px-2.5">
@@ -892,7 +892,7 @@ export const ChatRowContent = memo(
 						<div>
 							<div className={HEADER_CLASSNAMES}>
 								<LightbulbIcon className="size-2" />
-								<span className="font-bold">Asi loaded the skill:</span>
+								<span className="font-bold">Fetch Coder loaded the skill:</span>
 							</div>
 							<div className="bg-code border border-editor-group-border overflow-hidden rounded-xs py-[9px] px-2.5">
 								<span className="ph-no-capture font-medium">{tool.path}</span>
@@ -1258,7 +1258,7 @@ export const ChatRowContent = memo(
 									</span>
 								</div>
 								<div className="text-foreground opacity-80">
-									Asi may have trouble viewing the command's output. Please
+									Fetch Coder may have trouble viewing the command's output. Please
 									update VSCode (<code>CMD/CTRL + Shift + P</code> → "Update")
 									and make sure you're using a supported shell: zsh, bash, fish,
 									or PowerShell (<code>CMD/CTRL + Shift + P</code> → "Terminal:
@@ -1501,7 +1501,7 @@ export const ChatRowContent = memo(
 								<div className={HEADER_CLASSNAMES}>
 									<FilePlus2Icon className="size-2" />
 									<span className="text-foreground font-bold">
-										Asi wants to start a new task:
+										Fetch Coder wants to start a new task:
 									</span>
 								</div>
 								<NewTaskPreview context={message.text || ""} />
@@ -1513,7 +1513,7 @@ export const ChatRowContent = memo(
 								<div className={HEADER_CLASSNAMES}>
 									<FilePlus2Icon className="size-2" />
 									<span className="text-foreground font-bold">
-										Asi wants to condense your conversation:
+										Fetch Coder wants to condense your conversation:
 									</span>
 								</div>
 								<NewTaskPreview context={message.text || ""} />
@@ -1525,7 +1525,7 @@ export const ChatRowContent = memo(
 								<div className={HEADER_CLASSNAMES}>
 									<FilePlus2Icon className="size-2" />
 									<span className="text-foreground font-bold">
-										Asi wants to create a Github issue:
+										Fetch Coder wants to create a Github issue:
 									</span>
 								</div>
 								<ReportBugPreview data={message.text || ""} />
