@@ -1,45 +1,55 @@
-import { afterEach, beforeEach, describe, it } from "mocha"
-import "should"
-import fs from "fs/promises"
-import path from "path"
-import sinon from "sinon"
-import { HookOutput } from "../../../shared/proto/Asi/hooks"
-import { HookFactory } from "../hook-factory"
-import { createHookTestEnv, HookTestEnv, stubHookDirs, withFixtureRunner, writeHookScriptForPlatform } from "./test-utils"
+import { afterEach, beforeEach, describe, it } from "mocha";
+import "should";
+import fs from "fs/promises";
+import path from "path";
+import sinon from "sinon";
+import { HookOutput } from "../../../shared/proto/Asi/hooks";
+import { HookFactory } from "../hook-factory";
+import {
+	createHookTestEnv,
+	HookTestEnv,
+	stubHookDirs,
+	withFixtureRunner,
+	writeHookScriptForPlatform,
+} from "./test-utils";
 
 describe("TaskResume Hook", () => {
-	let tempDir: string
-	let sandbox: sinon.SinonSandbox
-	let hookTestEnv: HookTestEnv
-	const WINDOWS_HOOK_TEST_TIMEOUT_MS = 15000
+	let tempDir: string;
+	let sandbox: sinon.SinonSandbox;
+	let hookTestEnv: HookTestEnv;
+	const WINDOWS_HOOK_TEST_TIMEOUT_MS = 15000;
 
 	type FixtureScenario = {
-		fixtureName: string
-		lastMessageTs: string
-		messageCount: string
-		conversationHistoryDeleted: string
-		assert: (result: HookOutput) => void
-	}
+		fixtureName: string;
+		lastMessageTs: string;
+		messageCount: string;
+		conversationHistoryDeleted: string;
+		assert: (result: HookOutput) => void;
+	};
 
-	const getErrorMessage = (error: unknown): string => (error instanceof Error ? error.message : String(error))
+	const getErrorMessage = (error: unknown): string =>
+		error instanceof Error ? error.message : String(error);
 
-	const writeHookScript = async (hookPath: string, nodeScript: string): Promise<void> => {
-		await writeHookScriptForPlatform(hookPath, nodeScript)
-	}
+	const writeHookScript = async (
+		hookPath: string,
+		nodeScript: string,
+	): Promise<void> => {
+		await writeHookScriptForPlatform(hookPath, nodeScript);
+	};
 
 	beforeEach(async () => {
-		hookTestEnv = await createHookTestEnv()
-		tempDir = hookTestEnv.tempDir
-		sandbox = hookTestEnv.sandbox
-	})
+		hookTestEnv = await createHookTestEnv();
+		tempDir = hookTestEnv.tempDir;
+		sandbox = hookTestEnv.sandbox;
+	});
 
 	afterEach(async () => {
-		await hookTestEnv.cleanup()
-	})
+		await hookTestEnv.cleanup();
+	});
 
 	describe("Hook Input Format", () => {
 		it("should receive all required taskResume fields", async () => {
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const hasRequiredFields = 
@@ -51,12 +61,12 @@ const hasRequiredFields =
 console.log(JSON.stringify({
   cancel: false,
   contextModification: hasRequiredFields ? "All fields present" : "Missing fields"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const result = await runner.run({
 				taskId: "test-task",
@@ -71,14 +81,14 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.cancel.should.be.false()
-			result.contextModification?.should.equal("All fields present")
-		})
+			result.cancel.should.be.false();
+			result.contextModification?.should.equal("All fields present");
+		});
 
 		it("should receive all common hook input fields", async () => {
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const hasAllFields = input.clineVersion && input.hookName && input.timestamp && 
@@ -87,12 +97,12 @@ const hasAllFields = input.clineVersion && input.hookName && input.timestamp &&
 console.log(JSON.stringify({
   cancel: false,
   contextModification: hasAllFields ? "All fields present" : "Missing fields"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const result = await runner.run({
 				taskId: "test-task",
@@ -104,19 +114,19 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.contextModification?.should.equal("All fields present")
-		})
-	})
+			result.contextModification?.should.equal("All fields present");
+		});
+	});
 
 	describe("Time-Based Calculations", () => {
 		it("should correctly calculate minutes ago for recent resumes", async function () {
 			if (process.platform === "win32") {
-				this.timeout(WINDOWS_HOOK_TEST_TIMEOUT_MS)
+				this.timeout(WINDOWS_HOOK_TEST_TIMEOUT_MS);
 			}
 
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const lastTs = parseInt(input.taskResume.previousState.lastMessageTs);
@@ -125,22 +135,22 @@ const minutesAgo = Math.floor((now - lastTs) / 60000);
 console.log(JSON.stringify({
   cancel: false,
   contextModification: "Minutes ago: " + minutesAgo
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			// Test various time intervals
 			const testCases = [
 				{ offset: 2 * 60 * 1000, expected: 2 }, // 2 minutes
 				{ offset: 30 * 60 * 1000, expected: 30 }, // 30 minutes
 				{ offset: 90 * 60 * 1000, expected: 90 }, // 90 minutes
-			]
+			];
 
 			for (const { offset, expected } of testCases) {
-				const timestamp = Date.now() - offset
+				const timestamp = Date.now() - offset;
 				const result = await runner.run({
 					taskId: "test-task",
 					taskResume: {
@@ -151,18 +161,18 @@ console.log(JSON.stringify({
 							conversationHistoryDeleted: "false",
 						},
 					},
-				})
+				});
 
-				result.contextModification?.should.equal(`Minutes ago: ${expected}`)
+				result.contextModification?.should.equal(`Minutes ago: ${expected}`);
 			}
-		})
+		});
 
 		it("should handle very old timestamps (days ago)", async function () {
 			if (process.platform === "win32") {
-				this.timeout(WINDOWS_HOOK_TEST_TIMEOUT_MS)
+				this.timeout(WINDOWS_HOOK_TEST_TIMEOUT_MS);
 			}
 
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const lastTs = parseInt(input.taskResume.previousState.lastMessageTs);
@@ -171,15 +181,15 @@ const daysAgo = Math.floor((now - lastTs) / (24 * 60 * 60 * 1000));
 console.log(JSON.stringify({
   cancel: false,
   contextModification: daysAgo > 0 ? "Days ago: " + daysAgo : "Recent"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			// Test 7 days ago
-			const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
+			const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
 			const result = await runner.run({
 				taskId: "test-task",
 				taskResume: {
@@ -190,13 +200,13 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.contextModification?.should.equal("Days ago: 7")
-		})
+			result.contextModification?.should.equal("Days ago: 7");
+		});
 
 		it("should handle edge case: future timestamp", async () => {
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const lastTs = parseInt(input.taskResume.previousState.lastMessageTs);
@@ -205,14 +215,14 @@ const isFuture = lastTs > now;
 console.log(JSON.stringify({
   cancel: false,
   contextModification: isFuture ? "Future timestamp detected" : "Normal timestamp"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
-			const futureTimestamp = Date.now() + 60 * 60 * 1000 // 1 hour in future
+			const futureTimestamp = Date.now() + 60 * 60 * 1000; // 1 hour in future
 			const result = await runner.run({
 				taskId: "test-task",
 				taskResume: {
@@ -223,19 +233,19 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.contextModification?.should.equal("Future timestamp detected")
-		})
-	})
+			result.contextModification?.should.equal("Future timestamp detected");
+		});
+	});
 
 	describe("Message Count Analysis", () => {
 		it("should analyze message count thresholds", async function () {
 			if (process.platform === "win32") {
-				this.timeout(WINDOWS_HOOK_TEST_TIMEOUT_MS)
+				this.timeout(WINDOWS_HOOK_TEST_TIMEOUT_MS);
 			}
 
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const count = parseInt(input.taskResume.previousState.messageCount);
@@ -246,18 +256,18 @@ else category = "long";
 console.log(JSON.stringify({
   cancel: false,
   contextModification: "Conversation length: " + category + " (" + count + " messages)"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const testCases = [
 				{ count: "2", expected: "short (2 messages)" },
 				{ count: "10", expected: "medium (10 messages)" },
 				{ count: "50", expected: "long (50 messages)" },
-			]
+			];
 
 			for (const { count, expected } of testCases) {
 				const result = await runner.run({
@@ -270,26 +280,28 @@ console.log(JSON.stringify({
 							conversationHistoryDeleted: "false",
 						},
 					},
-				})
+				});
 
-				result.contextModification?.should.equal(`Conversation length: ${expected}`)
+				result.contextModification?.should.equal(
+					`Conversation length: ${expected}`,
+				);
 			}
-		})
+		});
 
 		it("should handle zero message count", async () => {
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const count = parseInt(input.taskResume.previousState.messageCount);
 console.log(JSON.stringify({
   cancel: false,
   contextModification: count === 0 ? "Empty conversation" : "Has messages"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const result = await runner.run({
 				taskId: "test-task",
@@ -301,15 +313,15 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.contextModification?.should.equal("Empty conversation")
-		})
-	})
+			result.contextModification?.should.equal("Empty conversation");
+		});
+	});
 
 	describe("State Combination Analysis", () => {
 		it("should analyze combination of long pause and many messages", async () => {
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const lastTs = parseInt(input.taskResume.previousState.lastMessageTs);
@@ -319,14 +331,14 @@ const isStale = hoursAgo > 24 && count > 20;
 console.log(JSON.stringify({
   cancel: false,
   contextModification: isStale ? "STALE_TASK: Long conversation paused for extended time" : "Active task"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
-			const oneDayAgo = Date.now() - 25 * 60 * 60 * 1000
+			const oneDayAgo = Date.now() - 25 * 60 * 60 * 1000;
 			const result = await runner.run({
 				taskId: "test-task",
 				taskResume: {
@@ -337,13 +349,15 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.contextModification?.should.equal("STALE_TASK: Long conversation paused for extended time")
-		})
+			result.contextModification?.should.equal(
+				"STALE_TASK: Long conversation paused for extended time",
+			);
+		});
 
 		it("should combine context deletion with other state", async () => {
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const deleted = input.taskResume.previousState.conversationHistoryDeleted === 'true';
@@ -353,12 +367,12 @@ console.log(JSON.stringify({
   contextModification: deleted && count > 10 
     ? "CONTEXT_WARNING: Large conversation with truncated history" 
     : "Normal state"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const result = await runner.run({
 				taskId: "test-task",
@@ -370,22 +384,24 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "true",
 					},
 				},
-			})
+			});
 
-			result.contextModification?.should.equal("CONTEXT_WARNING: Large conversation with truncated history")
-		})
-	})
+			result.contextModification?.should.equal(
+				"CONTEXT_WARNING: Large conversation with truncated history",
+			);
+		});
+	});
 
 	describe("Error Handling", () => {
 		it("should handle malformed JSON output", async () => {
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
-console.log("not valid json")`
+console.log("not valid json")`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			// When hook exits 0 but has malformed JSON, it returns success without context
 			const result = await runner.run({
@@ -398,15 +414,18 @@ console.log("not valid json")`
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
 			// Hook succeeded (exit 0) but couldn't parse JSON, so returns success without context
-			result.cancel.should.be.false()
-			;(result.contextModification === undefined || result.contextModification === "").should.be.true()
-		})
+			result.cancel.should.be.false();
+			(
+				result.contextModification === undefined ||
+				result.contextModification === ""
+			).should.be.true();
+		});
 
 		it("should handle invalid timestamp gracefully", async () => {
-			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const hookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume");
 			const hookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const lastTs = parseInt(input.taskResume.previousState.lastMessageTs);
@@ -414,12 +433,12 @@ const isValid = !isNaN(lastTs) && lastTs > 0;
 console.log(JSON.stringify({
   cancel: false,
   contextModification: isValid ? "Valid timestamp" : "Invalid timestamp"
-}))`
+}))`;
 
-			await writeHookScript(hookPath, hookScript)
+			await writeHookScript(hookPath, hookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const result = await runner.run({
 				taskId: "test-task",
@@ -431,43 +450,48 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.contextModification?.should.equal("Invalid timestamp")
-		})
-	})
+			result.contextModification?.should.equal("Invalid timestamp");
+		});
+	});
 
 	describe("Global and Workspace Hooks", () => {
-		let globalHooksDir: string
-		let workspaceHooksDir: string
+		let globalHooksDir: string;
+		let workspaceHooksDir: string;
 
 		beforeEach(async () => {
-			globalHooksDir = path.join(tempDir, "global-hooks")
-			await fs.mkdir(globalHooksDir, { recursive: true })
-			workspaceHooksDir = path.join(tempDir, ".Asirules", "hooks")
+			globalHooksDir = path.join(tempDir, "global-hooks");
+			await fs.mkdir(globalHooksDir, { recursive: true });
+			workspaceHooksDir = path.join(tempDir, ".Asirules", "hooks");
 
-			stubHookDirs(sandbox, [globalHooksDir, workspaceHooksDir])
-		})
+			stubHookDirs(sandbox, [globalHooksDir, workspaceHooksDir]);
+		});
 
 		it("should execute both global and workspace TaskResume hooks", async () => {
-			const globalHookPath = path.join(globalHooksDir, "TaskResume")
+			const globalHookPath = path.join(globalHooksDir, "TaskResume");
 			const globalHookScript = `#!/usr/bin/env node
 console.log(JSON.stringify({
   cancel: false,
   contextModification: "GLOBAL: Task resumed"
-}))`
-			await writeHookScript(globalHookPath, globalHookScript)
+}))`;
+			await writeHookScript(globalHookPath, globalHookScript);
 
-			const workspaceHookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const workspaceHookPath = path.join(
+				tempDir,
+				".Asirules",
+				"hooks",
+				"TaskResume",
+			);
 			const workspaceHookScript = `#!/usr/bin/env node
 console.log(JSON.stringify({
   cancel: false,
   contextModification: "WORKSPACE: Task resumed"
-}))`
-			await writeHookScript(workspaceHookPath, workspaceHookScript)
+}))`;
+			await writeHookScript(workspaceHookPath, workspaceHookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const result = await runner.run({
 				taskId: "test-task",
@@ -479,17 +503,17 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.cancel.should.be.false()
-			result.contextModification?.should.match(/GLOBAL: Task resumed/)
-			result.contextModification?.should.match(/WORKSPACE: Task resumed/)
-		})
+			result.cancel.should.be.false();
+			result.contextModification?.should.match(/GLOBAL: Task resumed/);
+			result.contextModification?.should.match(/WORKSPACE: Task resumed/);
+		});
 
 		it("should combine context modifications from both hooks with time analysis", async () => {
-			const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
+			const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
 
-			const globalHookPath = path.join(globalHooksDir, "TaskResume")
+			const globalHookPath = path.join(globalHooksDir, "TaskResume");
 			const globalHookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const lastTs = parseInt(input.taskResume.previousState.lastMessageTs);
@@ -497,21 +521,26 @@ const daysAgo = Math.floor((Date.now() - lastTs) / (24 * 60 * 60 * 1000));
 console.log(JSON.stringify({
   cancel: false,
   contextModification: "GLOBAL_POLICY: " + (daysAgo > 0 ? "Review task context" : "Continue")
-}))`
-			await writeHookScript(globalHookPath, globalHookScript)
+}))`;
+			await writeHookScript(globalHookPath, globalHookScript);
 
-			const workspaceHookPath = path.join(tempDir, ".Asirules", "hooks", "TaskResume")
+			const workspaceHookPath = path.join(
+				tempDir,
+				".Asirules",
+				"hooks",
+				"TaskResume",
+			);
 			const workspaceHookScript = `#!/usr/bin/env node
 const input = JSON.parse(require('fs').readFileSync(0, 'utf-8'));
 const count = parseInt(input.taskResume.previousState.messageCount);
 console.log(JSON.stringify({
   cancel: false,
   contextModification: "PROJECT_NOTE: " + count + " messages in history"
-}))`
-			await writeHookScript(workspaceHookPath, workspaceHookScript)
+}))`;
+			await writeHookScript(workspaceHookPath, workspaceHookScript);
 
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const result = await runner.run({
 				taskId: "test-task",
@@ -523,17 +552,21 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.contextModification?.should.match(/GLOBAL_POLICY: Review task context/)
-			result.contextModification?.should.match(/PROJECT_NOTE: 15 messages in history/)
-		})
-	})
+			result.contextModification?.should.match(
+				/GLOBAL_POLICY: Review task context/,
+			);
+			result.contextModification?.should.match(
+				/PROJECT_NOTE: 15 messages in history/,
+			);
+		});
+	});
 
 	describe("No Hook Behavior", () => {
 		it("should allow resume when no hook exists", async () => {
-			const factory = new HookFactory()
-			const runner = await factory.create("TaskResume")
+			const factory = new HookFactory();
+			const runner = await factory.create("TaskResume");
 
 			const result = await runner.run({
 				taskId: "test-task",
@@ -545,16 +578,16 @@ console.log(JSON.stringify({
 						conversationHistoryDeleted: "false",
 					},
 				},
-			})
+			});
 
-			result.cancel.should.be.false()
-		})
-	})
+			result.cancel.should.be.false();
+		});
+	});
 
 	describe("Fixture-Based Tests", () => {
 		it("should validate representative fixtures end-to-end", async function () {
 			if (process.platform === "win32") {
-				this.timeout(WINDOWS_HOOK_TEST_TIMEOUT_MS)
+				this.timeout(WINDOWS_HOOK_TEST_TIMEOUT_MS);
 			}
 
 			const scenarios: FixtureScenario[] = [
@@ -564,8 +597,10 @@ console.log(JSON.stringify({
 					messageCount: "5",
 					conversationHistoryDeleted: "false",
 					assert: (result: HookOutput) => {
-						result.cancel.should.be.false()
-						result.contextModification?.should.equal("TaskResume hook executed successfully")
+						result.cancel.should.be.false();
+						result.contextModification?.should.equal(
+							"TaskResume hook executed successfully",
+						);
 					},
 				},
 				{
@@ -574,8 +609,8 @@ console.log(JSON.stringify({
 					messageCount: "5",
 					conversationHistoryDeleted: "false",
 					assert: (result: HookOutput) => {
-						result.cancel.should.be.false()
-						result.contextModification?.should.match(/Recently paused task/)
+						result.cancel.should.be.false();
+						result.contextModification?.should.match(/Recently paused task/);
 					},
 				},
 				{
@@ -584,8 +619,8 @@ console.log(JSON.stringify({
 					messageCount: "5",
 					conversationHistoryDeleted: "false",
 					assert: (result: HookOutput) => {
-						result.cancel.should.be.false()
-						result.contextModification?.should.match(/paused 48 hours ago/)
+						result.cancel.should.be.false();
+						result.contextModification?.should.match(/paused 48 hours ago/);
 					},
 				},
 				{
@@ -594,8 +629,8 @@ console.log(JSON.stringify({
 					messageCount: "50",
 					conversationHistoryDeleted: "true",
 					assert: (result: HookOutput) => {
-						result.cancel.should.be.false()
-						result.contextModification?.should.match(/truncated/)
+						result.cancel.should.be.false();
+						result.contextModification?.should.match(/truncated/);
 					},
 				},
 				{
@@ -604,8 +639,10 @@ console.log(JSON.stringify({
 					messageCount: "25",
 					conversationHistoryDeleted: "false",
 					assert: (result: HookOutput) => {
-						result.cancel.should.be.false()
-						result.contextModification?.should.equal("TASK_CONTEXT: Resuming task with 25 previous messages")
+						result.cancel.should.be.false();
+						result.contextModification?.should.equal(
+							"TASK_CONTEXT: Resuming task with 25 previous messages",
+						);
 					},
 				},
 				{
@@ -614,52 +651,63 @@ console.log(JSON.stringify({
 					messageCount: "5",
 					conversationHistoryDeleted: "false",
 					assert: (result: HookOutput) => {
-						result.cancel.should.be.false()
+						result.cancel.should.be.false();
 						result.contextModification?.should.equal(
 							"WORKSPACE_RULES: Task test-task resumed - review previous context",
-						)
+						);
 					},
 				},
-			]
+			];
 
 			for (const scenario of scenarios) {
-				await withFixtureRunner("TaskResume", `hooks/taskresume/${scenario.fixtureName}`, hookTestEnv, async (runner) => {
-					const result = await runner.run({
-						taskId: "test-task",
-						taskResume: {
-							taskMetadata: { taskId: "test-task", ulid: "test-ulid" },
-							previousState: {
-								lastMessageTs: scenario.lastMessageTs,
-								messageCount: scenario.messageCount,
-								conversationHistoryDeleted: scenario.conversationHistoryDeleted,
+				await withFixtureRunner(
+					"TaskResume",
+					`hooks/taskresume/${scenario.fixtureName}`,
+					hookTestEnv,
+					async (runner) => {
+						const result = await runner.run({
+							taskId: "test-task",
+							taskResume: {
+								taskMetadata: { taskId: "test-task", ulid: "test-ulid" },
+								previousState: {
+									lastMessageTs: scenario.lastMessageTs,
+									messageCount: scenario.messageCount,
+									conversationHistoryDeleted:
+										scenario.conversationHistoryDeleted,
+								},
 							},
-						},
-					})
+						});
 
-					scenario.assert(result)
-				})
+						scenario.assert(result);
+					},
+				);
 			}
-		})
+		});
 
 		it("should preserve fixture-based failure behavior", async () => {
-			await withFixtureRunner("TaskResume", "hooks/taskresume/error", hookTestEnv, async (runner) => {
-				try {
-					await runner.run({
-						taskId: "test-task",
-						taskResume: {
-							taskMetadata: { taskId: "test-task", ulid: "test-ulid" },
-							previousState: {
-								lastMessageTs: Date.now().toString(),
-								messageCount: "5",
-								conversationHistoryDeleted: "false",
+			await withFixtureRunner(
+				"TaskResume",
+				"hooks/taskresume/error",
+				hookTestEnv,
+				async (runner) => {
+					try {
+						await runner.run({
+							taskId: "test-task",
+							taskResume: {
+								taskMetadata: { taskId: "test-task", ulid: "test-ulid" },
+								previousState: {
+									lastMessageTs: Date.now().toString(),
+									messageCount: "5",
+									conversationHistoryDeleted: "false",
+								},
 							},
-						},
-					})
-					throw new Error("Should have thrown")
-				} catch (error: unknown) {
-					getErrorMessage(error).should.match(/exited with code 1/)
-				}
-			})
-		})
-	})
-})
+						});
+						throw new Error("Should have thrown");
+					} catch (error: unknown) {
+						getErrorMessage(error).should.match(/exited with code 1/);
+					}
+				},
+			);
+		});
+	});
+});

@@ -265,7 +265,8 @@ export class AsiHandler implements ApiHandler {
 						cost_details?: { upstream_inference_cost?: number };
 					};
 					let totalCost =
-						(usage.cost || 0) + (usage.cost_details?.upstream_inference_cost || 0);
+						(usage.cost || 0) +
+						(usage.cost_details?.upstream_inference_cost || 0);
 					const modelId = this.getModel().id;
 					const isFreeModel = freeModelIds.has(normalizeModelId(modelId));
 

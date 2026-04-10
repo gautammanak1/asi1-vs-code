@@ -1,61 +1,79 @@
 // Restore GenerateContentConfig import and add GenerateContentResponseUsageMetadata
 import {
-    ApiError,
-    FunctionCallingConfigMode,
-    type GenerateContentConfig,
-    type GenerateContentResponseUsageMetadata,
-    GoogleGenAI,
-    FunctionDeclaration as GoogleTool,
-    ThinkingLevel,
-} from "@google/genai"
-import { GeminiModelId, geminiDefaultModelId, geminiModels, ModelInfo } from "@shared/api"
-import { GEMINI_FLASH_MAX_OUTPUT_TOKENS, isGeminiFlashModel } from "@utils/model-utils"
-import { buildExternalBasicHeaders } from "@/services/EnvUtils"
-import { telemetryService } from "@/services/telemetry"
-import { AsiStorageMessage } from "@/shared/messages/content"
-import { Logger } from "@/shared/services/Logger"
-import { ApiHandler, CommonApiHandlerOptions } from "../"
-import { RetriableError, withRetry } from "../retry"
-import { convertAnthropicMessageToGemini } from "../transform/gemini-format"
-import { ApiStream } from "../transform/stream"
+	ApiError,
+	FunctionCallingConfigMode,
+	type GenerateContentConfig,
+	type GenerateContentResponseUsageMetadata,
+	GoogleGenAI,
+	FunctionDeclaration as GoogleTool,
+	ThinkingLevel,
+} from "@google/genai";
+import {
+	GeminiModelId,
+	geminiDefaultModelId,
+	geminiModels,
+	ModelInfo,
+} from "@shared/api";
+import {
+	GEMINI_FLASH_MAX_OUTPUT_TOKENS,
+	isGeminiFlashModel,
+} from "@utils/model-utils";
+import { buildExternalBasicHeaders } from "@/services/EnvUtils";
+import { telemetryService } from "@/services/telemetry";
+import { AsiStorageMessage } from "@/shared/messages/content";
+import { Logger } from "@/shared/services/Logger";
+import { ApiHandler, CommonApiHandlerOptions } from "../";
+import { RetriableError, withRetry } from "../retry";
+import { convertAnthropicMessageToGemini } from "../transform/gemini-format";
+import { ApiStream } from "../transform/stream";
 
-const rateLimitPatterns = [/got status: 429/i, /429 Too Many Requests/i, /rate limit exceeded/i, /too many requests/i]
+const rateLimitPatterns = [
+	/got status: 429/i,
+	/429 Too Many Requests/i,
+	/rate limit exceeded/i,
+	/too many requests/i,
+];
 
 interface GeminiHandlerOptions extends CommonApiHandlerOptions {
-	isVertex?: boolean
-	vertexProjectId?: string
-	vertexRegion?: string
-	geminiApiKey?: string
-	geminiBaseUrl?: string
-	thinkingBudgetTokens?: number
-	reasoningEffort?: string
-	apiModelId?: string
-	ulid?: string
+	isVertex?: boolean;
+	vertexProjectId?: string;
+	vertexRegion?: string;
+	geminiApiKey?: string;
+	geminiBaseUrl?: string;
+	thinkingBudgetTokens?: number;
+	reasoningEffort?: string;
+	apiModelId?: string;
+	ulid?: string;
 }
 
-function mapReasoningEffortToGeminiThinkingLevel(effort: string): ThinkingLevel {
+function mapReasoningEffortToGeminiThinkingLevel(
+	effort: string,
+): ThinkingLevel {
 	switch (effort) {
 		case "low":
 		case "medium":
-			return ThinkingLevel.LOW
+			return ThinkingLevel.LOW;
 		case "high":
 		case "xhigh":
-			return ThinkingLevel.HIGH
+			return ThinkingLevel.HIGH;
 		default:
-			return ThinkingLevel.LOW
+			return ThinkingLevel.LOW;
 	}
 }
 
-function getGeminiMaxOutputTokens(modelId: string, modelMaxTokens?: number): number | undefined {
+function getGeminiMaxOutputTokens(
+	modelId: string,
+	modelMaxTokens?: number,
+): number | undefined {
 	if (!isGeminiFlashModel(modelId)) {
-		return undefined
+		return undefined;
 	}
 
 	if (modelMaxTokens && modelMaxTokens > 0) {
-		return Math.min(modelMaxTokens, GEMINI_FLASH_MAX_OUTPUT_TOKENS)
+		return Math.min(modelMaxTokens, GEMINI_FLASH_MAX_OUTPUT_TOKENS);
 	}
 
-	return GEMINI_FLASH_MAX_OUTPUT_TOKENS
+	return GEMINI_FLASH_MAX_OUTPUT_TOKENS;
 }
 
 /**
@@ -79,23 +97,23 @@ function getGeminiMaxOutputTokens(modelId: string, modelMaxTokens?: number): num
  * 4. Separating immediate costs from ongoing costs to avoid double-counting
  */
 export class GeminiHandler implements ApiHandler {
-	private options: GeminiHandlerOptions
-	private client: GoogleGenAI | undefined
+	private options: GeminiHandlerOptions;
+	private client: GoogleGenAI | undefined;
 
 	constructor(options: GeminiHandlerOptions) {
 		// Store the options
-		this.options = options
+		this.options = options;
 	}
 
 	private ensureClient(): GoogleGenAI {
 		if (!this.client) {
-			const options = this.options as GeminiHandlerOptions
-			const externalHeaders = buildExternalBasicHeaders()
+			const options = this.options as GeminiHandlerOptions;
+			const externalHeaders = buildExternalBasicHeaders();
 
 			if (options.isVertex) {
 				// Initialize with Vertex AI configuration
-				const project = this.options.vertexProjectId ?? "not-provided"
-				const location = this.options.vertexRegion ?? "not-provided"
+				const project = this.options.vertexProjectId ?? "not-provided";
+				const location = this.options.vertexRegion ?? "not-provided";
 
 				try {
 					this.client = new GoogleGenAI({
@@ -105,14 +123,18 @@ export class GeminiHandler implements ApiHandler {
 						httpOptions: {
 							headers: externalHeaders,
 						},
-					})
+					});
 				} catch (error) {
-					throw new Error(`Error creating Gemini Vertex AI client: ${error.message}`)
+					throw new Error(
+						`Error creating Gemini Vertex AI client: ${error.message}`,
+					);
 				}
 			} else {
 				// Initialize with standard API key
 				if (!options.geminiApiKey) {
-					throw new Error("API key is required for Google Gemini when not using Vertex AI")
+					throw new Error(
+						"API key is required for Google Gemini when not using Vertex AI",
+					);
 				}
 
 				try {
@@ -121,13 +143,13 @@ export class GeminiHandler implements ApiHandler {
 						httpOptions: {
 							headers: externalHeaders,
 						},
-					})
+					});
 				} catch (error) {
-					throw new Error(`Error creating Gemini client: ${error.message}`)
+					throw new Error(`Error creating Gemini client: ${error.message}`);
 				}
 			}
 		}
-		return this.client
+		return this.client;
 	}
 
 	/**
@@ -145,39 +167,52 @@ export class GeminiHandler implements ApiHandler {
 		baseDelay: 2000,
 		maxDelay: 15000,
 	})
-	async *createMessage(systemPrompt: string, messages: AsiStorageMessage[], tools?: GoogleTool[]): ApiStream {
-		const client = this.ensureClient()
-		const { id: modelId, info } = this.getModel()
-		const contents = messages.map(convertAnthropicMessageToGemini)
+	async *createMessage(
+		systemPrompt: string,
+		messages: AsiStorageMessage[],
+		tools?: GoogleTool[],
+	): ApiStream {
+		const client = this.ensureClient();
+		const { id: modelId, info } = this.getModel();
+		const contents = messages.map(convertAnthropicMessageToGemini);
 		// Gemini may emit multiple function calls under the same responseId and without functionCall.id.
 		// Track a local sequence so each emitted tool call has a stable unique ID.
-		const responseToolCallCount = new Map<string, number>()
+		const responseToolCallCount = new Map<string, number>();
 
 		// Configure thinking budget/level if supported
-		const _thinkingBudget = this.options.thinkingBudgetTokens ?? 0
-		const maxBudget = info.thinkingConfig?.maxBudget ?? 24576
-		const thinkingBudget = Math.min(_thinkingBudget, maxBudget)
+		const _thinkingBudget = this.options.thinkingBudgetTokens ?? 0;
+		const maxBudget = info.thinkingConfig?.maxBudget ?? 24576;
+		const thinkingBudget = Math.min(_thinkingBudget, maxBudget);
 		// When ThinkingLevel is defined, thinking budget cannot be zero
 		// and only level is used to control thinking behavior.
 		// Only set thinkingLevel for models that support it
-		let thinkingLevel: ThinkingLevel | undefined
-		const rawReasoningEffort = (this.options.reasoningEffort || "").toLowerCase()
-		const normalizedReasoningEffort = !rawReasoningEffort || rawReasoningEffort === "none" ? "low" : rawReasoningEffort
+		let thinkingLevel: ThinkingLevel | undefined;
+		const rawReasoningEffort = (
+			this.options.reasoningEffort || ""
+		).toLowerCase();
+		const normalizedReasoningEffort =
+			!rawReasoningEffort || rawReasoningEffort === "none"
+				? "low"
+				: rawReasoningEffort;
 		if (info.thinkingConfig?.supportsThinkingLevel) {
-			thinkingLevel = mapReasoningEffortToGeminiThinkingLevel(normalizedReasoningEffort)
+			thinkingLevel = mapReasoningEffortToGeminiThinkingLevel(
+				normalizedReasoningEffort,
+			);
 		}
 
 		// Set up base generation config
-		const maxOutputTokens = getGeminiMaxOutputTokens(modelId, info.maxTokens)
+		const maxOutputTokens = getGeminiMaxOutputTokens(modelId, info.maxTokens);
 		const requestConfig: GenerateContentConfig = {
 			// Add base URL if configured
-			httpOptions: this.options.geminiBaseUrl ? { baseUrl: this.options.geminiBaseUrl } : undefined,
+			httpOptions: this.options.geminiBaseUrl
+				? { baseUrl: this.options.geminiBaseUrl }
+				: undefined,
 			systemInstruction: systemPrompt,
 			// Set temperature (default to 0)
 			// Gemini 3 recommends 1.0
 			temperature: info.temperature ?? 1,
 			...(maxOutputTokens !== undefined ? { maxOutputTokens } : {}),
-		}
+		};
 
 		// Add thinking config only if the model supports it
 		if (info.thinkingConfig) {
@@ -190,31 +225,31 @@ export class GeminiHandler implements ApiHandler {
 				thinkingBudget: thinkingLevel ? undefined : thinkingBudget, // Use budget only if thinkingLevel is not set
 				thinkingLevel,
 				includeThoughts: thinkingBudget > 0 || !!thinkingLevel,
-			}
+			};
 		}
 
 		// Generate content using the configured parameters
-		const sdkCallStartTime = Date.now()
-		let responseId: string | undefined
-		let sdkFirstChunkTime: number | undefined
-		let ttftSdkMs: number | undefined
-		let apiSuccess = false
-		let apiError: string | undefined
-		let promptTokens = 0
-		let outputTokens = 0
-		let cacheReadTokens = 0
-		let thoughtsTokenCount = 0 // Initialize thought token counts
-		let lastUsageMetadata: GenerateContentResponseUsageMetadata | undefined
+		const sdkCallStartTime = Date.now();
+		let responseId: string | undefined;
+		let sdkFirstChunkTime: number | undefined;
+		let ttftSdkMs: number | undefined;
+		let apiSuccess = false;
+		let apiError: string | undefined;
+		let promptTokens = 0;
+		let outputTokens = 0;
+		let cacheReadTokens = 0;
+		let thoughtsTokenCount = 0; // Initialize thought token counts
+		let lastUsageMetadata: GenerateContentResponseUsageMetadata | undefined;
 
-		const isNativeToolCallsEnabled = tools?.length
+		const isNativeToolCallsEnabled = tools?.length;
 		if (isNativeToolCallsEnabled) {
-			requestConfig.tools = [{ functionDeclarations: tools }]
+			requestConfig.tools = [{ functionDeclarations: tools }];
 			requestConfig.toolConfig = {
 				// Force the model to call 'any' function.
 				functionCallingConfig: {
 					mode: FunctionCallingConfigMode.ANY,
 				},
-			}
+			};
 		}
 
 		try {
@@ -224,19 +259,19 @@ export class GeminiHandler implements ApiHandler {
 				config: {
 					...requestConfig,
 				},
-			})
+			});
 
-			let isFirstSdkChunk = true
+			let isFirstSdkChunk = true;
 			for await (const chunk of result) {
-				const responseKey = chunk.responseId || "gemini-response"
+				const responseKey = chunk.responseId || "gemini-response";
 				if (isFirstSdkChunk) {
-					sdkFirstChunkTime = Date.now()
-					ttftSdkMs = sdkFirstChunkTime - sdkCallStartTime
-					isFirstSdkChunk = false
+					sdkFirstChunkTime = Date.now();
+					ttftSdkMs = sdkFirstChunkTime - sdkCallStartTime;
+					isFirstSdkChunk = false;
 				}
 
 				// Handle thinking content from Gemini's response
-				const parts = chunk?.candidates?.[0]?.content?.parts || []
+				const parts = chunk?.candidates?.[0]?.content?.parts || [];
 				for (const part of parts) {
 					if (part.thought && part.text) {
 						yield {
@@ -244,27 +279,30 @@ export class GeminiHandler implements ApiHandler {
 							id: chunk.responseId,
 							reasoning: part.text || "",
 							signature: part.thoughtSignature,
-						}
+						};
 					} else if (part.text) {
 						yield {
 							type: "text",
 							text: part.text,
 							id: chunk.responseId,
 							signature: part.thoughtSignature,
-						}
+						};
 					}
 					if (part.functionCall) {
-						const functionCall = part.functionCall
-						const args = Object.entries(functionCall.args || {}).filter(([_key, val]) => !!val)
+						const functionCall = part.functionCall;
+						const args = Object.entries(functionCall.args || {}).filter(
+							([_key, val]) => !!val,
+						);
 						if (functionCall.args && args.length > 0) {
-							const existingId = functionCall.id?.trim()
+							const existingId = functionCall.id?.trim();
 							const toolCallId =
 								existingId ??
 								(() => {
-									const sequenceNumber = responseToolCallCount.get(responseKey) ?? 0
-									responseToolCallCount.set(responseKey, sequenceNumber + 1)
-									return `${responseKey}-tool-${sequenceNumber}`
-								})()
+									const sequenceNumber =
+										responseToolCallCount.get(responseKey) ?? 0;
+									responseToolCallCount.set(responseKey, sequenceNumber + 1);
+									return `${responseKey}-tool-${sequenceNumber}`;
+								})();
 							yield {
 								type: "tool_calls",
 								id: chunk.responseId,
@@ -277,21 +315,23 @@ export class GeminiHandler implements ApiHandler {
 									},
 								},
 								signature: part.thoughtSignature,
-							}
+							};
 						}
 					}
 				}
 
 				if (chunk.usageMetadata) {
-					responseId = chunk.responseId
-					lastUsageMetadata = chunk.usageMetadata
-					promptTokens = lastUsageMetadata.promptTokenCount ?? promptTokens
-					outputTokens = lastUsageMetadata.candidatesTokenCount ?? outputTokens
-					thoughtsTokenCount = lastUsageMetadata.thoughtsTokenCount ?? thoughtsTokenCount
-					cacheReadTokens = lastUsageMetadata.cachedContentTokenCount ?? cacheReadTokens
+					responseId = chunk.responseId;
+					lastUsageMetadata = chunk.usageMetadata;
+					promptTokens = lastUsageMetadata.promptTokenCount ?? promptTokens;
+					outputTokens = lastUsageMetadata.candidatesTokenCount ?? outputTokens;
+					thoughtsTokenCount =
+						lastUsageMetadata.thoughtsTokenCount ?? thoughtsTokenCount;
+					cacheReadTokens =
+						lastUsageMetadata.cachedContentTokenCount ?? cacheReadTokens;
 				}
 			}
-			apiSuccess = true
+			apiSuccess = true;
 
 			if (lastUsageMetadata) {
 				const totalCost = this.calculateCost({
@@ -300,7 +340,7 @@ export class GeminiHandler implements ApiHandler {
 					outputTokens,
 					thoughtsTokenCount,
 					cacheReadTokens,
-				})
+				});
 				yield {
 					type: "usage",
 					inputTokens: promptTokens - cacheReadTokens,
@@ -310,28 +350,29 @@ export class GeminiHandler implements ApiHandler {
 					cacheWriteTokens: 0,
 					totalCost,
 					id: responseId,
-				}
+				};
 			}
 		} catch (error) {
-			apiSuccess = false
+			apiSuccess = false;
 			// Let the error propagate to be handled by withRetry or Task.ts
 			// Telemetry will be sent in the finally block.
 			if (error instanceof Error) {
-				apiError = error.message
+				apiError = error.message;
 
 				if (error instanceof ApiError) {
 					if (error.status === 429) {
 						// The API includes more details in the message
 						// https://github.com/googleapis/js-genai/blob/v1.11.0/src/_api_client.ts#L758
-						const response = this.attemptParse(error.message)
+						const response = this.attemptParse(error.message);
 
 						if (response && response.error) {
-							const responseBody = this.attemptParse(response.error.message)
+							const responseBody = this.attemptParse(response.error.message);
 
 							if (responseBody.error) {
 								const detail = responseBody.error.details?.find(
-									(d: any) => d["@type"] === "type.googleapis.com/google.rpc.RetryInfo",
-								)
+									(d: any) =>
+										d["@type"] === "type.googleapis.com/google.rpc.RetryInfo",
+								);
 
 								const detailedError = new RetriableError(
 									apiError,
@@ -339,49 +380,60 @@ export class GeminiHandler implements ApiHandler {
 									{
 										cause: error,
 									},
-								)
-								throw detailedError
+								);
+								throw detailedError;
 							}
 						}
 
-						throw new RetriableError(apiError, undefined, { cause: error })
+						throw new RetriableError(apiError, undefined, { cause: error });
 					}
 
 					// Fallback in case Gemini throws a rate limit error without a 429 status code
 					// https://github.com/gautammanak1/asi1-vs-code/pull/5205#discussion_r2311761559
-					const isRateLimit = rateLimitPatterns.some((pattern) => pattern.test(error.message))
+					const isRateLimit = rateLimitPatterns.some((pattern) =>
+						pattern.test(error.message),
+					);
 					if (isRateLimit) {
-						throw new RetriableError(apiError, undefined, { cause: error })
+						throw new RetriableError(apiError, undefined, { cause: error });
 					}
 				}
 			} else {
-				apiError = String(error)
+				apiError = String(error);
 			}
 
-			throw error
+			throw error;
 		} finally {
-			const sdkCallEndTime = Date.now()
-			const totalDurationSdkMs = sdkCallEndTime - sdkCallStartTime
-			const cacheHit = cacheReadTokens > 0
-			const cacheHitPercentage = promptTokens > 0 ? (cacheReadTokens / promptTokens) * 100 : undefined
+			const sdkCallEndTime = Date.now();
+			const totalDurationSdkMs = sdkCallEndTime - sdkCallStartTime;
+			const cacheHit = cacheReadTokens > 0;
+			const cacheHitPercentage =
+				promptTokens > 0 ? (cacheReadTokens / promptTokens) * 100 : undefined;
 			const throughputTokensPerSecSdk =
-				totalDurationSdkMs > 0 && outputTokens > 0 ? outputTokens / (totalDurationSdkMs / 1000) : undefined
+				totalDurationSdkMs > 0 && outputTokens > 0
+					? outputTokens / (totalDurationSdkMs / 1000)
+					: undefined;
 
 			if (this.options.ulid) {
-				telemetryService.captureGeminiApiPerformance(this.options.ulid, modelId, {
-					ttftSec: ttftSdkMs !== undefined ? ttftSdkMs / 1000 : undefined,
-					totalDurationSec: totalDurationSdkMs / 1000,
-					promptTokens,
-					outputTokens,
-					cacheReadTokens,
-					cacheHit,
-					cacheHitPercentage,
-					apiSuccess,
-					apiError,
-					throughputTokensPerSec: throughputTokensPerSecSdk,
-				})
+				telemetryService.captureGeminiApiPerformance(
+					this.options.ulid,
+					modelId,
+					{
+						ttftSec: ttftSdkMs !== undefined ? ttftSdkMs / 1000 : undefined,
+						totalDurationSec: totalDurationSdkMs / 1000,
+						promptTokens,
+						outputTokens,
+						cacheReadTokens,
+						cacheHit,
+						cacheHitPercentage,
+						apiSuccess,
+						apiError,
+						throughputTokensPerSec: throughputTokensPerSecSdk,
+					},
+				);
 			} else {
-				Logger.warn("GeminiHandler: ulid not available for telemetry in createMessage.")
+				Logger.warn(
+					"GeminiHandler: ulid not available for telemetry in createMessage.",
+				);
 			}
 		}
 	}
@@ -403,77 +455,96 @@ export class GeminiHandler implements ApiHandler {
 		thoughtsTokenCount = 0,
 		cacheReadTokens = 0,
 	}: {
-		info: ModelInfo
-		inputTokens: number
-		outputTokens: number
-		thoughtsTokenCount: number
-		cacheReadTokens?: number
+		info: ModelInfo;
+		inputTokens: number;
+		outputTokens: number;
+		thoughtsTokenCount: number;
+		cacheReadTokens?: number;
 	}) {
 		// Exit early if any required pricing information is missing
 		if (!info.inputPrice || !info.outputPrice) {
-			return undefined
+			return undefined;
 		}
 
-		let inputPrice = info.inputPrice
-		let outputPrice = info.outputPrice
+		let inputPrice = info.inputPrice;
+		let outputPrice = info.outputPrice;
 		// Right now, we only show the immediate costs of caching and not the ongoing costs of storing the cache
-		let cacheReadsPrice = info.cacheReadsPrice ?? 0
+		let cacheReadsPrice = info.cacheReadsPrice ?? 0;
 
 		// If there's tiered pricing then adjust prices based on the input tokens used
 		if (info.tiers) {
-			const tier = info.tiers.find((tier) => inputTokens <= tier.contextWindow)
+			const tier = info.tiers.find((tier) => inputTokens <= tier.contextWindow);
 			if (tier) {
-				inputPrice = tier.inputPrice ?? inputPrice
-				outputPrice = tier.outputPrice ?? outputPrice
-				cacheReadsPrice = tier.cacheReadsPrice ?? cacheReadsPrice
+				inputPrice = tier.inputPrice ?? inputPrice;
+				outputPrice = tier.outputPrice ?? outputPrice;
+				cacheReadsPrice = tier.cacheReadsPrice ?? cacheReadsPrice;
 			}
 		}
 
 		// Subtract the cached input tokens from the total input tokens
-		const uncachedInputTokens = inputTokens - (cacheReadTokens ?? 0)
+		const uncachedInputTokens = inputTokens - (cacheReadTokens ?? 0);
 
 		// Calculate immediate costs only
 
 		// 1. Input token costs (for uncached tokens)
-		const inputTokensCost = inputPrice * (uncachedInputTokens / 1_000_000)
+		const inputTokensCost = inputPrice * (uncachedInputTokens / 1_000_000);
 
 		// 2. Output token costs
-		const responseTokensCost = outputPrice * ((outputTokens + thoughtsTokenCount) / 1_000_000)
+		const responseTokensCost =
+			outputPrice * ((outputTokens + thoughtsTokenCount) / 1_000_000);
 
 		// 3. Cache read costs (immediate)
-		const cacheReadCost = (cacheReadTokens ?? 0) > 0 ? cacheReadsPrice * ((cacheReadTokens ?? 0) / 1_000_000) : 0
+		const cacheReadCost =
+			(cacheReadTokens ?? 0) > 0
+				? cacheReadsPrice * ((cacheReadTokens ?? 0) / 1_000_000)
+				: 0;
 
 		// Calculate total immediate cost (excluding cache write/storage costs)
-		const totalCost = inputTokensCost + responseTokensCost + cacheReadCost
+		const totalCost = inputTokensCost + responseTokensCost + cacheReadCost;
 
 		// Create the trace object for debugging
-		const trace: Record<string, { price: number; tokens: number; cost: number }> = {
-			input: { price: inputPrice, tokens: uncachedInputTokens, cost: inputTokensCost },
-			output: { price: outputPrice, tokens: outputTokens, cost: responseTokensCost },
-		}
+		const trace: Record<
+			string,
+			{ price: number; tokens: number; cost: number }
+		> = {
+			input: {
+				price: inputPrice,
+				tokens: uncachedInputTokens,
+				cost: inputTokensCost,
+			},
+			output: {
+				price: outputPrice,
+				tokens: outputTokens,
+				cost: responseTokensCost,
+			},
+		};
 
 		// Only include cache read costs in the trace (cache write costs are tracked separately)
 		if ((cacheReadTokens ?? 0) > 0) {
-			trace.cacheRead = { price: cacheReadsPrice, tokens: cacheReadTokens ?? 0, cost: cacheReadCost }
+			trace.cacheRead = {
+				price: cacheReadsPrice,
+				tokens: cacheReadTokens ?? 0,
+				cost: cacheReadCost,
+			};
 		}
 
 		// Logger.log(`[GeminiHandler] calculateCost -> ${totalCost}`, trace)
-		return totalCost
+		return totalCost;
 	}
 
 	/**
 	 * Get the model ID and info for the current configuration
 	 */
 	getModel(): { id: GeminiModelId; info: ModelInfo } {
-		const modelId = this.options.apiModelId
+		const modelId = this.options.apiModelId;
 		if (modelId && modelId in geminiModels) {
-			const id = modelId as GeminiModelId
-			return { id, info: geminiModels[id] }
+			const id = modelId as GeminiModelId;
+			return { id, info: geminiModels[id] };
 		}
 		return {
 			id: geminiDefaultModelId,
 			info: geminiModels[geminiDefaultModelId],
-		}
+		};
 	}
 
 	/**
@@ -481,32 +552,32 @@ export class GeminiHandler implements ApiHandler {
 	 */
 	async countTokens(content: Array<any>): Promise<number> {
 		try {
-			const client = this.ensureClient()
-			const { id: model } = this.getModel()
+			const client = this.ensureClient();
+			const { id: model } = this.getModel();
 
 			// Convert content to Gemini format
 			const geminiContent = content.map((block) => {
 				if (typeof block === "string") {
-					return { text: block }
+					return { text: block };
 				}
-				return { text: JSON.stringify(block) }
-			})
+				return { text: JSON.stringify(block) };
+			});
 
 			// Use Gemini's token counting API
 			const response = await client.models.countTokens({
 				model,
 				contents: [{ parts: geminiContent }],
-			})
+			});
 
 			if (response.totalTokens === undefined) {
-				Logger.warn("Gemini token counting returned undefined, using fallback")
-				return this.estimateTokens(content)
+				Logger.warn("Gemini token counting returned undefined, using fallback");
+				return this.estimateTokens(content);
 			}
 
-			return response.totalTokens
+			return response.totalTokens;
 		} catch (error) {
-			Logger.warn("Gemini token counting failed, using fallback", error)
-			return this.estimateTokens(content)
+			Logger.warn("Gemini token counting failed, using fallback", error);
+			return this.estimateTokens(content);
 		}
 	}
 
@@ -517,54 +588,54 @@ export class GeminiHandler implements ApiHandler {
 		// Simple estimation: ~4 characters per token
 		const totalChars = content.reduce((total, block) => {
 			if (typeof block === "string") {
-				return total + block.length
+				return total + block.length;
 			}
 			if (block && typeof block === "object") {
 				// Safely stringify the object
 				try {
-					const jsonStr = JSON.stringify(block)
-					return total + jsonStr.length
+					const jsonStr = JSON.stringify(block);
+					return total + jsonStr.length;
 				} catch (e) {
-					Logger.warn("Failed to stringify block for token estimation", e)
-					return total
+					Logger.warn("Failed to stringify block for token estimation", e);
+					return total;
 				}
 			}
-			return total
-		}, 0)
+			return total;
+		}, 0);
 
-		return Math.ceil(totalChars / 4)
+		return Math.ceil(totalChars / 4);
 	}
 
 	private parseRetryDelay(retryAfter?: string): number {
 		if (!retryAfter) {
-			return 0
+			return 0;
 		}
 
-		const unit = retryAfter.at(-1)
-		const value = Number.parseInt(retryAfter, 10)
+		const unit = retryAfter.at(-1);
+		const value = Number.parseInt(retryAfter, 10);
 
 		if (Number.isNaN(value)) {
-			return 0
+			return 0;
 		}
 
 		if (unit === "s") {
-			return value
+			return value;
 		}
 		if (unit === "m") {
-			return value * 60 // Convert minutes to seconds
+			return value * 60; // Convert minutes to seconds
 		}
 		if (unit === "h") {
-			return value * 60 * 60 // Convert hours to seconds
+			return value * 60 * 60; // Convert hours to seconds
 		}
 
-		return value
+		return value;
 	}
 
 	private attemptParse(str: string) {
 		try {
-			return JSON.parse(str)
+			return JSON.parse(str);
 		} catch (_) {
-			return null
+			return null;
 		}
 	}
 }

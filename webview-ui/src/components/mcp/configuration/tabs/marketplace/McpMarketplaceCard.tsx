@@ -1,37 +1,43 @@
-import { McpMarketplaceItem, McpServer } from "@shared/mcp"
-import { StringRequest } from "@shared/proto/Asi/common"
-import { useEffect, useMemo, useRef, useState } from "react"
-import styled from "styled-components"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { McpMarketplaceItem, McpServer } from "@shared/mcp";
+import { StringRequest } from "@shared/proto/Asi/common";
+import { useEffect, useMemo, useRef, useState } from "react";
+import styled from "styled-components";
+import { useExtensionState } from "@/context/ExtensionStateContext";
+import { McpServiceClient } from "@/services/grpc-client";
 
 interface McpMarketplaceCardProps {
-	item: McpMarketplaceItem
-	installedServers: McpServer[]
-	setError: (error: string | null) => void
+	item: McpMarketplaceItem;
+	installedServers: McpServer[];
+	setError: (error: string | null) => void;
 }
 
-const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplaceCardProps) => {
-	const isInstalled = installedServers.some((server) => server.name === item.mcpId)
-	const [isDownloading, setIsDownloading] = useState(false)
-	const [isLoading, setIsLoading] = useState(false)
-	const githubLinkRef = useRef<HTMLDivElement>(null)
-	const { onRelinquishControl } = useExtensionState()
+const McpMarketplaceCard = ({
+	item,
+	installedServers,
+	setError,
+}: McpMarketplaceCardProps) => {
+	const isInstalled = installedServers.some(
+		(server) => server.name === item.mcpId,
+	);
+	const [isDownloading, setIsDownloading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const githubLinkRef = useRef<HTMLDivElement>(null);
+	const { onRelinquishControl } = useExtensionState();
 
 	useEffect(() => {
 		return onRelinquishControl(() => {
-			setIsLoading(false)
-		})
-	}, [onRelinquishControl])
+			setIsLoading(false);
+		});
+	}, [onRelinquishControl]);
 
 	const githubAuthorUrl = useMemo(() => {
-		const url = new URL(item.githubUrl)
-		const pathParts = url.pathname.split("/")
+		const url = new URL(item.githubUrl);
+		const pathParts = url.pathname.split("/");
 		if (pathParts.length >= 2) {
-			return `${url.origin}/${pathParts[1]}`
+			return `${url.origin}/${pathParts[1]}`;
 		}
-		return item.githubUrl
-	}, [item.githubUrl])
+		return item.githubUrl;
+	}, [item.githubUrl]);
 
 	return (
 		<>
@@ -60,7 +66,8 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 					cursor: isLoading ? "wait" : "pointer",
 					textDecoration: "none",
 					color: "inherit",
-				}}>
+				}}
+			>
 				{/* Main container with logo and content */}
 				<div style={{ display: "flex", gap: "12px" }}>
 					{/* Logo */}
@@ -84,7 +91,8 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 							display: "flex",
 							flexDirection: "column",
 							justifyContent: "space-between",
-						}}>
+						}}
+					>
 						{/* First row: name and install button */}
 						<div
 							style={{
@@ -92,43 +100,53 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 								justifyContent: "space-between",
 								alignItems: "center",
 								gap: "16px",
-							}}>
+							}}
+						>
 							<h3
 								style={{
 									margin: 0,
 									fontSize: "13px",
 									fontWeight: 600,
-								}}>
+								}}
+							>
 								{item.name}
 							</h3>
 							<div
 								onClick={async (e) => {
-									e.preventDefault() // Prevent card click when clicking install
-									e.stopPropagation() // Stop event from bubbling up to parent link
+									e.preventDefault(); // Prevent card click when clicking install
+									e.stopPropagation(); // Stop event from bubbling up to parent link
 									if (!isInstalled && !isDownloading) {
-										setIsDownloading(true)
+										setIsDownloading(true);
 										try {
 											const response = await McpServiceClient.downloadMcp(
 												StringRequest.create({ value: item.mcpId }),
-											)
+											);
 											if (response.error) {
-												console.error("MCP download failed:", response.error)
-												setError(response.error)
+												console.error("MCP download failed:", response.error);
+												setError(response.error);
 											} else {
-												console.log("MCP download successful:", response)
+												console.log("MCP download successful:", response);
 												// Clear any previous errors on success
-												setError(null)
+												setError(null);
 											}
 										} catch (error) {
-											console.error("Failed to download MCP:", error)
+											console.error("Failed to download MCP:", error);
 										} finally {
-											setIsDownloading(false)
+											setIsDownloading(false);
 										}
 									}
 								}}
-								style={{}}>
-								<StyledInstallButton $isInstalled={isInstalled} disabled={isInstalled || isDownloading}>
-									{isInstalled ? "Installed" : isDownloading ? "Installing..." : "Install"}
+								style={{}}
+							>
+								<StyledInstallButton
+									$isInstalled={isInstalled}
+									disabled={isInstalled || isDownloading}
+								>
+									{isInstalled
+										? "Installed"
+										: isDownloading
+											? "Installing..."
+											: "Install"}
 								</StyledInstallButton>
 							</div>
 						</div>
@@ -144,17 +162,18 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 								flexWrap: "wrap",
 								minWidth: 0,
 								rowGap: 0,
-							}}>
+							}}
+						>
 							<a
 								className="github-link"
 								href={githubAuthorUrl}
 								onMouseEnter={(e) => {
-									e.currentTarget.style.opacity = "1"
-									e.currentTarget.style.color = "var(--link-active-foreground)"
+									e.currentTarget.style.opacity = "1";
+									e.currentTarget.style.color = "var(--link-active-foreground)";
 								}}
 								onMouseLeave={(e) => {
-									e.currentTarget.style.opacity = "0.7"
-									e.currentTarget.style.color = "var(--vscode-foreground)"
+									e.currentTarget.style.opacity = "0.7";
+									e.currentTarget.style.color = "var(--vscode-foreground)";
 								}}
 								style={{
 									display: "flex",
@@ -164,16 +183,24 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 									opacity: 0.7,
 									textDecoration: "none",
 									border: "none !important",
-								}}>
-								<div ref={githubLinkRef} style={{ display: "flex", gap: "4px", alignItems: "center" }}>
-									<span className="codicon codicon-github" style={{ fontSize: "14px" }} />
+								}}
+							>
+								<div
+									ref={githubLinkRef}
+									style={{ display: "flex", gap: "4px", alignItems: "center" }}
+								>
+									<span
+										className="codicon codicon-github"
+										style={{ fontSize: "14px" }}
+									/>
 									<span
 										style={{
 											overflow: "hidden",
 											textOverflow: "ellipsis",
 											wordBreak: "break-all",
 											minWidth: 0,
-										}}>
+										}}
+									>
 										{item.author}
 									</span>
 								</div>
@@ -185,9 +212,12 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 									gap: "4px",
 									minWidth: 0,
 									flexShrink: 0,
-								}}>
+								}}
+							>
 								<span className="codicon codicon-star-full" />
-								<span style={{ wordBreak: "break-all" }}>{item.githubStars?.toLocaleString() ?? 0}</span>
+								<span style={{ wordBreak: "break-all" }}>
+									{item.githubStars?.toLocaleString() ?? 0}
+								</span>
 							</div>
 							<div
 								style={{
@@ -196,12 +226,19 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 									gap: "4px",
 									minWidth: 0,
 									flexShrink: 0,
-								}}>
+								}}
+							>
 								<span className="codicon codicon-cloud-download" />
-								<span style={{ wordBreak: "break-all" }}>{item.downloadCount?.toLocaleString() ?? 0}</span>
+								<span style={{ wordBreak: "break-all" }}>
+									{item.downloadCount?.toLocaleString() ?? 0}
+								</span>
 							</div>
 							{item.requiresApiKey && (
-								<span className="codicon codicon-key" style={{ flexShrink: 0 }} title="Requires API key" />
+								<span
+									className="codicon codicon-key"
+									style={{ flexShrink: 0 }}
+									title="Requires API key"
+								/>
 							)}
 						</div>
 					</div>
@@ -228,10 +265,13 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 					<p style={{ fontSize: "13px", margin: 0 }}>{item.description}</p>
 					<div
 						onScroll={(e) => {
-							const target = e.currentTarget
-							const gradient = target.querySelector(".tags-gradient") as HTMLElement
+							const target = e.currentTarget;
+							const gradient = target.querySelector(
+								".tags-gradient",
+							) as HTMLElement;
 							if (gradient) {
-								gradient.style.visibility = target.scrollLeft > 0 ? "hidden" : "visible"
+								gradient.style.visibility =
+									target.scrollLeft > 0 ? "hidden" : "visible";
 							}
 						}}
 						style={{
@@ -241,16 +281,19 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 							overflowX: "auto",
 							scrollbarWidth: "none",
 							position: "relative",
-						}}>
+						}}
+					>
 						<span
 							style={{
 								fontSize: "10px",
 								padding: "1px 4px",
 								borderRadius: "3px",
-								border: "1px solid color-mix(in srgb, var(--vscode-descriptionForeground) 50%, transparent)",
+								border:
+									"1px solid color-mix(in srgb, var(--vscode-descriptionForeground) 50%, transparent)",
 								color: "var(--vscode-descriptionForeground)",
 								whiteSpace: "nowrap",
-							}}>
+							}}
+						>
 							{item.category}
 						</span>
 						{item.tags.map((tag, index) => (
@@ -260,11 +303,13 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 									fontSize: "10px",
 									padding: "1px 4px",
 									borderRadius: "3px",
-									border: "1px solid color-mix(in srgb, var(--vscode-descriptionForeground) 50%, transparent)",
+									border:
+										"1px solid color-mix(in srgb, var(--vscode-descriptionForeground) 50%, transparent)",
 									color: "var(--vscode-descriptionForeground)",
 									whiteSpace: "nowrap",
 									display: "inline-flex",
-								}}>
+								}}
+							>
 								{tag}
 								{index === item.tags.length - 1 ? "" : ""}
 							</span>
@@ -277,7 +322,8 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 								top: 0,
 								bottom: 0,
 								width: "32px",
-								background: "linear-gradient(to right, transparent, var(--vscode-sideBar-background))",
+								background:
+									"linear-gradient(to right, transparent, var(--vscode-sideBar-background))",
 								pointerEvents: "none",
 							}}
 						/>
@@ -285,8 +331,8 @@ const McpMarketplaceCard = ({ item, installedServers, setError }: McpMarketplace
 				</div>
 			</a>
 		</>
-	)
-}
+	);
+};
 
 const StyledInstallButton = styled.button<{ $isInstalled?: boolean }>`
 	font-size: 12px;
@@ -296,17 +342,23 @@ const StyledInstallButton = styled.button<{ $isInstalled?: boolean }>`
 	border: none;
 	cursor: pointer;
 	background: ${(props) =>
-		props.$isInstalled ? "var(--vscode-button-secondaryBackground)" : "var(--vscode-button-background)"};
+		props.$isInstalled
+			? "var(--vscode-button-secondaryBackground)"
+			: "var(--vscode-button-background)"};
 	color: var(--vscode-button-foreground);
 
 	&:hover:not(:disabled) {
 		background: ${(props) =>
-			props.$isInstalled ? "var(--vscode-button-secondaryHoverBackground)" : "var(--vscode-button-hoverBackground)"};
+			props.$isInstalled
+				? "var(--vscode-button-secondaryHoverBackground)"
+				: "var(--vscode-button-hoverBackground)"};
 	}
 
 	&:active:not(:disabled) {
 		background: ${(props) =>
-			props.$isInstalled ? "var(--vscode-button-secondaryBackground)" : "var(--vscode-button-background)"};
+			props.$isInstalled
+				? "var(--vscode-button-secondaryBackground)"
+				: "var(--vscode-button-background)"};
 		opacity: 0.7;
 	}
 
@@ -314,6 +366,6 @@ const StyledInstallButton = styled.button<{ $isInstalled?: boolean }>`
 		opacity: 0.5;
 		cursor: default;
 	}
-`
+`;
 
-export default McpMarketplaceCard
+export default McpMarketplaceCard;

@@ -1,18 +1,29 @@
-import { clearOnboardingModelsCache, getClineOnboardingModels } from "@/core/controller/models/getClineOnboardingModels"
-import type { OnboardingModel } from "@/shared/proto/Asi/state"
-import { FEATURE_FLAGS, FeatureFlag, FeatureFlagDefaultValue } from "@/shared/services/feature-flags/feature-flags"
-import { Logger } from "@/shared/services/Logger"
-import { telemetryService } from "../telemetry"
-import type { FeatureFlagPayload, FeatureFlagsAndPayloads, IFeatureFlagsProvider } from "./providers/IFeatureFlagsProvider"
+import {
+	clearOnboardingModelsCache,
+	getClineOnboardingModels,
+} from "@/core/controller/models/getClineOnboardingModels";
+import type { OnboardingModel } from "@/shared/proto/Asi/state";
+import {
+	FEATURE_FLAGS,
+	FeatureFlag,
+	FeatureFlagDefaultValue,
+} from "@/shared/services/feature-flags/feature-flags";
+import { Logger } from "@/shared/services/Logger";
+import { telemetryService } from "../telemetry";
+import type {
+	FeatureFlagPayload,
+	FeatureFlagsAndPayloads,
+	IFeatureFlagsProvider,
+} from "./providers/IFeatureFlagsProvider";
 
 // Default cache time-to-live (TTL) for feature flags - an hour
-const DEFAULT_CACHE_TTL = 60 * 60 * 1000
+const DEFAULT_CACHE_TTL = 60 * 60 * 1000;
 
 type CacheInfo = {
-	updateTime: number
-	userId: string | null
-	flagsPayload?: FeatureFlagsAndPayloads
-}
+	updateTime: number;
+	userId: string | null;
+	flagsPayload?: FeatureFlagsAndPayloads;
+};
 
 /**
  * FeatureFlagsService provides feature flag functionality that works independently
@@ -27,52 +38,59 @@ export class FeatureFlagsService {
 	 */
 	public constructor(private provider: IFeatureFlagsProvider) {}
 
-	private cache: Map<FeatureFlag, FeatureFlagPayload> = new Map()
+	private cache: Map<FeatureFlag, FeatureFlagPayload> = new Map();
 	/**
 	 * Tracks cache update time and user ID for cache validity
 	 */
-	private cacheInfo: CacheInfo = { updateTime: 0, userId: null }
+	private cacheInfo: CacheInfo = { updateTime: 0, userId: null };
 
 	/**
 	 * Poll all known feature flags to update their cached values
 	 */
 	public async poll(userId: string | null): Promise<void> {
 		// Do not update cache if last update was less than an hour ago
-		const timesNow = Date.now()
-		if (timesNow - this.cacheInfo.updateTime < DEFAULT_CACHE_TTL && this.cache.size) {
+		const timesNow = Date.now();
+		if (
+			timesNow - this.cacheInfo.updateTime < DEFAULT_CACHE_TTL &&
+			this.cache.size
+		) {
 			// Skip fetch if within TTL and user context is unchanged
 			if (this.cacheInfo.userId === userId) {
-				return
+				return;
 			}
 		}
 
 		// Only update timestamp after successfully populating cache
-		this.cacheInfo = { updateTime: timesNow, userId: userId || null }
+		this.cacheInfo = { updateTime: timesNow, userId: userId || null };
 
 		try {
 			const values = await this.provider.getAllFlagsAndPayloads({
 				flagKeys: FEATURE_FLAGS,
-			})
-			this.cacheInfo.flagsPayload = values
+			});
+			this.cacheInfo.flagsPayload = values;
 
 			for (const flag of FEATURE_FLAGS) {
-				const payload = await this.getFeatureFlag(flag).catch(() => false)
-				this.cache.set(flag, payload ?? false)
+				const payload = await this.getFeatureFlag(flag).catch(() => false);
+				this.cache.set(flag, payload ?? false);
 			}
 		} catch (error) {
 			// On error, clear cache info to force refresh on next poll
-			this.cacheInfo = { updateTime: 0, userId: null }
-			throw error
+			this.cacheInfo = { updateTime: 0, userId: null };
+			throw error;
 		}
 
-		getClineOnboardingModels() // Refresh onboarding models cache if relevant flag changed
+		getClineOnboardingModels(); // Refresh onboarding models cache if relevant flag changed
 	}
 
-	private async getFeatureFlag(flagName: FeatureFlag): Promise<FeatureFlagPayload | undefined> {
+	private async getFeatureFlag(
+		flagName: FeatureFlag,
+	): Promise<FeatureFlagPayload | undefined> {
 		try {
-			const payload = this.cacheInfo.flagsPayload?.featureFlagPayloads?.[flagName]
-			const flagValue = this.cacheInfo.flagsPayload?.featureFlags?.[flagName]
-			const value = payload ?? flagValue ?? FeatureFlagDefaultValue[flagName] ?? undefined
+			const payload =
+				this.cacheInfo.flagsPayload?.featureFlagPayloads?.[flagName];
+			const flagValue = this.cacheInfo.flagsPayload?.featureFlags?.[flagName];
+			const value =
+				payload ?? flagValue ?? FeatureFlagDefaultValue[flagName] ?? undefined;
 
 			if (!this.cache.has(flagName) || this.cache.get(flagName) !== value) {
 				telemetryService.capture({
@@ -81,13 +99,16 @@ export class FeatureFlagsService {
 						$feature_flag: flagName,
 						$feature_flag_response: flagValue,
 					},
-				})
+				});
 			}
 
-			return value
+			return value;
 		} catch (error) {
-			Logger.error(`Error checking if feature flag ${flagName} is enabled:`, error)
-			return FeatureFlagDefaultValue[flagName] ?? false
+			Logger.error(
+				`Error checking if feature flag ${flagName} is enabled:`,
+				error,
+			);
+			return FeatureFlagDefaultValue[flagName] ?? false;
 		}
 	}
 
@@ -99,32 +120,35 @@ export class FeatureFlagsService {
 	 * and whenever the user logs in.
 	 */
 	public getBooleanFlagEnabled(flagName: FeatureFlag): boolean {
-		return this.cache.get(flagName) === true
+		return this.cache.get(flagName) === true;
 	}
 
 	/**
 	 * Get a cached flag payload (or default) without triggering a network call.
 	 */
 	public getFlagPayload(flagName: FeatureFlag): FeatureFlagPayload | undefined {
-		return this.cache.get(flagName) ?? FeatureFlagDefaultValue[flagName]
+		return this.cache.get(flagName) ?? FeatureFlagDefaultValue[flagName];
 	}
 
 	public getWebtoolsEnabled(): boolean {
-		return this.getBooleanFlagEnabled(FeatureFlag.WEBTOOLS)
+		return this.getBooleanFlagEnabled(FeatureFlag.WEBTOOLS);
 	}
 
 	public getWorktreesEnabled(): boolean {
-		return this.getBooleanFlagEnabled(FeatureFlag.WORKTREES)
+		return this.getBooleanFlagEnabled(FeatureFlag.WORKTREES);
 	}
 
 	public getOnboardingOverrides() {
-		const payload = this.cache.get(FeatureFlag.ONBOARDING_MODELS)
+		const payload = this.cache.get(FeatureFlag.ONBOARDING_MODELS);
 		// Check if payload is object
 		if (payload && typeof payload === "object" && !Array.isArray(payload)) {
-			return payload.models as unknown as Record<string, OnboardingModel & { hidden?: boolean }>
+			return payload.models as unknown as Record<
+				string,
+				OnboardingModel & { hidden?: boolean }
+			>;
 		}
-		clearOnboardingModelsCache()
-		return undefined
+		clearOnboardingModelsCache();
+		return undefined;
 	}
 
 	/**
@@ -132,7 +156,7 @@ export class FeatureFlagsService {
 	 * @returns The current feature flags provider
 	 */
 	public getProvider(): IFeatureFlagsProvider {
-		return this.provider
+		return this.provider;
 	}
 
 	/**
@@ -140,7 +164,7 @@ export class FeatureFlagsService {
 	 * @returns Boolean indicating whether feature flags are enabled
 	 */
 	public isEnabled(): boolean {
-		return this.provider.isEnabled()
+		return this.provider.isEnabled();
 	}
 
 	/**
@@ -148,7 +172,7 @@ export class FeatureFlagsService {
 	 * @returns Current feature flags settings
 	 */
 	public getSettings() {
-		return this.provider.getSettings()
+		return this.provider.getSettings();
 	}
 
 	/**
@@ -156,7 +180,7 @@ export class FeatureFlagsService {
 	 */
 	public test(flagName: FeatureFlag, value: boolean) {
 		if (process.env.NODE_ENV === "true") {
-			this.cache.set(flagName, value)
+			this.cache.set(flagName, value);
 		}
 	}
 
@@ -164,6 +188,6 @@ export class FeatureFlagsService {
 	 * Clean up resources when the service is disposed
 	 */
 	public async dispose(): Promise<void> {
-		await this.provider.dispose()
+		await this.provider.dispose();
 	}
 }

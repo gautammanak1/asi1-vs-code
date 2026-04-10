@@ -1,20 +1,20 @@
-import { strict as assert } from "node:assert"
-import * as coreApi from "@core/api"
-import * as skills from "@core/context/instructions/user-instructions/skills"
-import { PromptRegistry } from "@core/prompts/system-prompt"
-import type { TaskConfig } from "@core/task/tools/types/TaskConfig"
-import { afterEach, describe, it } from "mocha"
-import sinon from "sinon"
-import { HostProvider } from "@/hosts/host-provider"
-import { ApiFormat } from "@/shared/proto/Asi/models"
-import { Logger } from "@/shared/services/Logger"
-import { AsiDefaultTool } from "@/shared/tools"
-import { TaskState } from "../../../TaskState"
-import { SubagentBuilder } from "../SubagentBuilder"
-import { SubagentRunner } from "../SubagentRunner"
+import { strict as assert } from "node:assert";
+import * as coreApi from "@core/api";
+import * as skills from "@core/context/instructions/user-instructions/skills";
+import { PromptRegistry } from "@core/prompts/system-prompt";
+import type { TaskConfig } from "@core/task/tools/types/TaskConfig";
+import { afterEach, describe, it } from "mocha";
+import sinon from "sinon";
+import { HostProvider } from "@/hosts/host-provider";
+import { ApiFormat } from "@/shared/proto/Asi/models";
+import { Logger } from "@/shared/services/Logger";
+import { AsiDefaultTool } from "@/shared/tools";
+import { TaskState } from "../../../TaskState";
+import { SubagentBuilder } from "../SubagentBuilder";
+import { SubagentRunner } from "../SubagentRunner";
 
 function initializeHostProvider() {
-	HostProvider.reset()
+	HostProvider.reset();
 	HostProvider.initialize(
 		() => ({}) as never,
 		() => ({}) as never,
@@ -33,7 +33,7 @@ function initializeHostProvider() {
 		async () => "",
 		"",
 		"",
-	)
+	);
 }
 
 function createTaskConfig(nativeToolCallEnabled: boolean): TaskConfig {
@@ -66,14 +66,15 @@ function createTaskConfig(nativeToolCallEnabled: boolean): TaskConfig {
 			stateManager: {
 				getGlobalSettingsKey: (key: string) => {
 					if (key === "mode") {
-						return "act"
+						return "act";
 					}
 					if (key === "customPrompt") {
-						return undefined
+						return undefined;
 					}
-					return undefined
+					return undefined;
 				},
-				getGlobalStateKey: (key: string) => (key === "nativeToolCallEnabled" ? nativeToolCallEnabled : undefined),
+				getGlobalStateKey: (key: string) =>
+					key === "nativeToolCallEnabled" ? nativeToolCallEnabled : undefined,
 				getApiConfiguration: () => ({
 					actModeApiProvider: "anthropic",
 					planModeApiProvider: "anthropic",
@@ -86,7 +87,9 @@ function createTaskConfig(nativeToolCallEnabled: boolean): TaskConfig {
 			enableNotifications: false,
 			actions: { executeSafeCommands: false, executeAllCommands: false },
 		},
-		autoApprover: { shouldAutoApproveTool: sinon.stub().returns([false, false]) },
+		autoApprover: {
+			shouldAutoApproveTool: sinon.stub().returns([false, false]),
+		},
 		callbacks: {
 			say: sinon.stub().resolves(undefined),
 			ask: sinon.stub().resolves({ response: "yesButtonClicked" }),
@@ -116,13 +119,13 @@ function createTaskConfig(nativeToolCallEnabled: boolean): TaskConfig {
 					return {
 						execute: sinon.stub().resolves("ok"),
 						getDescription: sinon.stub().returns("list_files"),
-					}
+					};
 				}
 
-				return undefined
+				return undefined;
 			}),
 		},
-	} as unknown as TaskConfig
+	} as unknown as TaskConfig;
 }
 
 function stubApiHandler(createMessage: sinon.SinonStub) {
@@ -137,17 +140,17 @@ function stubApiHandler(createMessage: sinon.SinonStub) {
 			},
 		}),
 		createMessage,
-	} as never)
+	} as never);
 }
 
 describe("SubagentRunner", () => {
 	afterEach(() => {
-		sinon.restore()
-		HostProvider.reset()
-	})
+		sinon.restore();
+		HostProvider.reset();
+	});
 
 	it("emits native tool_use blocks with matching tool_result tool_use_id across turns", async () => {
-		const createMessage = sinon.stub()
+		const createMessage = sinon.stub();
 		createMessage.onFirstCall().callsFake(async function* () {
 			yield {
 				type: "tool_calls",
@@ -158,25 +161,35 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ path: ".", recursive: false }),
 					},
 				},
-			}
-		})
-		createMessage.onSecondCall().callsFake(async function* (_systemPrompt: string, conversation: unknown[]) {
+			};
+		});
+		createMessage.onSecondCall().callsFake(async function* (
+			_systemPrompt: string,
+			conversation: unknown[],
+		) {
 			const assistantMessage = conversation[1] as {
-				role: string
-				content: Array<{ type?: string; [key: string]: unknown }>
-			}
-			assert.equal(assistantMessage.role, "assistant")
+				role: string;
+				content: Array<{ type?: string; [key: string]: unknown }>;
+			};
+			assert.equal(assistantMessage.role, "assistant");
 
-			const toolUse = assistantMessage.content.find((block) => block.type === "tool_use")
-			assert.ok(toolUse)
-			assert.equal(toolUse.id, "toolu_subagent_1")
-			assert.equal(toolUse.name, AsiDefaultTool.LIST_FILES)
+			const toolUse = assistantMessage.content.find(
+				(block) => block.type === "tool_use",
+			);
+			assert.ok(toolUse);
+			assert.equal(toolUse.id, "toolu_subagent_1");
+			assert.equal(toolUse.name, AsiDefaultTool.LIST_FILES);
 
-			const userMessage = conversation[2] as { role: string; content: Array<{ type?: string; [key: string]: unknown }> }
-			assert.equal(userMessage.role, "user")
-			const toolResult = userMessage.content.find((block) => block.type === "tool_result")
-			assert.ok(toolResult)
-			assert.equal(toolResult.tool_use_id, "toolu_subagent_1")
+			const userMessage = conversation[2] as {
+				role: string;
+				content: Array<{ type?: string; [key: string]: unknown }>;
+			};
+			assert.equal(userMessage.role, "user");
+			const toolResult = userMessage.content.find(
+				(block) => block.type === "tool_result",
+			);
+			assert.ok(toolResult);
+			assert.equal(toolResult.tool_use_id, "toolu_subagent_1");
 
 			yield {
 				type: "tool_calls",
@@ -187,30 +200,32 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async () => {
-			promptRegistry.nativeTools = [{ name: "list_files" } as any]
-			return "system prompt"
-		})
-		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			promptRegistry.nativeTools = [{ name: "list_files" } as any];
+			return "system prompt";
+		});
+		sinon
+			.stub(SubagentBuilder.prototype, "buildNativeTools")
+			.returns([{ name: "list_files" }] as any);
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(true))
-		const result = await runner.run("List files", () => {})
+		const runner = new SubagentRunner(createTaskConfig(true));
+		const result = await runner.run("List files", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(result.result, "done")
-		assert.equal(createMessage.callCount, 2)
-	})
+		assert.equal(result.status, "completed");
+		assert.equal(result.result, "done");
+		assert.equal(createMessage.callCount, 2);
+	});
 
 	it("passes prior request token totals into the next-turn compaction check", async () => {
-		const createMessage = sinon.stub()
+		const createMessage = sinon.stub();
 		createMessage.onFirstCall().callsFake(async function* () {
 			yield {
 				type: "usage",
@@ -218,7 +233,7 @@ describe("SubagentRunner", () => {
 				outputTokens: 7,
 				cacheWriteTokens: 3,
 				cacheReadTokens: 2,
-			}
+			};
 			yield {
 				type: "tool_calls",
 				tool_call: {
@@ -228,8 +243,8 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ path: ".", recursive: false }),
 					},
 				},
-			}
-		})
+			};
+		});
 		createMessage.onSecondCall().callsFake(async function* () {
 			yield {
 				type: "tool_calls",
@@ -240,37 +255,41 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async () => {
-			promptRegistry.nativeTools = [{ name: "list_files" } as any]
-			return "system prompt"
-		})
-		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			promptRegistry.nativeTools = [{ name: "list_files" } as any];
+			return "system prompt";
+		});
+		sinon
+			.stub(SubagentBuilder.prototype, "buildNativeTools")
+			.returns([{ name: "list_files" }] as any);
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(true))
-		const shouldCompactStub = sinon.stub(runner as any, "shouldCompactBeforeNextRequest").callsFake((...args: unknown[]) => {
-			const [previousRequestTotalTokens] = args
-			assert.equal(previousRequestTotalTokens, 23)
-			return false
-		})
+		const runner = new SubagentRunner(createTaskConfig(true));
+		const shouldCompactStub = sinon
+			.stub(runner as any, "shouldCompactBeforeNextRequest")
+			.callsFake((...args: unknown[]) => {
+				const [previousRequestTotalTokens] = args;
+				assert.equal(previousRequestTotalTokens, 23);
+				return false;
+			});
 
-		const result = await runner.run("List files", () => {})
+		const result = await runner.run("List files", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(result.result, "done")
-		assert.equal(createMessage.callCount, 2)
-		assert.equal(shouldCompactStub.callCount, 1)
-	})
+		assert.equal(result.status, "completed");
+		assert.equal(result.result, "done");
+		assert.equal(createMessage.callCount, 2);
+		assert.equal(shouldCompactStub.callCount, 1);
+	});
 
 	it("falls back to non-native result blocks if structured tool calls appear while native mode is disabled", async () => {
-		const createMessage = sinon.stub()
+		const createMessage = sinon.stub();
 		createMessage.onFirstCall().callsFake(async function* () {
 			yield {
 				type: "tool_calls",
@@ -281,20 +300,23 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ path: ".", recursive: false }),
 					},
 				},
-			}
-		})
-		createMessage.onSecondCall().callsFake(async function* (_systemPrompt: string, conversation: unknown[]) {
+			};
+		});
+		createMessage.onSecondCall().callsFake(async function* (
+			_systemPrompt: string,
+			conversation: unknown[],
+		) {
 			const lastMessage = conversation[conversation.length - 1] as {
-				role: string
-				content: Array<{ type?: string; [key: string]: unknown }>
-			}
+				role: string;
+				content: Array<{ type?: string; [key: string]: unknown }>;
+			};
 
-			assert.equal(lastMessage.role, "user")
-			assert.ok(lastMessage.content.every((block) => block.type === "text"))
+			assert.equal(lastMessage.role, "user");
+			assert.ok(lastMessage.content.every((block) => block.type === "text"));
 			assert.equal(
 				lastMessage.content.some((block) => block.type === "tool_result"),
 				false,
-			)
+			);
 
 			yield {
 				type: "tool_calls",
@@ -305,46 +327,55 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async () => {
-			promptRegistry.nativeTools = undefined
-			return "system prompt"
-		})
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			promptRegistry.nativeTools = undefined;
+			return "system prompt";
+		});
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(false))
-		const result = await runner.run("List files", () => {})
+		const runner = new SubagentRunner(createTaskConfig(false));
+		const result = await runner.run("List files", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(result.result, "done")
-		assert.equal(createMessage.callCount, 2)
-	})
+		assert.equal(result.status, "completed");
+		assert.equal(result.result, "done");
+		assert.equal(createMessage.callCount, 2);
+	});
 
 	it("retries empty assistant turns with a no-tools-used nudge before failing", async () => {
-		const createMessage = sinon.stub()
-		createMessage.onFirstCall().callsFake(async function* () {})
-		createMessage.onSecondCall().callsFake(async function* (_systemPrompt: string, conversation: unknown[]) {
+		const createMessage = sinon.stub();
+		createMessage.onFirstCall().callsFake(async function* () {});
+		createMessage.onSecondCall().callsFake(async function* (
+			_systemPrompt: string,
+			conversation: unknown[],
+		) {
 			const lastAssistant = conversation[1] as {
-				role: string
-				content: Array<{ type?: string; text?: string }>
-			}
-			assert.equal(lastAssistant.role, "assistant")
-			assert.equal(lastAssistant.content[0]?.type, "text")
-			assert.equal(lastAssistant.content[0]?.text, "Failure: I did not provide a response.")
+				role: string;
+				content: Array<{ type?: string; text?: string }>;
+			};
+			assert.equal(lastAssistant.role, "assistant");
+			assert.equal(lastAssistant.content[0]?.type, "text");
+			assert.equal(
+				lastAssistant.content[0]?.text,
+				"Failure: I did not provide a response.",
+			);
 
 			const lastUser = conversation[2] as {
-				role: string
-				content: Array<{ type?: string; text?: string }>
-			}
-			assert.equal(lastUser.role, "user")
-			assert.equal(lastUser.content[0]?.type, "text")
-			assert.match(lastUser.content[0]?.text || "", /You did not use a tool in your previous response/i)
+				role: string;
+				content: Array<{ type?: string; text?: string }>;
+			};
+			assert.equal(lastUser.role, "user");
+			assert.equal(lastUser.content[0]?.type, "text");
+			assert.match(
+				lastUser.content[0]?.text || "",
+				/You did not use a tool in your previous response/i,
+			);
 
 			yield {
 				type: "tool_calls",
@@ -355,96 +386,96 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async () => {
-			promptRegistry.nativeTools = undefined
-			return "system prompt"
-		})
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			promptRegistry.nativeTools = undefined;
+			return "system prompt";
+		});
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(false))
-		const result = await runner.run("List files", () => {})
+		const runner = new SubagentRunner(createTaskConfig(false));
+		const result = await runner.run("List files", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(result.result, "done")
-		assert.equal(createMessage.callCount, 2)
-	})
+		assert.equal(result.status, "completed");
+		assert.equal(result.result, "done");
+		assert.equal(createMessage.callCount, 2);
+	});
 
 	it("retries initial stream failures before failing", async () => {
-		const createMessage = sinon.stub()
+		const createMessage = sinon.stub();
 		createMessage.onFirstCall().callsFake(async function* () {
-			yield* []
+			yield* [];
 			throw new Error(
 				'{"code":"stream_initialization_failed","message":"Failed to create stream: failed to generate stream from Vercel: failed to send request"}',
-			)
-		})
+			);
+		});
 		createMessage.onSecondCall().callsFake(async function* () {
-			yield* []
+			yield* [];
 			throw new Error(
 				'{"code":"stream_initialization_failed","message":"Failed to create stream: failed to generate stream from Vercel: failed to send request"}',
-			)
-		})
+			);
+		});
 		createMessage.onThirdCall().callsFake(async function* () {
-			yield* []
+			yield* [];
 			throw new Error(
 				'{"code":"stream_initialization_failed","message":"Failed to create stream: failed to generate stream from Vercel: failed to send request"}',
-			)
-		})
+			);
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async () => {
-			promptRegistry.nativeTools = undefined
-			return "system prompt"
-		})
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			promptRegistry.nativeTools = undefined;
+			return "system prompt";
+		});
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const clock = sinon.useFakeTimers()
-		const runner = new SubagentRunner(createTaskConfig(false))
-		const runPromise = runner.run("List files", () => {})
-		await clock.runAllAsync()
-		const result = await runPromise
-		clock.restore()
+		const clock = sinon.useFakeTimers();
+		const runner = new SubagentRunner(createTaskConfig(false));
+		const runPromise = runner.run("List files", () => {});
+		await clock.runAllAsync();
+		const result = await runPromise;
+		clock.restore();
 
-		assert.equal(result.status, "failed")
-		assert.equal(createMessage.callCount, 3)
-		assert.match(result.error || "", /stream_initialization_failed/i)
-	})
+		assert.equal(result.status, "failed");
+		assert.equal(createMessage.callCount, 3);
+		assert.match(result.error || "", /stream_initialization_failed/i);
+	});
 
 	it("fails context window errors", async () => {
-		const createMessage = sinon.stub()
+		const createMessage = sinon.stub();
 		createMessage.onFirstCall().callsFake(async function* () {
-			yield* []
-			const contextError = new Error("context length exceeded")
-			;(contextError as Error & { status: number }).status = 400
-			throw contextError
-		})
+			yield* [];
+			const contextError = new Error("context length exceeded");
+			(contextError as Error & { status: number }).status = 400;
+			throw contextError;
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async () => {
-			promptRegistry.nativeTools = undefined
-			return "system prompt"
-		})
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			promptRegistry.nativeTools = undefined;
+			return "system prompt";
+		});
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(false))
-		const result = await runner.run("Huge prompt", () => {})
+		const runner = new SubagentRunner(createTaskConfig(false));
+		const result = await runner.run("Huge prompt", () => {});
 
-		assert.equal(result.status, "failed")
-		assert.equal(createMessage.callCount, 1)
-		assert.match(result.error || "", /context length exceeded/i)
-	})
+		assert.equal(result.status, "failed");
+		assert.equal(createMessage.callCount, 1);
+		assert.match(result.error || "", /context length exceeded/i);
+	});
 
 	it("uses the configured task api handler for subagent requests", async () => {
 		const createMessage = sinon.stub().callsFake(async function* () {
@@ -457,26 +488,28 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async () => {
-			promptRegistry.nativeTools = [{ name: "list_files" } as any]
-			return "system prompt"
-		})
-		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			promptRegistry.nativeTools = [{ name: "list_files" } as any];
+			return "system prompt";
+		});
+		sinon
+			.stub(SubagentBuilder.prototype, "buildNativeTools")
+			.returns([{ name: "list_files" }] as any);
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(true))
-		const result = await runner.run("List files", () => {})
+		const runner = new SubagentRunner(createTaskConfig(true));
+		const result = await runner.run("List files", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(createMessage.callCount, 1)
-	})
+		assert.equal(result.status, "completed");
+		assert.equal(createMessage.callCount, 1);
+	});
 
 	it("filters available skills to configured skills when subagent skills are configured", async () => {
 		const createMessage = sinon.stub().callsFake(async function* () {
@@ -489,34 +522,46 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async (context) => {
-			assert.ok(context.skills)
+			assert.ok(context.skills);
 			assert.deepEqual(
 				context.skills.map((skill) => skill.name),
 				["allowed-skill"],
-			)
-			promptRegistry.nativeTools = undefined
-			return "system prompt"
-		})
-		sinon.stub(SubagentBuilder.prototype, "getConfiguredSkills").returns(["allowed-skill"])
-		sinon.stub(skills, "discoverSkills").resolves([])
+			);
+			promptRegistry.nativeTools = undefined;
+			return "system prompt";
+		});
+		sinon
+			.stub(SubagentBuilder.prototype, "getConfiguredSkills")
+			.returns(["allowed-skill"]);
+		sinon.stub(skills, "discoverSkills").resolves([]);
 		sinon.stub(skills, "getAvailableSkills").returns([
-			{ name: "allowed-skill", description: "Allowed", path: "/skills/allowed/SKILL.md", source: "project" },
-			{ name: "other-skill", description: "Other", path: "/skills/other/SKILL.md", source: "project" },
-		])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			{
+				name: "allowed-skill",
+				description: "Allowed",
+				path: "/skills/allowed/SKILL.md",
+				source: "project",
+			},
+			{
+				name: "other-skill",
+				description: "Other",
+				path: "/skills/other/SKILL.md",
+				source: "project",
+			},
+		]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(false))
-		const result = await runner.run("Run task", () => {})
+		const runner = new SubagentRunner(createTaskConfig(false));
+		const result = await runner.run("Run task", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(createMessage.callCount, 1)
-	})
+		assert.equal(result.status, "completed");
+		assert.equal(createMessage.callCount, 1);
+	});
 
 	it("uses all available skills when subagent skills are not configured", async () => {
 		const createMessage = sinon.stub().callsFake(async function* () {
@@ -529,34 +574,46 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async (context) => {
-			assert.ok(context.skills)
+			assert.ok(context.skills);
 			assert.deepEqual(
 				context.skills.map((skill) => skill.name),
 				["alpha-skill", "beta-skill"],
-			)
-			promptRegistry.nativeTools = undefined
-			return "system prompt"
-		})
-		sinon.stub(SubagentBuilder.prototype, "getConfiguredSkills").returns(undefined)
-		sinon.stub(skills, "discoverSkills").resolves([])
+			);
+			promptRegistry.nativeTools = undefined;
+			return "system prompt";
+		});
+		sinon
+			.stub(SubagentBuilder.prototype, "getConfiguredSkills")
+			.returns(undefined);
+		sinon.stub(skills, "discoverSkills").resolves([]);
 		sinon.stub(skills, "getAvailableSkills").returns([
-			{ name: "alpha-skill", description: "Alpha", path: "/skills/alpha/SKILL.md", source: "project" },
-			{ name: "beta-skill", description: "Beta", path: "/skills/beta/SKILL.md", source: "project" },
-		])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			{
+				name: "alpha-skill",
+				description: "Alpha",
+				path: "/skills/alpha/SKILL.md",
+				source: "project",
+			},
+			{
+				name: "beta-skill",
+				description: "Beta",
+				path: "/skills/beta/SKILL.md",
+				source: "project",
+			},
+		]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(false))
-		const result = await runner.run("Run task", () => {})
+		const runner = new SubagentRunner(createTaskConfig(false));
+		const result = await runner.run("Run task", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(createMessage.callCount, 1)
-	})
+		assert.equal(result.status, "completed");
+		assert.equal(createMessage.callCount, 1);
+	});
 
 	it("logs a warning when a configured skill is not available", async () => {
 		const createMessage = sinon.stub().callsFake(async function* () {
@@ -569,49 +626,62 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const warnStub = sinon.stub(Logger, "warn")
-		const promptRegistry = PromptRegistry.getInstance()
+		const warnStub = sinon.stub(Logger, "warn");
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async (context) => {
-			assert.ok(context.skills)
+			assert.ok(context.skills);
 			assert.deepEqual(
 				context.skills.map((skill) => skill.name),
 				["present-skill"],
-			)
-			promptRegistry.nativeTools = undefined
-			return "system prompt"
-		})
-		sinon.stub(SubagentBuilder.prototype, "getConfiguredSkills").returns(["present-skill", "missing-skill"])
-		sinon.stub(skills, "discoverSkills").resolves([])
+			);
+			promptRegistry.nativeTools = undefined;
+			return "system prompt";
+		});
 		sinon
-			.stub(skills, "getAvailableSkills")
-			.returns([{ name: "present-skill", description: "Present", path: "/skills/present/SKILL.md", source: "project" }])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			.stub(SubagentBuilder.prototype, "getConfiguredSkills")
+			.returns(["present-skill", "missing-skill"]);
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([
+			{
+				name: "present-skill",
+				description: "Present",
+				path: "/skills/present/SKILL.md",
+				source: "project",
+			},
+		]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(false))
-		const result = await runner.run("Run task", () => {})
+		const runner = new SubagentRunner(createTaskConfig(false));
+		const result = await runner.run("Run task", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(createMessage.callCount, 1)
-		sinon.assert.calledWith(warnStub, "[SubagentRunner] Configured skill 'missing-skill' not found for subagent run.")
-	})
+		assert.equal(result.status, "completed");
+		assert.equal(createMessage.callCount, 1);
+		sinon.assert.calledWith(
+			warnStub,
+			"[SubagentRunner] Configured skill 'missing-skill' not found for subagent run.",
+		);
+	});
 
 	it("includes workspace metadata only in the initial user message", async () => {
-		const createMessage = sinon.stub()
-		createMessage.onFirstCall().callsFake(async function* (_systemPrompt: string, conversation: unknown[]) {
+		const createMessage = sinon.stub();
+		createMessage.onFirstCall().callsFake(async function* (
+			_systemPrompt: string,
+			conversation: unknown[],
+		) {
 			const initialUser = conversation[0] as {
-				role: string
-				content: Array<{ type?: string; text?: string }>
-			}
-			assert.equal(initialUser.role, "user")
+				role: string;
+				content: Array<{ type?: string; text?: string }>;
+			};
+			assert.equal(initialUser.role, "user");
 			const initialTexts = initialUser.content
 				.filter((block) => block.type === "text")
 				.map((block) => block.text || "")
-				.join("\n")
-			assert.match(initialTexts, /# Workspace Configuration/)
+				.join("\n");
+			assert.match(initialTexts, /# Workspace Configuration/);
 
 			yield {
 				type: "tool_calls",
@@ -622,19 +692,22 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ path: ".", recursive: false }),
 					},
 				},
-			}
-		})
-		createMessage.onSecondCall().callsFake(async function* (_systemPrompt: string, conversation: unknown[]) {
+			};
+		});
+		createMessage.onSecondCall().callsFake(async function* (
+			_systemPrompt: string,
+			conversation: unknown[],
+		) {
 			const followUpUser = conversation[2] as {
-				role: string
-				content: Array<{ type?: string; text?: string }>
-			}
-			assert.equal(followUpUser.role, "user")
+				role: string;
+				content: Array<{ type?: string; text?: string }>;
+			};
+			assert.equal(followUpUser.role, "user");
 			const followUpTexts = followUpUser.content
 				.filter((block) => block.type === "text")
 				.map((block) => block.text || "")
-				.join("\n")
-			assert.equal(followUpTexts.includes("# Workspace Configuration"), false)
+				.join("\n");
+			assert.equal(followUpTexts.includes("# Workspace Configuration"), false);
 
 			yield {
 				type: "tool_calls",
@@ -645,25 +718,27 @@ describe("SubagentRunner", () => {
 						arguments: JSON.stringify({ result: "done" }),
 					},
 				},
-			}
-		})
+			};
+		});
 
-		const promptRegistry = PromptRegistry.getInstance()
+		const promptRegistry = PromptRegistry.getInstance();
 		sinon.stub(promptRegistry, "get").callsFake(async () => {
-			promptRegistry.nativeTools = [{ name: "list_files" } as any]
-			return "system prompt"
-		})
-		sinon.stub(SubagentBuilder.prototype, "buildNativeTools").returns([{ name: "list_files" }] as any)
-		sinon.stub(skills, "discoverSkills").resolves([])
-		sinon.stub(skills, "getAvailableSkills").returns([])
-		stubApiHandler(createMessage)
-		initializeHostProvider()
+			promptRegistry.nativeTools = [{ name: "list_files" } as any];
+			return "system prompt";
+		});
+		sinon
+			.stub(SubagentBuilder.prototype, "buildNativeTools")
+			.returns([{ name: "list_files" }] as any);
+		sinon.stub(skills, "discoverSkills").resolves([]);
+		sinon.stub(skills, "getAvailableSkills").returns([]);
+		stubApiHandler(createMessage);
+		initializeHostProvider();
 
-		const runner = new SubagentRunner(createTaskConfig(true))
-		const result = await runner.run("List files", () => {})
+		const runner = new SubagentRunner(createTaskConfig(true));
+		const result = await runner.run("List files", () => {});
 
-		assert.equal(result.status, "completed")
-		assert.equal(result.result, "done")
-		assert.equal(createMessage.callCount, 2)
-	})
-})
+		assert.equal(result.status, "completed");
+		assert.equal(result.result, "done");
+		assert.equal(createMessage.callCount, 2);
+	});
+});

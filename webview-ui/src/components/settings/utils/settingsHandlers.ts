@@ -1,5 +1,5 @@
-import { McpDisplayMode, UpdateSettingsRequest } from "@shared/proto/Asi/state"
-import { StateServiceClient } from "@/services/grpc-client"
+import { McpDisplayMode, UpdateSettingsRequest } from "@shared/proto/Asi/state";
+import { StateServiceClient } from "@/services/grpc-client";
 
 /**
  * Converts values to their corresponding proto format
@@ -8,21 +8,24 @@ import { StateServiceClient } from "@/services/grpc-client"
  * @returns The converted value
  * @throws Error if the value is invalid for the field
  */
-const convertToProtoValue = (field: keyof UpdateSettingsRequest, value: any): any => {
+const convertToProtoValue = (
+	field: keyof UpdateSettingsRequest,
+	value: any,
+): any => {
 	if (field === "mcpDisplayMode" && typeof value === "string") {
 		switch (value) {
 			case "rich":
-				return McpDisplayMode.RICH
+				return McpDisplayMode.RICH;
 			case "plain":
-				return McpDisplayMode.PLAIN
+				return McpDisplayMode.PLAIN;
 			case "markdown":
-				return McpDisplayMode.MARKDOWN
+				return McpDisplayMode.MARKDOWN;
 			default:
-				throw new Error(`Invalid MCP display mode value: ${value}`)
+				throw new Error(`Invalid MCP display mode value: ${value}`);
 		}
 	}
-	return value
-}
+	return value;
+};
 
 /**
  * Updates a single field in the settings.
@@ -30,13 +33,18 @@ const convertToProtoValue = (field: keyof UpdateSettingsRequest, value: any): an
  * @param field - The field key to update
  * @param value - The new value for the field
  */
-export const updateSetting = (field: keyof UpdateSettingsRequest, value: any) => {
-	const updateRequest: Partial<UpdateSettingsRequest> = {}
+export const updateSetting = (
+	field: keyof UpdateSettingsRequest,
+	value: any,
+) => {
+	const updateRequest: Partial<UpdateSettingsRequest> = {};
 
-	const convertedValue = convertToProtoValue(field, value)
-	updateRequest[field] = convertedValue
+	const convertedValue = convertToProtoValue(field, value);
+	updateRequest[field] = convertedValue;
 
-	StateServiceClient.updateSettings(UpdateSettingsRequest.create(updateRequest)).catch((error) => {
-		console.error(`Failed to update setting ${field}:`, error)
-	})
-}
+	StateServiceClient.updateSettings(
+		UpdateSettingsRequest.create(updateRequest),
+	).catch((error) => {
+		console.error(`Failed to update setting ${field}:`, error);
+	});
+};

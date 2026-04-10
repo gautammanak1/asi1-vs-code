@@ -1,67 +1,73 @@
-import { McpViewTab } from "@shared/mcp"
-import { EmptyRequest } from "@shared/proto/Asi/common"
-import { McpServers } from "@shared/proto/Asi/mcp"
-import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
-import { useEffect, useState } from "react"
-import styled from "styled-components"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
-import ViewHeader from "../../common/ViewHeader"
-import AddRemoteServerForm from "./tabs/add-server/AddRemoteServerForm"
-import ConfigureServersView from "./tabs/installed/ConfigureServersView"
-import McpMarketplaceView from "./tabs/marketplace/McpMarketplaceView"
+import { McpViewTab } from "@shared/mcp";
+import { EmptyRequest } from "@shared/proto/Asi/common";
+import { McpServers } from "@shared/proto/Asi/mcp";
+import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion";
+import { useEffect, useState } from "react";
+import styled from "styled-components";
+import { useExtensionState } from "@/context/ExtensionStateContext";
+import { McpServiceClient } from "@/services/grpc-client";
+import ViewHeader from "../../common/ViewHeader";
+import AddRemoteServerForm from "./tabs/add-server/AddRemoteServerForm";
+import ConfigureServersView from "./tabs/installed/ConfigureServersView";
+import McpMarketplaceView from "./tabs/marketplace/McpMarketplaceView";
 
 type McpViewProps = {
-	onDone: () => void
-	initialTab?: McpViewTab
-}
+	onDone: () => void;
+	initialTab?: McpViewTab;
+};
 
 const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
-	const { remoteConfigSettings, setMcpServers, environment } = useExtensionState()
+	const { remoteConfigSettings, setMcpServers, environment } =
+		useExtensionState();
 	// Show marketplace by default unless remote config explicitly disables it
-	const showMarketplace = remoteConfigSettings?.mcpMarketplaceEnabled !== false
-	const showRemoteServers = remoteConfigSettings?.blockPersonalRemoteMCPServers !== true
-	const [activeTab, setActiveTab] = useState<McpViewTab>(initialTab || (showMarketplace ? "marketplace" : "configure"))
+	const showMarketplace = remoteConfigSettings?.mcpMarketplaceEnabled !== false;
+	const showRemoteServers =
+		remoteConfigSettings?.blockPersonalRemoteMCPServers !== true;
+	const [activeTab, setActiveTab] = useState<McpViewTab>(
+		initialTab || (showMarketplace ? "marketplace" : "configure"),
+	);
 
 	const handleTabChange = (tab: McpViewTab) => {
-		setActiveTab(tab)
-	}
+		setActiveTab(tab);
+	};
 
 	useEffect(() => {
 		if (!showMarketplace && activeTab === "marketplace") {
 			// If marketplace is disabled by remote config and we're on marketplace tab, switch to configure
-			setActiveTab("configure")
+			setActiveTab("configure");
 		}
 		if (!showRemoteServers && activeTab === "addRemote") {
-			setActiveTab("configure")
+			setActiveTab("configure");
 		}
-	}, [showMarketplace, showRemoteServers, activeTab])
+	}, [showMarketplace, showRemoteServers, activeTab]);
 
 	// Get setter for MCP marketplace catalog from context
-	const { setMcpMarketplaceCatalog } = useExtensionState()
+	const { setMcpMarketplaceCatalog } = useExtensionState();
 
 	useEffect(() => {
 		if (showMarketplace) {
 			McpServiceClient.refreshMcpMarketplace(EmptyRequest.create({}))
 				.then((response) => {
-					setMcpMarketplaceCatalog(response)
+					setMcpMarketplaceCatalog(response);
 				})
 				.catch((error) => {
-					console.error("Error refreshing MCP marketplace:", error)
-				})
+					console.error("Error refreshing MCP marketplace:", error);
+				});
 
 			McpServiceClient.getLatestMcpServers(EmptyRequest.create({}))
 				.then((response: McpServers) => {
 					if (response.mcpServers) {
-						const mcpServers = convertProtoMcpServersToMcpServers(response.mcpServers)
-						setMcpServers(mcpServers)
+						const mcpServers = convertProtoMcpServersToMcpServers(
+							response.mcpServers,
+						);
+						setMcpServers(mcpServers);
 					}
 				})
 				.catch((error) => {
-					console.error("Failed to fetch MCP servers:", error)
-				})
+					console.error("Failed to fetch MCP servers:", error);
+				});
 		}
-	}, [showMarketplace])
+	}, [showMarketplace]);
 
 	return (
 		<div
@@ -73,8 +79,13 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 				bottom: 0,
 				display: "flex",
 				flexDirection: "column",
-			}}>
-			<ViewHeader environment={environment} onDone={onDone} title="MCP Servers" />
+			}}
+		>
+			<ViewHeader
+				environment={environment}
+				onDone={onDone}
+				title="MCP Servers"
+			/>
 
 			<div style={{ flex: 1, overflow: "auto" }}>
 				{/* Tabs container */}
@@ -84,34 +95,48 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 						gap: "1px",
 						padding: "0 20px 0 20px",
 						borderBottom: "1px solid var(--vscode-panel-border)",
-					}}>
+					}}
+				>
 					{showMarketplace && (
-						<TabButton isActive={activeTab === "marketplace"} onClick={() => handleTabChange("marketplace")}>
+						<TabButton
+							isActive={activeTab === "marketplace"}
+							onClick={() => handleTabChange("marketplace")}
+						>
 							Marketplace
 						</TabButton>
 					)}
 					{showRemoteServers && (
-						<TabButton isActive={activeTab === "addRemote"} onClick={() => handleTabChange("addRemote")}>
+						<TabButton
+							isActive={activeTab === "addRemote"}
+							onClick={() => handleTabChange("addRemote")}
+						>
 							Remote Servers
 						</TabButton>
 					)}
-					<TabButton isActive={activeTab === "configure"} onClick={() => handleTabChange("configure")}>
+					<TabButton
+						isActive={activeTab === "configure"}
+						onClick={() => handleTabChange("configure")}
+					>
 						Configure
 					</TabButton>
 				</div>
 
 				{/* Content container */}
 				<div style={{ width: "100%" }}>
-					{showMarketplace && activeTab === "marketplace" && <McpMarketplaceView />}
+					{showMarketplace && activeTab === "marketplace" && (
+						<McpMarketplaceView />
+					)}
 					{showRemoteServers && activeTab === "addRemote" && (
-						<AddRemoteServerForm onServerAdded={() => handleTabChange("configure")} />
+						<AddRemoteServerForm
+							onServerAdded={() => handleTabChange("configure")}
+						/>
 					)}
 					{activeTab === "configure" && <ConfigureServersView />}
 				</div>
 			</div>
 		</div>
-	)
-}
+	);
+};
 
 const StyledTabButton = styled.button.withConfig({
 	shouldForwardProp: (prop) => !["isActive"].includes(prop),
@@ -131,7 +156,7 @@ const StyledTabButton = styled.button.withConfig({
 	&:hover {
 		color: ${(props) => (props.disabled ? "var(--vscode-descriptionForeground)" : "var(--vscode-foreground)")};
 	}
-`
+`;
 
 export const TabButton = ({
 	children,
@@ -140,15 +165,20 @@ export const TabButton = ({
 	disabled,
 	style,
 }: {
-	children: React.ReactNode
-	isActive: boolean
-	onClick: () => void
-	disabled?: boolean
-	style?: React.CSSProperties
+	children: React.ReactNode;
+	isActive: boolean;
+	onClick: () => void;
+	disabled?: boolean;
+	style?: React.CSSProperties;
 }) => (
-	<StyledTabButton disabled={disabled} isActive={isActive} onClick={onClick} style={style}>
+	<StyledTabButton
+		disabled={disabled}
+		isActive={isActive}
+		onClick={onClick}
+		style={style}
+	>
 		{children}
 	</StyledTabButton>
-)
+);
 
-export default McpConfigurationView
+export default McpConfigurationView;

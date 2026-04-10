@@ -188,8 +188,7 @@ export class OpenRouterHandler implements ApiHandler {
 				yield {
 					type: "usage",
 					cacheWriteTokens,
-					cacheReadTokens:
-						usage.prompt_tokens_details?.cached_tokens || 0,
+					cacheReadTokens: usage.prompt_tokens_details?.cached_tokens || 0,
 					inputTokens:
 						(usage.prompt_tokens || 0) -
 						(usage.prompt_tokens_details?.cached_tokens || 0) -

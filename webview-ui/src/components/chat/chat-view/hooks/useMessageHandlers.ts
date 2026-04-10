@@ -1,18 +1,21 @@
-import type { AsiMessage } from "@shared/ExtensionMessage"
-import { EmptyRequest, StringRequest } from "@shared/proto/Asi/common"
-import { AskResponseRequest, NewTaskRequest } from "@shared/proto/Asi/task"
-import { useCallback, useRef } from "react"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { SlashServiceClient, TaskServiceClient } from "@/services/grpc-client"
-import type { ButtonActionType } from "../shared/buttonConfig"
-import type { ChatState, MessageHandlers } from "../types/chatTypes"
+import type { AsiMessage } from "@shared/ExtensionMessage";
+import { EmptyRequest, StringRequest } from "@shared/proto/Asi/common";
+import { AskResponseRequest, NewTaskRequest } from "@shared/proto/Asi/task";
+import { useCallback, useRef } from "react";
+import { useExtensionState } from "@/context/ExtensionStateContext";
+import { SlashServiceClient, TaskServiceClient } from "@/services/grpc-client";
+import type { ButtonActionType } from "../shared/buttonConfig";
+import type { ChatState, MessageHandlers } from "../types/chatTypes";
 
 /**
  * Custom hook for managing message handlers
  * Handles sending messages, button clicks, and task management
  */
-export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState): MessageHandlers {
-	const { backgroundCommandRunning } = useExtensionState()
+export function useMessageHandlers(
+	messages: AsiMessage[],
+	chatState: ChatState,
+): MessageHandlers {
+	const { backgroundCommandRunning } = useExtensionState();
 	const {
 		setInputValue,
 		activeQuote,
@@ -23,26 +26,29 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 		setEnableButtons,
 		AsiAsk,
 		lastMessage,
-	} = chatState
-	const cancelInFlightRef = useRef(false)
+	} = chatState;
+	const cancelInFlightRef = useRef(false);
 
 	// Handle sending a message
 	const handleSendMessage = useCallback(
 		async (text: string, images: string[], files: string[]) => {
-			let messageToSend = text.trim()
-			const hasContent = messageToSend || images.length > 0 || files.length > 0
+			let messageToSend = text.trim();
+			const hasContent = messageToSend || images.length > 0 || files.length > 0;
 
 			// Prepend the active quote if it exists
 			if (activeQuote && hasContent) {
-				const prefix = "[context] \n> "
-				const formattedQuote = activeQuote
-				const suffix = "\n[/context] \n\n"
-				messageToSend = `${prefix} ${formattedQuote} ${suffix} ${messageToSend}`
+				const prefix = "[context] \n> ";
+				const formattedQuote = activeQuote;
+				const suffix = "\n[/context] \n\n";
+				messageToSend = `${prefix} ${formattedQuote} ${suffix} ${messageToSend}`;
 			}
 
 			if (hasContent) {
-				console.log("[ChatView] handleSendMessage - Sending message:", messageToSend)
-				let messageSent = false
+				console.log(
+					"[ChatView] handleSendMessage - Sending message:",
+					messageToSend,
+				);
+				let messageSent = false;
 
 				if (messages.length === 0) {
 					await TaskServiceClient.newTask(
@@ -51,8 +57,8 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 							images,
 							files,
 						}),
-					)
-					messageSent = true
+					);
+					messageSent = true;
 				} else if (AsiAsk) {
 					// For resume_task and resume_completed_task, use yesButtonClicked to match Resume button behavior
 					// This ensures Enter key and Resume button work identically
@@ -64,8 +70,8 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 								images,
 								files,
 							}),
-						)
-						messageSent = true
+						);
+						messageSent = true;
 					} else {
 						// All other ask types use messageResponse
 						switch (AsiAsk) {
@@ -90,17 +96,19 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 										images,
 										files,
 									}),
-								)
-								messageSent = true
-								break
+								);
+								messageSent = true;
+								break;
 						}
 					}
 				} else if (messages.length > 0) {
 					// No AsiAsk set - check if task is actively running
 					// If so, allow interrupting it with feedback
-					const lastMessage = messages[messages.length - 1]
+					const lastMessage = messages[messages.length - 1];
 					const isTaskRunning =
-						lastMessage.partial === true || (lastMessage.type === "say" && lastMessage.say === "api_req_started")
+						lastMessage.partial === true ||
+						(lastMessage.type === "say" &&
+							lastMessage.say === "api_req_started");
 
 					if (isTaskRunning) {
 						// Task is running - send message as interruption/feedback
@@ -111,23 +119,23 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 								images,
 								files,
 							}),
-						)
-						messageSent = true
+						);
+						messageSent = true;
 					}
 				}
 
 				// Only clear input and disable UI if message was actually sent
 				if (messageSent) {
-					setInputValue("")
-					setActiveQuote(null)
-					setSendingDisabled(true)
-					setSelectedImages([])
-					setSelectedFiles([])
-					setEnableButtons(false)
+					setInputValue("");
+					setActiveQuote(null);
+					setSendingDisabled(true);
+					setSelectedImages([]);
+					setSelectedFiles([]);
+					setEnableButtons(false);
 
 					// Reset auto-scroll
 					if ("disableAutoScrollRef" in chatState) {
-						;(chatState as any).disableAutoScrollRef.current = false
+						(chatState as any).disableAutoScrollRef.current = false;
 					}
 				}
 			}
@@ -144,27 +152,35 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 			setEnableButtons,
 			chatState,
 		],
-	)
+	);
 
 	// Start a new task
 	const startNewTask = useCallback(async () => {
-		setActiveQuote(null)
-		await TaskServiceClient.clearTask(EmptyRequest.create({}))
-	}, [setActiveQuote])
+		setActiveQuote(null);
+		await TaskServiceClient.clearTask(EmptyRequest.create({}));
+	}, [setActiveQuote]);
 
 	// Clear input state helper
 	const clearInputState = useCallback(() => {
-		setInputValue("")
-		setActiveQuote(null)
-		setSelectedImages([])
-		setSelectedFiles([])
-	}, [setInputValue, setActiveQuote, setSelectedImages, setSelectedFiles])
+		setInputValue("");
+		setActiveQuote(null);
+		setSelectedImages([]);
+		setSelectedFiles([]);
+	}, [setInputValue, setActiveQuote, setSelectedImages, setSelectedFiles]);
 
 	// Execute button action based on type
 	const executeButtonAction = useCallback(
-		async (actionType: ButtonActionType, text?: string, images?: string[], files?: string[]) => {
-			const trimmedInput = text?.trim()
-			const hasContent = trimmedInput || (images && images.length > 0) || (files && files.length > 0)
+		async (
+			actionType: ButtonActionType,
+			text?: string,
+			images?: string[],
+			files?: string[],
+		) => {
+			const trimmedInput = text?.trim();
+			const hasContent =
+				trimmedInput ||
+				(images && images.length > 0) ||
+				(files && files.length > 0);
 
 			switch (actionType) {
 				case "retry":
@@ -173,9 +189,9 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 						AskResponseRequest.create({
 							responseType: "yesButtonClicked",
 						}),
-					)
-					clearInputState()
-					break
+					);
+					clearInputState();
+					break;
 				case "approve":
 					if (hasContent) {
 						await TaskServiceClient.askResponse(
@@ -185,16 +201,16 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 								images: images,
 								files: files,
 							}),
-						)
+						);
 					} else {
 						await TaskServiceClient.askResponse(
 							AskResponseRequest.create({
 								responseType: "yesButtonClicked",
 							}),
-						)
+						);
 					}
-					clearInputState()
-					break
+					clearInputState();
+					break;
 
 				case "reject":
 					if (hasContent) {
@@ -205,16 +221,16 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 								images: images,
 								files: files,
 							}),
-						)
+						);
 					} else {
 						await TaskServiceClient.askResponse(
 							AskResponseRequest.create({
 								responseType: "noButtonClicked",
 							}),
-						)
+						);
 					}
-					clearInputState()
-					break
+					clearInputState();
+					break;
 
 				case "proceed":
 					if (hasContent) {
@@ -225,16 +241,16 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 								images: images,
 								files: files,
 							}),
-						)
+						);
 					} else {
 						await TaskServiceClient.askResponse(
 							AskResponseRequest.create({
 								responseType: "yesButtonClicked",
 							}),
-						)
+						);
 					}
-					clearInputState()
-					break
+					clearInputState();
+					break;
 
 				case "new_task":
 					if (AsiAsk === "new_task") {
@@ -244,53 +260,55 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 								images: [],
 								files: [],
 							}),
-						)
+						);
 					} else {
-						await startNewTask()
+						await startNewTask();
 					}
-					break
+					break;
 
 				case "cancel": {
 					if (cancelInFlightRef.current) {
-						return
+						return;
 					}
-					cancelInFlightRef.current = true
-					setSendingDisabled(true)
-					setEnableButtons(false)
+					cancelInFlightRef.current = true;
+					setSendingDisabled(true);
+					setEnableButtons(false);
 					try {
 						if (backgroundCommandRunning) {
-							await TaskServiceClient.cancelBackgroundCommand(EmptyRequest.create({})).catch((err) =>
+							await TaskServiceClient.cancelBackgroundCommand(
+								EmptyRequest.create({}),
+							).catch((err) =>
 								console.error("Failed to cancel background command:", err),
-							)
+							);
 						}
-						await TaskServiceClient.cancelTask(EmptyRequest.create({}))
+						await TaskServiceClient.cancelTask(EmptyRequest.create({}));
 					} finally {
-						cancelInFlightRef.current = false
+						cancelInFlightRef.current = false;
 						// Clear any pending state that might interfere with resume
-						setSendingDisabled(false)
-						setEnableButtons(true)
+						setSendingDisabled(false);
+						setEnableButtons(true);
 					}
-					break
+					break;
 				}
 
 				case "utility":
 					switch (AsiAsk) {
 						case "condense":
-							await SlashServiceClient.condense(StringRequest.create({ value: lastMessage?.text })).catch((err) =>
-								console.error(err),
-							)
-							break
+							await SlashServiceClient.condense(
+								StringRequest.create({ value: lastMessage?.text }),
+							).catch((err) => console.error(err));
+							break;
 						case "report_bug":
-							await SlashServiceClient.reportBug(StringRequest.create({ value: lastMessage?.text })).catch((err) =>
-								console.error(err),
-							)
-							break
+							await SlashServiceClient.reportBug(
+								StringRequest.create({ value: lastMessage?.text }),
+							).catch((err) => console.error(err));
+							break;
 					}
-					break
+					break;
 			}
 
 			if ("disableAutoScrollRef" in chatState) {
-				;(chatState as any).disableAutoScrollRef.current = false
+				(chatState as any).disableAutoScrollRef.current = false;
 			}
 		},
 		[
@@ -305,17 +323,17 @@ export function useMessageHandlers(messages: AsiMessage[], chatState: ChatState)
 			setSendingDisabled,
 			setEnableButtons,
 		],
-	)
+	);
 
 	// Handle task close button click
 	const handleTaskCloseButtonClick = useCallback(() => {
-		startNewTask()
-	}, [startNewTask])
+		startNewTask();
+	}, [startNewTask]);
 
 	return {
 		handleSendMessage,
 		executeButtonAction,
 		handleTaskCloseButtonClick,
 		startNewTask,
-	}
+	};
 }

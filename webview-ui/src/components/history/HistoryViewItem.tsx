@@ -1,28 +1,28 @@
-import { HistoryItem } from "@shared/HistoryItem"
-import { StringRequest } from "@shared/proto/Asi/common"
-import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
+import { HistoryItem } from "@shared/HistoryItem";
+import { StringRequest } from "@shared/proto/Asi/common";
+import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react";
 import {
-    ChevronsDownUpIcon,
-    ChevronsUpDownIcon,
-    DownloadIcon,
-    StarIcon,
-    TrashIcon,
-} from "lucide-react"
-import { memo, useCallback, useMemo, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { TaskServiceClient } from "@/services/grpc-client"
-import { formatSize } from "@/utils/format"
+	ChevronsDownUpIcon,
+	ChevronsUpDownIcon,
+	DownloadIcon,
+	StarIcon,
+	TrashIcon,
+} from "lucide-react";
+import { memo, useCallback, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { TaskServiceClient } from "@/services/grpc-client";
+import { formatSize } from "@/utils/format";
 
 type HistoryViewItemProps = {
-	item: HistoryItem
-	index: number
-	selectedItems: string[]
-	pendingFavoriteToggles: Record<string, boolean>
-	handleDeleteHistoryItem: (id: string) => void
-	toggleFavorite: (id: string, isCurrentlyFavorited: boolean) => void
-	handleHistorySelect: (itemId: string, checked: boolean) => void
-}
+	item: HistoryItem;
+	index: number;
+	selectedItems: string[];
+	pendingFavoriteToggles: Record<string, boolean>;
+	handleDeleteHistoryItem: (id: string) => void;
+	toggleFavorite: (id: string, isCurrentlyFavorited: boolean) => void;
+	handleHistorySelect: (itemId: string, checked: boolean) => void;
+};
 
 const HistoryViewItem = ({
 	item,
@@ -32,23 +32,23 @@ const HistoryViewItem = ({
 	handleHistorySelect,
 	selectedItems,
 }: HistoryViewItemProps) => {
-	const [expanded, setExpanded] = useState(false)
+	const [expanded, setExpanded] = useState(false);
 
 	const isFavoritedItem = useMemo(
 		() => pendingFavoriteToggles[item.id] ?? item.isFavorited,
 		[item.id, item.isFavorited, pendingFavoriteToggles],
-	)
+	);
 
 	const handleShowTaskWithId = useCallback((id: string) => {
-		TaskServiceClient.showTaskWithId(StringRequest.create({ value: id })).catch((error) =>
-			console.error("Error showing task:", error),
-		)
-	}, [])
+		TaskServiceClient.showTaskWithId(StringRequest.create({ value: id })).catch(
+			(error) => console.error("Error showing task:", error),
+		);
+	}, []);
 
 	const formatDate = useCallback((timestamp: number) => {
-		const date = new Date(timestamp)
-		const today = new Date()
-		const isToday = today.toDateString() === date.toDateString()
+		const date = new Date(timestamp);
+		const today = new Date();
+		const isToday = today.toDateString() === date.toDateString();
 
 		return date
 			.toLocaleString(
@@ -68,28 +68,32 @@ const HistoryViewItem = ({
 						},
 			)
 			.replace(", ", " ")
-			.replace(" at", ",")
-	}, [])
+			.replace(" at", ",");
+	}, []);
 
 	return (
-		<div className="history-item cursor-pointer flex group mb-1 hover:bg-list-hover border-b border-accent/10" key={item.id}>
+		<div
+			className="history-item cursor-pointer flex group mb-1 hover:bg-list-hover border-b border-accent/10"
+			key={item.id}
+		>
 			<VSCodeCheckbox
 				checked={selectedItems.includes(item.id)}
 				className="pl-3 pr-1 py-auto self-start mt-3"
 				onClick={(e) => {
-					e.preventDefault()
-					e.stopPropagation()
-					const checked = (e.target as HTMLInputElement).checked
-					handleHistorySelect(item.id, checked)
+					e.preventDefault();
+					e.stopPropagation();
+					const checked = (e.target as HTMLInputElement).checked;
+					handleHistorySelect(item.id, checked);
 				}}
 			/>
 
 			<div
 				className="flex flex-col gap-2 py-2 pl-2 pr-3 relative flex-grow min-w-0"
 				onClick={(e) => {
-					e.stopPropagation()
-					handleShowTaskWithId(item.id)
-				}}>
+					e.stopPropagation();
+					handleShowTaskWithId(item.id);
+				}}
+			>
 				<div className="flex items-center gap-2">
 					<div className="line-clamp-1 overflow-hidden break-words whitespace-pre-wrap flex-1 min-w-0">
 						<span className="ph-no-capture">{item.task}</span>
@@ -100,26 +104,31 @@ const HistoryViewItem = ({
 							className="p-0 opacity-0 group-hover:opacity-100 transition-opacity"
 							disabled={isFavoritedItem}
 							onClick={(e) => {
-								e.stopPropagation()
-								handleDeleteHistoryItem(item.id)
+								e.stopPropagation();
+								handleDeleteHistoryItem(item.id);
 							}}
-							variant="ghost">
+							variant="ghost"
+						>
 							<span className="flex items-center gap-1 text-xs">
 								<TrashIcon className="stroke-1" />
 							</span>
 						</Button>
 						<Button
-							aria-label={isFavoritedItem ? "Remove from favorites" : "Add to favorites"}
+							aria-label={
+								isFavoritedItem ? "Remove from favorites" : "Add to favorites"
+							}
 							className="p-0"
 							disabled={pendingFavoriteToggles[item.id] !== undefined}
 							onClick={(e) => {
-								e.stopPropagation()
-								toggleFavorite(item.id, isFavoritedItem)
+								e.stopPropagation();
+								toggleFavorite(item.id, isFavoritedItem);
 							}}
-							variant="icon">
+							variant="icon"
+						>
 							<StarIcon
 								className={cn("opacity-70", {
-									"text-button-background  fill-button-background opacity-100": isFavoritedItem,
+									"text-button-background  fill-button-background opacity-100":
+										isFavoritedItem,
 								})}
 							/>
 						</Button>
@@ -129,12 +138,15 @@ const HistoryViewItem = ({
 				<Button
 					className="p-0"
 					onClick={(e) => {
-						e.stopPropagation()
-						setExpanded(!expanded)
+						e.stopPropagation();
+						setExpanded(!expanded);
 					}}
-					variant="icon">
+					variant="icon"
+				>
 					<div className="flex items-center justify-between w-full">
-						<div className="text-description text-xs uppercase">{formatDate(item.ts)}</div>
+						<div className="text-description text-xs uppercase">
+							{formatDate(item.ts)}
+						</div>
 						<div className="self-end flex items-center text-xs">
 							{expanded ? (
 								<ChevronsDownUpIcon className="text-description" />
@@ -148,10 +160,11 @@ const HistoryViewItem = ({
 					<Button
 						className="m-0 text-xs cursor-pointer p-2 bg-accent/10 w-full rounded-xs"
 						onClick={(e) => {
-							e.stopPropagation()
-							setExpanded(!expanded)
+							e.stopPropagation();
+							setExpanded(!expanded);
 						}}
-						variant="text">
+						variant="text"
+					>
 						<div className="flex flex-col gap-1 w-full text-xs">
 							<div className="flex items-center justify-between w-full">
 								<div className="flex items-center gap-1 flex-wrap w-full">
@@ -168,12 +181,15 @@ const HistoryViewItem = ({
 												aria-label="Export"
 												className="m-0 p-0"
 												onClick={(e) => {
-													e.stopPropagation()
+													e.stopPropagation();
 													TaskServiceClient.exportTaskWithId(
 														StringRequest.create({ value: item.id }),
-													).catch((err) => console.error("Failed to export task:", err))
+													).catch((err) =>
+														console.error("Failed to export task:", err),
+													);
 												}}
-												variant="ghost">
+												variant="ghost"
+											>
 												<DownloadIcon />
 											</Button>
 										</span>
@@ -185,7 +201,7 @@ const HistoryViewItem = ({
 				)}
 			</div>
 		</div>
-	)
-}
+	);
+};
 
-export default memo(HistoryViewItem)
+export default memo(HistoryViewItem);

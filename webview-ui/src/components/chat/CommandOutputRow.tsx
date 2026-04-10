@@ -1,12 +1,15 @@
-import { COMMAND_OUTPUT_STRING, COMMAND_REQ_APP_STRING } from "@shared/combineCommandSequences"
-import { AsiMessage } from "@shared/ExtensionMessage"
-import { StringRequest } from "@shared/proto/Asi/common"
-import { memo, useEffect, useRef } from "react"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { FileServiceClient } from "@/services/grpc-client"
-import CodeBlock from "../common/CodeBlock"
-import ExpandHandle from "./ExpandHandle"
+import {
+	COMMAND_OUTPUT_STRING,
+	COMMAND_REQ_APP_STRING,
+} from "@shared/combineCommandSequences";
+import { AsiMessage } from "@shared/ExtensionMessage";
+import { StringRequest } from "@shared/proto/Asi/common";
+import { memo, useEffect, useRef } from "react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { FileServiceClient } from "@/services/grpc-client";
+import CodeBlock from "../common/CodeBlock";
+import ExpandHandle from "./ExpandHandle";
 
 export const CommandOutputContent = memo(
 	({
@@ -15,96 +18,127 @@ export const CommandOutputContent = memo(
 		onToggle,
 		isContainerExpanded,
 	}: {
-		output: string
-		isOutputFullyExpanded: boolean
-		onToggle: () => void
-		isContainerExpanded: boolean
+		output: string;
+		isOutputFullyExpanded: boolean;
+		onToggle: () => void;
+		isContainerExpanded: boolean;
 	}) => {
-		const outputLines = output.split("\n")
-		const lineCount = outputLines.length
-		const shouldAutoShow = lineCount <= 5
-		const outputRef = useRef<HTMLDivElement>(null)
+		const outputLines = output.split("\n");
+		const lineCount = outputLines.length;
+		const shouldAutoShow = lineCount <= 5;
+		const outputRef = useRef<HTMLDivElement>(null);
 
 		// Auto-scroll to bottom when output changes (only when showing limited output)
 		useEffect(() => {
 			if (!isOutputFullyExpanded && outputRef.current) {
 				// Direct scrollTop manipulation
-				outputRef.current.scrollTop = outputRef.current.scrollHeight
+				outputRef.current.scrollTop = outputRef.current.scrollHeight;
 
 				// Another attempt with more delay (for slower renders) to ensure scrolling works
 				setTimeout(() => {
 					if (outputRef.current) {
-						outputRef.current.scrollTop = outputRef.current.scrollHeight
+						outputRef.current.scrollTop = outputRef.current.scrollHeight;
 					}
-				}, 50)
+				}, 50);
 			}
-		}, [output, isOutputFullyExpanded])
+		}, [output, isOutputFullyExpanded]);
 
 		// Don't render anything if container is collapsed
 		if (!isContainerExpanded) {
-			return null
+			return null;
 		}
 
 		// Check if output contains a log file path indicator
-		const logFilePathMatch = output.match(/📋 Output is being logged to: ([^\n]+)/)
-		const logFilePath = logFilePathMatch ? logFilePathMatch[1].trim() : null
+		const logFilePathMatch = output.match(
+			/📋 Output is being logged to: ([^\n]+)/,
+		);
+		const logFilePath = logFilePathMatch ? logFilePathMatch[1].trim() : null;
 
 		// Render output with clickable log file path
 		const renderOutput = () => {
 			if (!logFilePath) {
-				return <CodeBlock forceWrap={true} source={`${"```"}shell\n${output}\n${"```"}`} />
+				return (
+					<CodeBlock
+						forceWrap={true}
+						source={`${"```"}shell\n${output}\n${"```"}`}
+					/>
+				);
 			}
 
 			// Split output into parts: before log path, log path line, after log path
-			const logPathLineStart = output.indexOf("📋 Output is being logged to:")
-			const logPathLineEnd = output.indexOf("\n", logPathLineStart)
-			const beforeLogPath = output.substring(0, logPathLineStart)
-			const afterLogPath = logPathLineEnd !== -1 ? output.substring(logPathLineEnd) : ""
+			const logPathLineStart = output.indexOf("📋 Output is being logged to:");
+			const logPathLineEnd = output.indexOf("\n", logPathLineStart);
+			const beforeLogPath = output.substring(0, logPathLineStart);
+			const afterLogPath =
+				logPathLineEnd !== -1 ? output.substring(logPathLineEnd) : "";
 
 			// Extract just the filename from the full path for display
-			const fileName = logFilePath.split("/").pop() || logFilePath
+			const fileName = logFilePath.split("/").pop() || logFilePath;
 
 			return (
 				<div className="border border-editor-group-border rounded-sm">
-					{beforeLogPath && <CodeBlock forceWrap={true} source={`${"```"}shell\n${beforeLogPath}\n${"```"}`} />}
+					{beforeLogPath && (
+						<CodeBlock
+							forceWrap={true}
+							source={`${"```"}shell\n${beforeLogPath}\n${"```"}`}
+						/>
+					)}
 					<div
 						className="flex flex-wrap items-center gap-1.5 px-3 py-2 mx-2 my-1.5 rounded-sm bg-banner-background cursor-pointer hover:brightness-110 transition-colors"
 						onClick={() => {
-							FileServiceClient.openFile(StringRequest.create({ value: logFilePath })).catch((err) =>
-								console.error("Failed to open log file:", err),
-							)
+							FileServiceClient.openFile(
+								StringRequest.create({ value: logFilePath }),
+							).catch((err) => console.error("Failed to open log file:", err));
 						}}
-						title={`Click to open: ${logFilePath}`}>
+						title={`Click to open: ${logFilePath}`}
+					>
 						<span className="shrink-0">📋 Output is being logged to:</span>
-						<span className="text-vscode-textLink-foreground underline break-all">{fileName}</span>
+						<span className="text-vscode-textLink-foreground underline break-all">
+							{fileName}
+						</span>
 					</div>
-					{afterLogPath && <CodeBlock forceWrap={true} source={`${"```"}shell\n${afterLogPath}\n${"```"}`} />}
+					{afterLogPath && (
+						<CodeBlock
+							forceWrap={true}
+							source={`${"```"}shell\n${afterLogPath}\n${"```"}`}
+						/>
+					)}
 				</div>
-			)
-		}
+			);
+		};
 
 		return (
 			<div
-				className={cn("w-full relative pb-0 overflow-visible border-t border-editor-group-border bg-code rounded-sm", {
-					"rounded-b-none": lineCount > 5,
-				})}>
+				className={cn(
+					"w-full relative pb-0 overflow-visible border-t border-editor-group-border bg-code rounded-sm",
+					{
+						"rounded-b-none": lineCount > 5,
+					},
+				)}
+			>
 				<div
 					className={cn("text-white scroll-smooth bg-code overflow-y-auto", {
 						"max-h-[75px]": !shouldAutoShow && !isOutputFullyExpanded,
 						"max-h-[200px]": !shouldAutoShow && isOutputFullyExpanded,
 						"overflow-y-visible": shouldAutoShow,
 					})}
-					ref={outputRef}>
+					ref={outputRef}
+				>
 					<div className="bg-code">{renderOutput()}</div>
 				</div>
 				{/* Show notch only if there's more than 5 lines */}
-				{lineCount > 5 && <ExpandHandle isExpanded={isOutputFullyExpanded} onToggle={onToggle} />}
+				{lineCount > 5 && (
+					<ExpandHandle
+						isExpanded={isOutputFullyExpanded}
+						onToggle={onToggle}
+					/>
+				)}
 			</div>
-		)
+		);
 	},
-)
+);
 
-CommandOutputContent.displayName = "CommandOutputContent"
+CommandOutputContent.displayName = "CommandOutputContent";
 
 export const CommandOutputRow = memo(
 	({
@@ -119,21 +153,21 @@ export const CommandOutputRow = memo(
 		isOutputFullyExpanded,
 		setIsOutputFullyExpanded,
 	}: {
-		message: AsiMessage
-		isCommandExecuting?: boolean
-		isCommandPending?: boolean
-		isCommandCompleted?: boolean
-		isBackgroundExec?: boolean
-		onCancelCommand?: () => void
-		icon?: JSX.Element | null
-		title?: JSX.Element | null
-		isOutputFullyExpanded: boolean
-		setIsOutputFullyExpanded: (expanded: boolean) => void
+		message: AsiMessage;
+		isCommandExecuting?: boolean;
+		isCommandPending?: boolean;
+		isCommandCompleted?: boolean;
+		isBackgroundExec?: boolean;
+		onCancelCommand?: () => void;
+		icon?: JSX.Element | null;
+		title?: JSX.Element | null;
+		isOutputFullyExpanded: boolean;
+		setIsOutputFullyExpanded: (expanded: boolean) => void;
 	}) => {
 		const splitMessage = (text: string) => {
-			const outputIndex = text.indexOf(COMMAND_OUTPUT_STRING)
+			const outputIndex = text.indexOf(COMMAND_OUTPUT_STRING);
 			if (outputIndex === -1) {
-				return { command: text, output: "" }
+				return { command: text, output: "" };
 			}
 			return {
 				command: text.slice(0, outputIndex).trim(),
@@ -144,34 +178,38 @@ export const CommandOutputRow = memo(
 					.map((char) => {
 						switch (char) {
 							case "\t":
-								return "→   "
+								return "→   ";
 							case "\b":
-								return "⌫"
+								return "⌫";
 							case "\f":
-								return "⏏"
+								return "⏏";
 							case "\v":
-								return "⇳"
+								return "⇳";
 							default:
-								return char
+								return char;
 						}
 					})
 					.join(""),
-			}
-		}
+			};
+		};
 
-		const { command: rawCommand, output } = splitMessage(message.text || "")
+		const { command: rawCommand, output } = splitMessage(message.text || "");
 
-		const requestsApproval = rawCommand.endsWith(COMMAND_REQ_APP_STRING)
-		const command = requestsApproval ? rawCommand.slice(0, -COMMAND_REQ_APP_STRING.length) : rawCommand
+		const requestsApproval = rawCommand.endsWith(COMMAND_REQ_APP_STRING);
+		const command = requestsApproval
+			? rawCommand.slice(0, -COMMAND_REQ_APP_STRING.length)
+			: rawCommand;
 		const showCancelButton =
-			(isCommandExecuting || isCommandPending) && typeof onCancelCommand === "function" && isBackgroundExec
+			(isCommandExecuting || isCommandPending) &&
+			typeof onCancelCommand === "function" &&
+			isBackgroundExec;
 
 		const commandHeader = (
 			<div className="flex items-center gap-2.5 mb-3">
 				{icon}
 				{title}
 			</div>
-		)
+		);
 
 		return (
 			<>
@@ -180,40 +218,53 @@ export const CommandOutputRow = memo(
 					className="bg-code rounded-sm border border-editor-group-border"
 					style={{
 						transition: "all 0.3s ease-in-out",
-					}}>
+					}}
+				>
 					{command && (
 						<div className="bg-code flex items-center justify-between px-2 py-2.5 border-b border-editor-group-border rounded-sm rounded-b-none overflow-hidden">
 							<div className="flex items-center gap-2 flex-1 m-w-0">
 								<div
-									className={cn("bg-description rounded-full w-2 h-2 shrink-0", {
-										"bg-success animate-pulse": isCommandExecuting,
-										"bg-editor-warning-foreground": isCommandPending,
-									})}
+									className={cn(
+										"bg-description rounded-full w-2 h-2 shrink-0",
+										{
+											"bg-success animate-pulse": isCommandExecuting,
+											"bg-editor-warning-foreground": isCommandPending,
+										},
+									)}
 								/>
 								<span
-									className={cn("text-description font-medium text-base shrink-0", {
-										"text-success": isCommandExecuting,
-										"text-editor-warning-foreground": isCommandPending,
-									})}>
-									{getCommandStatusText(isCommandExecuting, isCommandPending, isCommandCompleted)}
+									className={cn(
+										"text-description font-medium text-base shrink-0",
+										{
+											"text-success": isCommandExecuting,
+											"text-editor-warning-foreground": isCommandPending,
+										},
+									)}
+								>
+									{getCommandStatusText(
+										isCommandExecuting,
+										isCommandPending,
+										isCommandCompleted,
+									)}
 								</span>
 							</div>
 							<div className="flex items-center gap-2 shrink-0">
 								{showCancelButton && (
 									<Button
 										onClick={(e) => {
-											e.stopPropagation()
+											e.stopPropagation();
 											if (isBackgroundExec) {
-												onCancelCommand?.()
+												onCancelCommand?.();
 											} else {
 												// For regular terminal mode, show a message
 												alert(
 													"This command is running in the VSCode terminal. You can manually stop it using Ctrl+C in the terminal, or switch to Background Execution mode in settings for cancellable commands.",
-												)
+												);
 											}
 										}}
 										size="sm"
-										variant="secondary">
+										variant="secondary"
+									>
 										{isBackgroundExec ? "cancel" : "stop"}
 									</Button>
 								)}
@@ -222,7 +273,10 @@ export const CommandOutputRow = memo(
 					)}
 
 					<div className="bg-code opacity-60 text-sm">
-						<CodeBlock forceWrap={true} source={`${"```"}shell\n${command}\n${"```"}`} />
+						<CodeBlock
+							forceWrap={true}
+							source={`${"```"}shell\n${command}\n${"```"}`}
+						/>
 					</div>
 
 					{output.length > 0 && (
@@ -237,32 +291,38 @@ export const CommandOutputRow = memo(
 				{requestsApproval && (
 					<div className="flex items-center gap-2.5 p-2 text-[12px] text-editor-warning-foreground">
 						<i className="codicon codicon-warning" />
-						<span>The model has determined this command requires explicit approval.</span>
+						<span>
+							The model has determined this command requires explicit approval.
+						</span>
 					</div>
 				)}
 			</>
-		)
+		);
 	},
-)
+);
 
-CommandOutputRow.displayName = "CommandOutputRow"
+CommandOutputRow.displayName = "CommandOutputRow";
 
 const CommandStatusMap = {
 	executing: "Running",
 	pending: "Pending",
 	completed: "Completed",
 	skipped: "Skipped",
-}
+};
 
-function getCommandStatusText(isExecuting: boolean, isPending: boolean, isCompleted: boolean): string {
+function getCommandStatusText(
+	isExecuting: boolean,
+	isPending: boolean,
+	isCompleted: boolean,
+): string {
 	if (isExecuting) {
-		return CommandStatusMap.executing
+		return CommandStatusMap.executing;
 	}
 	if (isPending) {
-		return CommandStatusMap.pending
+		return CommandStatusMap.pending;
 	}
 	if (isCompleted) {
-		return CommandStatusMap.completed
+		return CommandStatusMap.completed;
 	}
-	return CommandStatusMap.skipped
+	return CommandStatusMap.skipped;
 }

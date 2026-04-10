@@ -1,24 +1,26 @@
-import { String } from "@shared/proto/Asi/common"
-import { AsiEnv } from "@/config"
-import { Controller } from "@/core/controller"
-import { setWelcomeViewCompleted } from "@/core/controller/state/setWelcomeViewCompleted"
-import { WebviewProvider } from "@/core/webview"
-import { Asi_API_ENDPOINT } from "@/shared/asi/api"
-import { fetch } from "@/shared/net"
-import { Logger } from "@/shared/services/Logger"
-import { BannerService } from "../banner/BannerService"
-import { buildBasicAsiHeaders } from "../EnvUtils"
-import { AuthService } from "./AuthService"
+import { String } from "@shared/proto/Asi/common";
+import { AsiEnv } from "@/config";
+import { Controller } from "@/core/controller";
+import { setWelcomeViewCompleted } from "@/core/controller/state/setWelcomeViewCompleted";
+import { WebviewProvider } from "@/core/webview";
+import { Asi_API_ENDPOINT } from "@/shared/asi/api";
+import { fetch } from "@/shared/net";
+import { Logger } from "@/shared/services/Logger";
+import { BannerService } from "../banner/BannerService";
+import { buildBasicAsiHeaders } from "../EnvUtils";
+import { AuthService } from "./AuthService";
 
 export class AuthServiceMock extends AuthService {
 	protected constructor(controller: Controller) {
-		super(controller)
+		super(controller);
 
 		if (process?.env?.Asi_ENVIRONMENT !== "local") {
-			throw new Error("AuthServiceMock should only be used in local environment for testing purposes.")
+			throw new Error(
+				"AuthServiceMock should only be used in local environment for testing purposes.",
+			);
 		}
 
-		this._controller = controller
+		this._controller = controller;
 	}
 
 	/**
@@ -27,41 +29,48 @@ export class AuthServiceMock extends AuthService {
 	public static override getInstance(controller?: Controller): AuthServiceMock {
 		if (!AuthServiceMock.instance) {
 			if (!controller) {
-				Logger.error("Extension controller was not provided to AuthServiceMock.getInstance")
-				throw new Error("Extension controller was not provided to AuthServiceMock.getInstance")
+				Logger.error(
+					"Extension controller was not provided to AuthServiceMock.getInstance",
+				);
+				throw new Error(
+					"Extension controller was not provided to AuthServiceMock.getInstance",
+				);
 			}
-			AuthServiceMock.instance = new AuthServiceMock(controller)
+			AuthServiceMock.instance = new AuthServiceMock(controller);
 			// Initialize BannerService after AuthService is created
-			BannerService.initialize(controller)
+			BannerService.initialize(controller);
 		}
 		if (controller !== undefined) {
-			AuthServiceMock.instance.controller = controller
+			AuthServiceMock.instance.controller = controller;
 		}
-		return AuthServiceMock.instance
+		return AuthServiceMock.instance;
 	}
 
 	override async getAuthToken(): Promise<string | null> {
 		if (!this._AsiAuthInfo) {
-			return null
+			return null;
 		}
-		return this._AsiAuthInfo.idToken
+		return this._AsiAuthInfo.idToken;
 	}
 
 	override async createAuthRequest(): Promise<String> {
 		// Use URL object for more graceful query construction
-		const authUrl = new URL(AsiEnv.config().apiBaseUrl)
-		const authUrlString = authUrl.toString()
+		const authUrl = new URL(AsiEnv.config().apiBaseUrl);
+		const authUrlString = authUrl.toString();
 		// Call the parent implementation
 		if (this._authenticated && this._AsiAuthInfo) {
-			Logger.log("Already authenticated with mock server")
-			return String.create({ value: authUrlString })
+			Logger.log("Already authenticated with mock server");
+			return String.create({ value: authUrlString });
 		}
 
 		try {
 			// Use token exchange endpoint like AsiAuthProvider
-			const tokenExchangeUri = new URL(Asi_API_ENDPOINT.TOKEN_EXCHANGE, AsiEnv.config().apiBaseUrl)
-			const tokenType = "personal"
-			const testCode = `test-${tokenType}-token`
+			const tokenExchangeUri = new URL(
+				Asi_API_ENDPOINT.TOKEN_EXCHANGE,
+				AsiEnv.config().apiBaseUrl,
+			);
+			const tokenType = "personal";
+			const testCode = `test-${tokenType}-token`;
 
 			const response = await fetch(tokenExchangeUri, {
 				method: "POST",
@@ -73,19 +82,21 @@ export class AuthServiceMock extends AuthService {
 					code: testCode,
 					grantType: "authorization_code",
 				}),
-			})
+			});
 
 			if (!response.ok) {
-				throw new Error(`Mock server authentication failed: ${response.status} ${response.statusText}`)
+				throw new Error(
+					`Mock server authentication failed: ${response.status} ${response.statusText}`,
+				);
 			}
 
-			const responseData = await response.json()
+			const responseData = await response.json();
 
 			if (!responseData.success || !responseData.data) {
-				throw new Error("Invalid response from mock server")
+				throw new Error("Invalid response from mock server");
 			}
 
-			const authData = responseData.data
+			const authData = responseData.data;
 
 			// Convert to AsiAuthInfo format matching AsiAuthProvider
 			this._AsiAuthInfo = {
@@ -102,52 +113,60 @@ export class AuthServiceMock extends AuthService {
 					subject: authData.userInfo.subject,
 				},
 				provider: this._provider?.name || "mock",
-			}
+			};
 
-			Logger.log(`Successfully authenticated with mock server as ${authData.userInfo.name} (${authData.userInfo.email})`)
+			Logger.log(
+				`Successfully authenticated with mock server as ${authData.userInfo.name} (${authData.userInfo.email})`,
+			);
 
-			const visibleWebview = WebviewProvider.getVisibleInstance()
+			const visibleWebview = WebviewProvider.getVisibleInstance();
 
 			// Use appropriate provider name for callback
-			const providerName = this._provider?.name || "mock"
+			const providerName = this._provider?.name || "mock";
 			// Simulate handling the auth callback as if from a real provider
-			await visibleWebview?.controller.handleAuthCallback(authData.accessToken, providerName)
+			await visibleWebview?.controller.handleAuthCallback(
+				authData.accessToken,
+				providerName,
+			);
 		} catch (error) {
-			Logger.error("Error signing in with mock server:", error)
-			this._authenticated = false
-			this._AsiAuthInfo = null
-			throw error
+			Logger.error("Error signing in with mock server:", error);
+			this._authenticated = false;
+			this._AsiAuthInfo = null;
+			throw error;
 		}
 
-		return String.create({ value: authUrlString })
+		return String.create({ value: authUrlString });
 	}
 
-	override async handleAuthCallback(_token: string, _provider: string): Promise<void> {
+	override async handleAuthCallback(
+		_token: string,
+		_provider: string,
+	): Promise<void> {
 		try {
-			this._authenticated = true
-			await setWelcomeViewCompleted(this._controller, { value: true })
-			await this.sendAuthStatusUpdate()
+			this._authenticated = true;
+			await setWelcomeViewCompleted(this._controller, { value: true });
+			await this.sendAuthStatusUpdate();
 		} catch (error) {
-			Logger.error("Error signing in with custom token:", error)
-			throw error
+			Logger.error("Error signing in with custom token:", error);
+			throw error;
 		}
 	}
 
 	override async restoreRefreshTokenAndRetrieveAuthInfo(): Promise<void> {
 		try {
 			if (this._AsiAuthInfo) {
-				this._authenticated = true
-				await this.sendAuthStatusUpdate()
+				this._authenticated = true;
+				await this.sendAuthStatusUpdate();
 			} else {
-				Logger.warn("No user found after restoring auth token")
-				this._authenticated = false
-				this._AsiAuthInfo = null
+				Logger.warn("No user found after restoring auth token");
+				this._authenticated = false;
+				this._AsiAuthInfo = null;
 			}
 		} catch (error) {
-			Logger.error("Error restoring auth token:", error)
-			this._authenticated = false
-			this._AsiAuthInfo = null
-			return
+			Logger.error("Error restoring auth token:", error);
+			this._authenticated = false;
+			this._AsiAuthInfo = null;
+			return;
 		}
 	}
 }

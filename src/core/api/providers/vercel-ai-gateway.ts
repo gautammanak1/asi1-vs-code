@@ -130,7 +130,8 @@ export class VercelAIGatewayHandler implements ApiHandler {
 						cost_details?: { upstream_inference_cost?: number };
 					};
 					const totalCost =
-						(usage.cost || 0) + (usage.cost_details?.upstream_inference_cost || 0);
+						(usage.cost || 0) +
+						(usage.cost_details?.upstream_inference_cost || 0);
 
 					yield {
 						type: "usage",
