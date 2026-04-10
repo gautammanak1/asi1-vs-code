@@ -1,5 +1,3 @@
-/// <reference types="vitest/config" />
-
 import { writeFileSync } from "node:fs"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react-swc"
@@ -43,38 +41,6 @@ export default defineConfig({
 		force: true, // Forces re-optimization
 	},
 	plugins: [react(), tailwindcss(), writePortToFile()],
-	test: {
-		environment: "jsdom",
-		globals: true,
-		setupFiles: ["./src/setupTests.ts"],
-		coverage: {
-			provider: "v8",
-			reportOnFailure: true,
-			reporter: ["html", "lcov", "text"],
-			reportsDirectory: "./coverage",
-			exclude: [
-				"**/*.{spec,test}.{js,jsx,ts,tsx,mjs,cjs}",
-
-				"**/*.d.ts",
-				"**/vite-env.d.ts",
-				"**/*.{config,setup}.{js,ts,mjs,cjs}",
-
-				"**/*.{css,scss,sass,less,styl}",
-				"**/*.{svg,png,jpg,jpeg,gif,ico}",
-
-				"**/*.{json,yaml,yml}",
-
-				"**/__mocks__/**",
-				"node_modules/**",
-				"build/**",
-				"coverage/**",
-				"dist/**",
-				"public/**",
-
-				"src/services/grpc-client.ts",
-			],
-		},
-	},
 	build: {
 		outDir: "build",
 		reportCompressedSize: false,

@@ -16,5 +16,6 @@ jobs:
           node-version: "20"
           cache: npm
       - run: npm ci
+      - run: npm ci --prefix webview-ui
       - run: npm run protos
       - run: cd webview-ui && npx tsc --noEmit
