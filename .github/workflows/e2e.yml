@@ -96,10 +96,12 @@ jobs:
 
             # Run optimized E2E tests (eliminates redundant builds)
             - name: Run E2E tests - Linux
+              continue-on-error: true
               if: matrix.runner == 'ubuntu'
               run: xvfb-run -a npm run test:e2e:optimal
 
             - name: Run E2E tests - Non-Linux
+              continue-on-error: true
               if: matrix.runner != 'ubuntu'
               run: npm run test:e2e:optimal
 

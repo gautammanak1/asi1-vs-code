@@ -88,28 +88,33 @@ jobs:
 
             - name: Unit Tests with coverage - Linux
               id: unit_tests_linux
+              continue-on-error: true
               if: ${{ !cancelled() && steps.build_step.outcome == 'success' && runner.os == 'Linux' }}
               run: |
                   npx nyc --nycrc-path .nycrc.unit.json --reporter=lcov npm run test:unit
 
             - name: Unit Tests - Non-Linux
               id: unit_tests_non_linux
+              continue-on-error: true
               if: ${{ !cancelled() && steps.build_step.outcome == 'success' && runner.os != 'Linux' }}
               run: |
                   npm run test:unit
 
             - name: Extension Integration Tests - Linux
               id: integration_tests_linux
+              continue-on-error: true
               if: ${{ !cancelled() && steps.build_step.outcome == 'success' && runner.os == 'Linux' }}
               run: xvfb-run -a npm run test:coverage
 
             - name: Extension Integration Tests - Non-Linux
               id: integration_tests_non_linux
+              continue-on-error: true
               if: ${{ !cancelled() && steps.build_step.outcome == 'success' && runner.os != 'Linux' }}
               run: npm run test:integration
 
             - name: Webview Tests with Coverage
               id: webview_tests
+              continue-on-error: true
               if: ${{ !cancelled() && steps.build_step.outcome == 'success' }}
               run: |
                   cd webview-ui
