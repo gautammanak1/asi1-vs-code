@@ -1,79 +1,93 @@
-import { type ModelInfo, openRouterDefaultModelId, openRouterDefaultModelInfo } from "@shared/api"
-import { shouldSkipReasoningForModel } from "@utils/model-utils"
-import axios from "axios"
-import OpenAI from "openai"
-import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
-import { AsiEnv } from "@/config"
-import { refreshClineRecommendedModels } from "@/core/controller/models/refreshClineRecommendedModels"
-import { AsiAccountService } from "@/services/account/ClineAccountService"
-import { AuthService } from "@/services/auth/AuthService"
-import { buildAsiExtraHeaders } from "@/services/EnvUtils"
-import { Asi_ACCOUNT_AUTH_ERROR_MESSAGE } from "@/shared/ClineAccount"
-import { Asi_RECOMMENDED_MODELS_FALLBACK } from "@/shared/asi/recommended-models"
-import type { AsiStorageMessage } from "@/shared/messages/content"
-import { fetch, getAxiosSettings } from "@/shared/net"
-import { Logger } from "@/shared/services/Logger"
-import type { ApiHandler, CommonApiHandlerOptions } from "../"
-import { withRetry } from "../retry"
-import { createOpenRouterStream } from "../transform/openrouter-stream"
-import type { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
-import { ToolCallProcessor } from "../transform/tool-call-processor"
-import type { OpenRouterErrorResponse } from "./types"
+import {
+	type ModelInfo,
+	openRouterDefaultModelId,
+	openRouterDefaultModelInfo,
+} from "@shared/api";
+import { shouldSkipReasoningForModel } from "@utils/model-utils";
+import axios from "axios";
+import OpenAI from "openai";
+import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions";
+import { AsiEnv } from "@/config";
+import { refreshClineRecommendedModels } from "@/core/controller/models/refreshClineRecommendedModels";
+import { AsiAccountService } from "@/services/account/ClineAccountService";
+import { AuthService } from "@/services/auth/AuthService";
+import { buildAsiExtraHeaders } from "@/services/EnvUtils";
+import { Asi_ACCOUNT_AUTH_ERROR_MESSAGE } from "@/shared/ClineAccount";
+import { Asi_RECOMMENDED_MODELS_FALLBACK } from "@/shared/asi/recommended-models";
+import type { AsiStorageMessage } from "@/shared/messages/content";
+import { fetch, getAxiosSettings } from "@/shared/net";
+import { Logger } from "@/shared/services/Logger";
+import type { ApiHandler, CommonApiHandlerOptions } from "../";
+import { withRetry } from "../retry";
+import { createOpenRouterStream } from "../transform/openrouter-stream";
+import type { ApiStream, ApiStreamUsageChunk } from "../transform/stream";
+import { ToolCallProcessor } from "../transform/tool-call-processor";
+import type { OpenRouterErrorResponse } from "./types";
 
 interface AsiHandlerOptions extends CommonApiHandlerOptions {
-	ulid?: string
-	taskId?: string
-	reasoningEffort?: string
-	thinkingBudgetTokens?: number
-	openRouterProviderSorting?: string
-	openRouterModelId?: string
-	openRouterModelInfo?: ModelInfo
-	AsiAccountId?: string
-	AsiApiKey?: string
-	enableParallelToolCalling?: boolean
+	ulid?: string;
+	taskId?: string;
+	reasoningEffort?: string;
+	thinkingBudgetTokens?: number;
+	openRouterProviderSorting?: string;
+	openRouterModelId?: string;
+	openRouterModelInfo?: ModelInfo;
+	AsiAccountId?: string;
+	AsiApiKey?: string;
+	enableParallelToolCalling?: boolean;
 }
 
 function normalizeModelId(modelId: string): string {
-	return modelId.trim().toLowerCase()
+	return modelId.trim().toLowerCase();
 }
 
-const Asi_FREE_MODEL_IDS = new Set(Asi_RECOMMENDED_MODELS_FALLBACK.free.map((model) => normalizeModelId(model.id)))
+const Asi_FREE_MODEL_IDS = new Set(
+	Asi_RECOMMENDED_MODELS_FALLBACK.free.map((model) =>
+		normalizeModelId(model.id),
+	),
+);
 
 export class AsiHandler implements ApiHandler {
-	private options: AsiHandlerOptions
-	private AsiAccountService = AsiAccountService.getInstance()
-	private _authService: AuthService
-	private client: OpenAI | undefined
-	lastGenerationId?: string
-	private lastRequestId?: string
+	private options: AsiHandlerOptions;
+	private AsiAccountService = AsiAccountService.getInstance();
+	private _authService: AuthService;
+	private client: OpenAI | undefined;
+	lastGenerationId?: string;
+	private lastRequestId?: string;
 
 	private get _baseUrl(): string {
-		return AsiEnv.config().apiBaseUrl
+		return AsiEnv.config().apiBaseUrl;
 	}
 
 	constructor(options: AsiHandlerOptions) {
-		this.options = options
-		this._authService = AuthService.getInstance()
+		this.options = options;
+		this._authService = AuthService.getInstance();
 	}
 
 	private async getFreeModelIdSet(): Promise<Set<string>> {
 		try {
-			const models = await refreshClineRecommendedModels()
-			const freeModelIds = models.free.map((model) => normalizeModelId(model.id)).filter((modelId) => modelId.length > 0)
+			const models = await refreshClineRecommendedModels();
+			const freeModelIds = models.free
+				.map((model) => normalizeModelId(model.id))
+				.filter((modelId) => modelId.length > 0);
 			if (freeModelIds.length > 0) {
-				return new Set(freeModelIds)
+				return new Set(freeModelIds);
 			}
 		} catch (error) {
-			Logger.error("Error resolving Asi free model IDs from recommended models:", error)
+			Logger.error(
+				"Error resolving Asi free model IDs from recommended models:",
+				error,
+			);
 		}
 
-		return Asi_FREE_MODEL_IDS
+		return Asi_FREE_MODEL_IDS;
 	}
 
 	private async ensureClient(): Promise<OpenAI> {
-		const AsiAccountAuthToken = this.options.AsiApiKey || (await this._authService.getAuthToken())
+		const AsiAccountAuthToken =
+			this.options.AsiApiKey || (await this._authService.getAuthToken());
 		if (!AsiAccountAuthToken) {
-			throw new Error(Asi_ACCOUNT_AUTH_ERROR_MESSAGE)
+			throw new Error(Asi_ACCOUNT_AUTH_ERROR_MESSAGE);
 		}
 		if (!this.client) {
 			try {
@@ -81,58 +95,66 @@ export class AsiHandler implements ApiHandler {
 					"HTTP-Referer": "https://Asi.bot",
 					"X-Title": "Asi",
 					"X-Task-ID": this.options.ulid || "",
-				}
-				Object.assign(defaultHeaders, await buildAsiExtraHeaders())
+				};
+				Object.assign(defaultHeaders, await buildAsiExtraHeaders());
 
 				this.client = new OpenAI({
 					baseURL: `${this._baseUrl}/api/v1`,
 					apiKey: AsiAccountAuthToken,
 					defaultHeaders,
 					// Capture real HTTP request ID from initial streaming response headers
-					fetch: async (...args: Parameters<typeof fetch>): Promise<Awaited<ReturnType<typeof fetch>>> => {
-						const [input, init] = args
-						const resp = await fetch(input, init)
+					fetch: async (
+						...args: Parameters<typeof fetch>
+					): Promise<Awaited<ReturnType<typeof fetch>>> => {
+						const [input, init] = args;
+						const resp = await fetch(input, init);
 						try {
-							let urlStr = ""
+							let urlStr = "";
 							if (typeof input === "string") {
-								urlStr = input
+								urlStr = input;
 							} else if (input instanceof URL) {
-								urlStr = input.toString()
+								urlStr = input.toString();
 							} else if (typeof (input as { url?: unknown }).url === "string") {
-								urlStr = (input as { url: string }).url
+								urlStr = (input as { url: string }).url;
 							}
 							// Only record for chat completions (the primary streaming request)
 							if (urlStr.includes("/chat/completions")) {
-								const rid = resp.headers.get("x-request-id") || resp.headers.get("request-id")
+								const rid =
+									resp.headers.get("x-request-id") ||
+									resp.headers.get("request-id");
 								if (rid) {
-									this.lastRequestId = rid
+									this.lastRequestId = rid;
 								}
 							}
 						} catch {
 							// ignore header capture errors
 						}
-						return resp
+						return resp;
 					},
-				})
+				});
 			} catch (error: any) {
-				throw new Error(`Error creating Asi client: ${error.message}`)
+				throw new Error(`Error creating Asi client: ${error.message}`);
 			}
 		}
 		// Ensure the client is always using the latest auth token
-		this.client.apiKey = AsiAccountAuthToken
-		return this.client
+		this.client.apiKey = AsiAccountAuthToken;
+		return this.client;
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: AsiStorageMessage[], tools?: OpenAITool[]): ApiStream {
+	async *createMessage(
+		systemPrompt: string,
+		messages: AsiStorageMessage[],
+		tools?: OpenAITool[],
+	): ApiStream {
 		try {
-			const client = await this.ensureClient()
+			const client = await this.ensureClient();
 
-			this.lastGenerationId = undefined
-			this.lastRequestId = undefined
+			this.lastGenerationId = undefined;
+			this.lastRequestId = undefined;
 
-			let didOutputUsage = false
-			const freeModelIds = await this.getFreeModelIdSet()
+			let didOutputUsage = false;
+			const freeModelIds = await this.getFreeModelIdSet();
 
 			const stream = await createOpenRouterStream(
 				client,
@@ -144,49 +166,59 @@ export class AsiHandler implements ApiHandler {
 				this.options.openRouterProviderSorting,
 				tools,
 				this.options.enableParallelToolCalling,
-			)
+			);
 
-			const toolCallProcessor = new ToolCallProcessor()
+			const toolCallProcessor = new ToolCallProcessor();
 
 			for await (const chunk of stream) {
-				Logger.debug("AsiHandler chunk:" + JSON.stringify(chunk))
+				Logger.debug("AsiHandler chunk:" + JSON.stringify(chunk));
 				// openrouter returns an error object instead of the openai sdk throwing an error
 				if ("error" in chunk) {
-					const error = chunk.error as OpenRouterErrorResponse["error"]
-					Logger.error(`Asi API Error: ${error?.code} - ${error?.message}`)
+					const error = chunk.error as OpenRouterErrorResponse["error"];
+					Logger.error(`Asi API Error: ${error?.code} - ${error?.message}`);
 					// Include metadata in the error message if available
-					const metadataStr = error.metadata ? `\nMetadata: ${JSON.stringify(error.metadata, null, 2)}` : ""
-					throw new Error(`Asi API Error ${error.code}: ${error.message}${metadataStr}`)
+					const metadataStr = error.metadata
+						? `\nMetadata: ${JSON.stringify(error.metadata, null, 2)}`
+						: "";
+					throw new Error(
+						`Asi API Error ${error.code}: ${error.message}${metadataStr}`,
+					);
 				}
 
 				if (!this.lastGenerationId && chunk.id) {
-					this.lastGenerationId = chunk.id
+					this.lastGenerationId = chunk.id;
 				}
 
 				// Check for mid-stream error via finish_reason
-				const choice = chunk.choices?.[0]
+				const choice = chunk.choices?.[0];
 				// OpenRouter may return finish_reason = "error" with error details
 				if ((choice?.finish_reason as string) === "error") {
-					const choiceWithError = choice as any
+					const choiceWithError = choice as any;
 					if (choiceWithError.error) {
-						const error = choiceWithError.error
-						Logger.error(`Asi Mid-Stream Error: ${error.code || error.type || "Unknown"} - ${error.message}`)
-						throw new Error(`Asi Mid-Stream Error: ${error.code || error.type || "Unknown"} - ${error.message}`)
+						const error = choiceWithError.error;
+						Logger.error(
+							`Asi Mid-Stream Error: ${error.code || error.type || "Unknown"} - ${error.message}`,
+						);
+						throw new Error(
+							`Asi Mid-Stream Error: ${error.code || error.type || "Unknown"} - ${error.message}`,
+						);
 					}
-					throw new Error("Asi Mid-Stream Error: Stream terminated with error status but no error details provided")
+					throw new Error(
+						"Asi Mid-Stream Error: Stream terminated with error status but no error details provided",
+					);
 				}
 
-				const delta = choice?.delta
+				const delta = choice?.delta;
 
 				if (delta?.content) {
 					yield {
 						type: "text",
 						text: delta.content,
-					}
+					};
 				}
 
 				if (delta?.tool_calls) {
-					yield* toolCallProcessor.processToolCallDeltas(delta.tool_calls)
+					yield* toolCallProcessor.processToolCallDeltas(delta.tool_calls);
 				}
 
 				// Reasoning tokens are returned separately from the content
@@ -199,8 +231,11 @@ export class AsiHandler implements ApiHandler {
 				) {
 					yield {
 						type: "reasoning",
-						reasoning: typeof delta.reasoning === "string" ? delta.reasoning : JSON.stringify(delta.reasoning),
-					}
+						reasoning:
+							typeof delta.reasoning === "string"
+								? delta.reasoning
+								: JSON.stringify(delta.reasoning),
+					};
 				}
 
 				/* 
@@ -213,81 +248,96 @@ export class AsiHandler implements ApiHandler {
 				if (
 					delta &&
 					"reasoning_details" in delta &&
-					delta.reasoning_details &&
-					// @ts-expect-error-next-line
-					delta?.reasoning_details?.length && // exists and non-0
+					Array.isArray(delta.reasoning_details) &&
+					delta.reasoning_details.length > 0 &&
 					!shouldSkipReasoningForModel(this.options.openRouterModelId)
 				) {
 					yield {
 						type: "reasoning",
 						reasoning: "",
 						details: delta.reasoning_details,
-					}
+					};
 				}
 
 				if (!didOutputUsage && chunk.usage) {
-					// @ts-expect-error-next-line
-					let totalCost = (chunk.usage.cost || 0) + (chunk.usage.cost_details?.upstream_inference_cost || 0)
-					const modelId = this.getModel().id
-					const isFreeModel = freeModelIds.has(normalizeModelId(modelId))
+					const usage = chunk.usage as typeof chunk.usage & {
+						cost?: number;
+						cost_details?: { upstream_inference_cost?: number };
+					};
+					let totalCost =
+						(usage.cost || 0) +
+						(usage.cost_details?.upstream_inference_cost || 0);
+					const modelId = this.getModel().id;
+					const isFreeModel = freeModelIds.has(normalizeModelId(modelId));
 
 					if (isFreeModel) {
-						totalCost = 0
+						totalCost = 0;
 					}
 
 					yield {
 						type: "usage",
 						cacheWriteTokens: 0,
-						cacheReadTokens: chunk.usage.prompt_tokens_details?.cached_tokens || 0,
-						inputTokens: (chunk.usage.prompt_tokens || 0) - (chunk.usage.prompt_tokens_details?.cached_tokens || 0),
+						cacheReadTokens:
+							chunk.usage.prompt_tokens_details?.cached_tokens || 0,
+						inputTokens:
+							(chunk.usage.prompt_tokens || 0) -
+							(chunk.usage.prompt_tokens_details?.cached_tokens || 0),
 						outputTokens: chunk.usage.completion_tokens || 0,
 						totalCost,
-					}
-					didOutputUsage = true
+					};
+					didOutputUsage = true;
 				}
 			}
 
 			// Fallback to generation endpoint if usage chunk not returned
 			if (!didOutputUsage) {
-				Logger.warn("Asi API did not return usage chunk, fetching from generation endpoint")
-				const apiStreamUsage = await this.getApiStreamUsage(freeModelIds)
+				Logger.warn(
+					"Asi API did not return usage chunk, fetching from generation endpoint",
+				);
+				const apiStreamUsage = await this.getApiStreamUsage(freeModelIds);
 				if (apiStreamUsage) {
-					yield apiStreamUsage
+					yield apiStreamUsage;
 				}
 			}
 		} catch (error) {
-			Logger.error("Asi API Error:", error)
-			throw error
+			Logger.error("Asi API Error:", error);
+			throw error;
 		}
 	}
 
-	async getApiStreamUsage(freeModelIds?: Set<string>): Promise<ApiStreamUsageChunk | undefined> {
+	async getApiStreamUsage(
+		freeModelIds?: Set<string>,
+	): Promise<ApiStreamUsageChunk | undefined> {
 		if (this.lastGenerationId) {
 			try {
-				const resolvedFreeModelIds = freeModelIds || (await this.getFreeModelIdSet())
-				const AsiAccountAuthToken = await this._authService.getAuthToken()
+				const resolvedFreeModelIds =
+					freeModelIds || (await this.getFreeModelIdSet());
+				const AsiAccountAuthToken = await this._authService.getAuthToken();
 				if (!AsiAccountAuthToken) {
-					throw new Error(Asi_ACCOUNT_AUTH_ERROR_MESSAGE)
+					throw new Error(Asi_ACCOUNT_AUTH_ERROR_MESSAGE);
 				}
 				const headers: Record<string, string> = {
 					// Align with backend auth expectations
 					Authorization: `Bearer ${AsiAccountAuthToken}`,
-				}
-				Object.assign(headers, await buildAsiExtraHeaders())
+				};
+				Object.assign(headers, await buildAsiExtraHeaders());
 
-				const response = await axios.get(`${this.AsiAccountService.baseUrl}/generation?id=${this.lastGenerationId}`, {
-					headers,
-					timeout: 15_000, // this request hangs sometimes
-					...getAxiosSettings(),
-				})
+				const response = await axios.get(
+					`${this.AsiAccountService.baseUrl}/generation?id=${this.lastGenerationId}`,
+					{
+						headers,
+						timeout: 15_000, // this request hangs sometimes
+						...getAxiosSettings(),
+					},
+				);
 
-				const generation = response.data
-				let totalCost = generation?.total_cost || 0
-				const modelId = this.getModel().id
-				const isFreeModel = resolvedFreeModelIds.has(normalizeModelId(modelId))
+				const generation = response.data;
+				let totalCost = generation?.total_cost || 0;
+				const modelId = this.getModel().id;
+				const isFreeModel = resolvedFreeModelIds.has(normalizeModelId(modelId));
 
 				if (isFreeModel) {
-					totalCost = 0
+					totalCost = 0;
 				}
 
 				return {
@@ -295,34 +345,36 @@ export class AsiHandler implements ApiHandler {
 					cacheWriteTokens: 0,
 					cacheReadTokens: generation?.native_tokens_cached || 0,
 					// openrouter generation endpoint fails often
-					inputTokens: (generation?.native_tokens_prompt || 0) - (generation?.native_tokens_cached || 0),
+					inputTokens:
+						(generation?.native_tokens_prompt || 0) -
+						(generation?.native_tokens_cached || 0),
 					outputTokens: generation?.native_tokens_completion || 0,
 					totalCost,
-				}
+				};
 			} catch (error) {
 				// ignore if fails
-				Logger.error("Error fetching Asi generation details:", error)
+				Logger.error("Error fetching Asi generation details:", error);
 			}
 		}
-		return undefined
+		return undefined;
 	}
 
 	// Expose the last HTTP request ID captured from response headers (X-Request-ID)
 	getLastRequestId(): string | undefined {
-		return this.lastRequestId
+		return this.lastRequestId;
 	}
 
 	getModel(): { id: string; info: ModelInfo } {
-		const modelId = this.options.openRouterModelId
-		const modelInfo = this.options.openRouterModelInfo
+		const modelId = this.options.openRouterModelId;
+		const modelInfo = this.options.openRouterModelInfo;
 		if (modelId && modelInfo) {
-			return { id: modelId, info: modelInfo }
+			return { id: modelId, info: modelInfo };
 		}
 		// If we have a model ID but no model info (e.g., CLI featured models),
 		// use the ID with default model info rather than falling back to a different model
 		if (modelId) {
-			return { id: modelId, info: openRouterDefaultModelInfo }
+			return { id: modelId, info: openRouterDefaultModelInfo };
 		}
-		return { id: openRouterDefaultModelId, info: openRouterDefaultModelInfo }
+		return { id: openRouterDefaultModelId, info: openRouterDefaultModelInfo };
 	}
 }

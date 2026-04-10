@@ -1,73 +1,87 @@
-import { StringRequest } from "@shared/proto/asi/common"
-import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
-import React, { useEffect, useMemo, useState } from "react"
-import kanbanDemoVideoMp4 from "@/assets/cline_kanban_demo.mp4"
-import kanbanDemoVideoWebm from "@/assets/cline_kanban_demo.webm"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
-import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config"
-import { FileServiceClient, StateServiceClient } from "@/services/grpc-client"
+import { StringRequest } from "@shared/proto/Asi/common";
+import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react";
+import React, { useEffect, useMemo, useState } from "react";
+import kanbanDemoVideoMp4 from "@/assets/cline_kanban_demo.mp4";
+import kanbanDemoVideoWebm from "@/assets/cline_kanban_demo.webm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config";
+import { FileServiceClient, StateServiceClient } from "@/services/grpc-client";
 
-const INSTALL_COMMAND = "npm install -g Asi"
-const COPIED_TIMEOUT = 1500
-const resolveAssetSrc = (src: string) => (src.startsWith("/src/") ? new URL(src, import.meta.url).toString() : src)
-const kanbanDemoMp4Src = resolveAssetSrc(kanbanDemoVideoMp4)
-const kanbanDemoWebmSrc = resolveAssetSrc(kanbanDemoVideoWebm)
+const INSTALL_COMMAND = "npm install -g Asi";
+const COPIED_TIMEOUT = 1500;
+const resolveAssetSrc = (src: string) =>
+	src.startsWith("/src/") ? new URL(src, import.meta.url).toString() : src;
+const kanbanDemoMp4Src = resolveAssetSrc(kanbanDemoVideoMp4);
+const kanbanDemoWebmSrc = resolveAssetSrc(kanbanDemoVideoWebm);
 
-export const Asi_KANBAN_MODAL_DISMISS_ID = "Asi-kanban-launch-modal-v1"
+export const Asi_KANBAN_MODAL_DISMISS_ID = "Asi-kanban-launch-modal-v1";
 
 interface AsiKanbanLaunchModalProps {
-	open: boolean
-	onClose: (doNotShowAgain: boolean) => void
+	open: boolean;
+	onClose: (doNotShowAgain: boolean) => void;
 }
 
-export const AsiKanbanLaunchModal: React.FC<AsiKanbanLaunchModalProps> = ({ open, onClose }) => {
-	const [doNotShowAgain, setDoNotShowAgain] = useState(false)
-	const [isInstalling, setIsInstalling] = useState(false)
-	const [copied, setCopied] = useState(false)
+export const AsiKanbanLaunchModal: React.FC<AsiKanbanLaunchModalProps> = ({
+	open,
+	onClose,
+}) => {
+	const [doNotShowAgain, setDoNotShowAgain] = useState(false);
+	const [isInstalling, setIsInstalling] = useState(false);
+	const [copied, setCopied] = useState(false);
 
-	const isVsCode = useMemo(() => PLATFORM_CONFIG.type === PlatformType.VSCODE, [])
+	const isVsCode = useMemo(
+		() => PLATFORM_CONFIG.type === PlatformType.VSCODE,
+		[],
+	);
 
 	useEffect(() => {
 		if (open) {
-			setCopied(false)
-			setIsInstalling(false)
+			setCopied(false);
+			setIsInstalling(false);
 		}
-	}, [open])
+	}, [open]);
 
 	const handleAction = async () => {
 		if (isVsCode) {
-			setIsInstalling(true)
+			setIsInstalling(true);
 			try {
-				await StateServiceClient.installAsiCli({})
+				await StateServiceClient.installClineCli({});
 			} catch (error) {
-				console.error("Failed to run CLI install command:", error)
+				console.error("Failed to run CLI install command:", error);
 			} finally {
-				setIsInstalling(false)
+				setIsInstalling(false);
 			}
-			return
+			return;
 		}
 
 		try {
-			await FileServiceClient.copyToClipboard(StringRequest.create({ value: INSTALL_COMMAND }))
-			setCopied(true)
-			setTimeout(() => setCopied(false), COPIED_TIMEOUT)
+			await FileServiceClient.copyToClipboard(
+				StringRequest.create({ value: INSTALL_COMMAND }),
+			);
+			setCopied(true);
+			setTimeout(() => setCopied(false), COPIED_TIMEOUT);
 		} catch (error) {
-			console.error("Failed to copy CLI install command:", error)
+			console.error("Failed to copy CLI install command:", error);
 		}
-	}
+	};
 
 	return (
-		<Dialog onOpenChange={(isOpen) => !isOpen && onClose(doNotShowAgain)} open={open}>
+		<Dialog
+			onOpenChange={(isOpen) => !isOpen && onClose(doNotShowAgain)}
+			open={open}
+		>
 			<DialogContent
 				aria-describedby="Asi-kanban-description"
 				aria-labelledby="Asi-kanban-title"
-				className="pt-4 px-5 pb-4 gap-0 max-w-2xl">
+				className="pt-4 px-5 pb-4 gap-0 max-w-2xl"
+			>
 				<div className="space-y-3" id="Asi-kanban-description">
 					<div className="pr-6 min-h-6 flex items-center">
 						<h2
 							className="m-0 text-lg font-semibold"
 							id="Asi-kanban-title"
-							style={{ color: "var(--vscode-editor-foreground)" }}>
+							style={{ color: "var(--vscode-editor-foreground)" }}
+						>
 							Introducing Asi Kanban
 						</h2>
 					</div>
@@ -77,15 +91,20 @@ export const AsiKanbanLaunchModal: React.FC<AsiKanbanLaunchModalProps> = ({ open
 						className="w-full rounded-md border border-[var(--vscode-editorGroup-border)]"
 						loop
 						muted
-						playsInline>
+						playsInline
+					>
 						<source src={kanbanDemoMp4Src} type="video/mp4" />
 						<source src={kanbanDemoWebmSrc} type="video/webm" />
 					</video>
 
-					<p className="text-sm" style={{ color: "var(--vscode-descriptionForeground)" }}>
-						A replacement for your IDE better suited for running many agents in parallel and reviewing diffs. Enable
-						auto-commit and link cards together to create dependency chains that complete large amounts of work
-						autonomously.
+					<p
+						className="text-sm"
+						style={{ color: "var(--vscode-descriptionForeground)" }}
+					>
+						A replacement for your IDE better suited for running many agents in
+						parallel and reviewing diffs. Enable auto-commit and link cards
+						together to create dependency chains that complete large amounts of
+						work autonomously.
 					</p>
 
 					<div className="p-1">
@@ -109,15 +128,16 @@ export const AsiKanbanLaunchModal: React.FC<AsiKanbanLaunchModalProps> = ({ open
 						<VSCodeCheckbox
 							checked={doNotShowAgain}
 							onChange={(e: any) => {
-								setDoNotShowAgain(e.target.checked === true)
-							}}>
+								setDoNotShowAgain(e.target.checked === true);
+							}}
+						>
 							Do not show again
 						</VSCodeCheckbox>
 					</div>
 				</div>
 			</DialogContent>
 		</Dialog>
-	)
-}
+	);
+};
 
-export default AsiKanbanLaunchModal
+export default AsiKanbanLaunchModal;

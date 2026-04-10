@@ -1,27 +1,27 @@
-import { StringRequest } from "@shared/proto/asi/common"
-import { memo } from "react"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { StringRequest } from "@shared/proto/Asi/common";
+import { memo } from "react";
+import { useExtensionState } from "@/context/ExtensionStateContext";
+import { TaskServiceClient } from "@/services/grpc-client";
 
 type HistoryPreviewProps = {
-	showHistoryView: () => void
-}
+	showHistoryView: () => void;
+};
 
 const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
-	const { taskHistory } = useExtensionState()
+	const { taskHistory } = useExtensionState();
 	const handleHistorySelect = (id: string) => {
-		TaskServiceClient.showTaskWithId(StringRequest.create({ value: id })).catch((error) =>
-			console.error("Error showing task:", error),
-		)
-	}
+		TaskServiceClient.showTaskWithId(StringRequest.create({ value: id })).catch(
+			(error) => console.error("Error showing task:", error),
+		);
+	};
 
 	const formatDate = (timestamp: number) => {
-		const date = new Date(timestamp)
+		const date = new Date(timestamp);
 		return date?.toLocaleString("en-US", {
 			month: "short",
 			day: "numeric",
-		})
-	}
+		});
+	};
 
 	return (
 		<div style={{ flexShrink: 0 }}>
@@ -102,20 +102,23 @@ const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
 					display: "flex",
 					alignItems: "center",
 					justifyContent: "space-between",
-				}}>
+				}}
+			>
 				<div style={{ display: "flex", alignItems: "center" }}>
 					<span
 						className="codicon codicon-comment-discussion"
 						style={{
 							marginRight: "4px",
 							transform: "scale(0.9)",
-						}}></span>
+						}}
+					></span>
 					<span
 						style={{
 							fontWeight: 500,
 							fontSize: "0.85em",
 							textTransform: "uppercase",
-						}}>
+						}}
+					>
 						Recent
 					</span>
 				</div>
@@ -124,7 +127,8 @@ const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
 						aria-label="View all history"
 						className="history-view-all-btn"
 						onClick={() => showHistoryView()}
-						type="button">
+						type="button"
+					>
 						View All
 						<span className="codicon codicon-chevron-right" />
 					</button>
@@ -138,7 +142,11 @@ const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
 							.filter((item) => item.ts && item.task)
 							.slice(0, 3)
 							.map((item) => (
-								<div className="history-preview-item" key={item.id} onClick={() => handleHistorySelect(item.id)}>
+								<div
+									className="history-preview-item"
+									key={item.id}
+									onClick={() => handleHistorySelect(item.id)}
+								>
 									<div className="history-task-content">
 										{item.isFavorited && (
 											<span
@@ -150,7 +158,9 @@ const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
 												}}
 											/>
 										)}
-										<div className="history-task-description ph-no-capture">{item.task}</div>
+										<div className="history-task-description ph-no-capture">
+											{item.task}
+										</div>
 									</div>
 									<div className="history-meta-stack">
 										<span className="history-date">{formatDate(item.ts)}</span>
@@ -164,14 +174,15 @@ const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
 								color: "var(--vscode-descriptionForeground)",
 								fontSize: "var(--vscode-font-size)",
 								padding: "10px 0",
-							}}>
+							}}
+						>
 							No recent tasks
 						</div>
 					)}
 				</div>
 			}
 		</div>
-	)
-}
+	);
+};
 
-export default memo(HistoryPreview)
+export default memo(HistoryPreview);

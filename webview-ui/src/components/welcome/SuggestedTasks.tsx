@@ -1,13 +1,17 @@
-import { NewTaskRequest } from "@shared/proto/asi/task"
-import React from "react"
-import { TaskServiceClient } from "@/services/grpc-client"
-import QuickWinCard from "./QuickWinCard"
-import { QuickWinTask, quickWinTasks } from "./quickWinTasks"
+import { NewTaskRequest } from "@shared/proto/Asi/task";
+import React from "react";
+import { TaskServiceClient } from "@/services/grpc-client";
+import QuickWinCard from "./QuickWinCard";
+import { QuickWinTask, quickWinTasks } from "./quickWinTasks";
 
-export const SuggestedTasks: React.FC<{ shouldShowQuickWins: boolean }> = ({ shouldShowQuickWins }) => {
+export const SuggestedTasks: React.FC<{ shouldShowQuickWins: boolean }> = ({
+	shouldShowQuickWins,
+}) => {
 	const handleExecuteQuickWin = async (prompt: string) => {
-		await TaskServiceClient.newTask(NewTaskRequest.create({ text: prompt, images: [] }))
-	}
+		await TaskServiceClient.newTask(
+			NewTaskRequest.create({ text: prompt, images: [] }),
+		);
+	};
 
 	if (shouldShowQuickWins) {
 		return (
@@ -19,10 +23,14 @@ export const SuggestedTasks: React.FC<{ shouldShowQuickWins: boolean }> = ({ sho
 				<div className="flex flex-col space-y-1">
 					{" "}
 					{quickWinTasks.map((task: QuickWinTask) => (
-						<QuickWinCard key={task.id} onExecute={() => handleExecuteQuickWin(task.prompt)} task={task} />
+						<QuickWinCard
+							key={task.id}
+							onExecute={() => handleExecuteQuickWin(task.prompt)}
+							task={task}
+						/>
 					))}
 				</div>
 			</div>
-		)
+		);
 	}
-}
+};

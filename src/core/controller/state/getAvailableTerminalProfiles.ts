@@ -1,12 +1,12 @@
-import * as proto from "@/shared/proto"
-import { getAvailableTerminalProfiles as getTerminalProfilesFromShell } from "../../../utils/shell"
-import { Controller } from "../index"
+import * as proto from "@/shared/proto";
+import { getAvailableTerminalProfiles as getTerminalProfilesFromShell } from "../../../utils/shell";
+import { Controller } from "../index";
 
 export async function getAvailableTerminalProfiles(
 	_controller: Controller,
 	_request: proto.Asi.EmptyRequest,
 ): Promise<proto.Asi.TerminalProfiles> {
-	const profiles = getTerminalProfilesFromShell()
+	const profiles = getTerminalProfilesFromShell();
 
 	return proto.Asi.TerminalProfiles.create({
 		profiles: profiles.map((profile) => ({
@@ -15,5 +15,5 @@ export async function getAvailableTerminalProfiles(
 			path: profile.path || "",
 			description: profile.description || "",
 		})),
-	})
+	});
 }

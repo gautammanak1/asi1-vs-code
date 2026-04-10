@@ -7,7 +7,7 @@
 
 export function getHookTemplate(hookName: string): string {
 	if (process.platform === "win32") {
-		return getWindowsPowerShellTemplate(hookName)
+		return getWindowsPowerShellTemplate(hookName);
 	}
 
 	const templates: Record<string, string> = {
@@ -20,9 +20,9 @@ export function getHookTemplate(hookName: string): string {
 		UserPromptSubmit: getUserPromptSubmitTemplate(),
 		Notification: getNotificationTemplate(),
 		PreCompact: getPreCompactTemplate(),
-	}
+	};
 
-	return templates[hookName] || getDefaultTemplate(hookName)
+	return templates[hookName] || getDefaultTemplate(hookName);
 }
 
 function getWindowsPowerShellTemplate(hookName: string): string {
@@ -43,7 +43,7 @@ try {
     contextModification = ""
     errorMessage = ""
 } | ConvertTo-Json -Compress
-`
+`;
 }
 
 function getTaskStartTemplate(): string {
@@ -53,7 +53,7 @@ function getTaskStartTemplate(): string {
 # 
 # Executes when a new task begins.
 # 
-# Input: { taskId, taskStart: { task: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, taskStart: { task: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -87,7 +87,7 @@ CONTEXT_MOD="Note: Task started at $TIMESTAMP_ISO"
 
 # Return result as JSON
 echo "{\"cancel\":false,\"contextModification\":\"$CONTEXT_MOD\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getTaskResumeTemplate(): string {
@@ -97,7 +97,7 @@ function getTaskResumeTemplate(): string {
 # 
 # Executes when a task is resumed after being interrupted.
 # 
-# Input: { taskId, taskResume: { task: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, taskResume: { task: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -119,7 +119,7 @@ echo "[TaskResume] Resuming task: $TASK" >&2
 
 # Return result
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getTaskCancelTemplate(): string {
@@ -129,7 +129,7 @@ function getTaskCancelTemplate(): string {
 # 
 # Executes when a task is cancelled by the user.
 # 
-# Input: { taskId, taskCancel: { task: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, taskCancel: { task: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -151,7 +151,7 @@ echo "[TaskCancel] Task cancelled: $TASK" >&2
 
 # Return result
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getTaskCompleteTemplate(): string {
@@ -161,7 +161,7 @@ function getTaskCompleteTemplate(): string {
 # 
 # Executes when a task completes successfully.
 # 
-# Input: { taskId, taskComplete: { task: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, taskComplete: { task: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -184,7 +184,7 @@ echo "[TaskComplete] Task completed: $TASK" >&2
 
 # Return result
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getPreToolUseTemplate(): string {
@@ -226,7 +226,7 @@ echo "[PreToolUse] Tool about to execute: $TOOL" >&2
 
 # Allow execution
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getPostToolUseTemplate(): string {
@@ -276,7 +276,7 @@ echo "[PostToolUse] Tool completed: $TOOL ($STATUS) in \${DURATION}ms" >&2
 
 # Return result
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getUserPromptSubmitTemplate(): string {
@@ -286,7 +286,7 @@ function getUserPromptSubmitTemplate(): string {
 # 
 # Executes when the user submits a prompt to Asi.
 # 
-# Input: { taskId, userPromptSubmit: { prompt: string }, AsiVersion, timestamp, ... }
+# Input: { taskId, userPromptSubmit: { prompt: string }, clineVersion, timestamp, ... }
 # Output: { cancel: boolean, contextModification?: string, errorMessage?: string }
 # 
 # Use cases:
@@ -310,7 +310,7 @@ echo "[UserPromptSubmit] User submitted prompt (length: $PROMPT_LENGTH)" >&2
 
 # Return result
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getNotificationTemplate(): string {
@@ -335,7 +335,7 @@ function getNotificationTemplate(): string {
 #     requiresUserAction: boolean,
 #     severity: string
 #   },
-#   AsiVersion,
+#   clineVersion,
 #   timestamp,
 #   ...
 # }
@@ -373,7 +373,7 @@ fi
 echo "[Notification] event=$EVENT source=$SOURCE sourceType=$SOURCE_TYPE waitingForUserInput=$WAITING requiresUserAction=$REQUIRES_ACTION severity=$SEVERITY eventVersion=$EVENT_VERSION" >&2
 
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getPreCompactTemplate(): string {
@@ -414,7 +414,7 @@ echo "[PreCompact] About to compact conversation (messages: $CONV_LENGTH, tokens
 
 # Return result
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }
 
 function getDefaultTemplate(hookName: string): string {
@@ -440,5 +440,5 @@ echo "[${hookName}] Executed for task $TASK_ID" >&2
 
 # Return result
 echo "{\"cancel\":false,\"contextModification\":\"\",\"errorMessage\":\"\"}"
-`
+`;
 }

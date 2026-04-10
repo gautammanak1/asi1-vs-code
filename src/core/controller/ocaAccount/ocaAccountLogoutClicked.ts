@@ -1,6 +1,6 @@
-import type { EmptyRequest } from "@shared/proto/asi/common"
-import { Empty } from "@shared/proto/asi/common"
-import type { Controller } from "../index"
+import type { EmptyRequest } from "@shared/proto/Asi/common";
+import { Empty } from "@shared/proto/Asi/common";
+import type { Controller } from "../index";
 
 /**
  * Handles the account logout action
@@ -8,7 +8,10 @@ import type { Controller } from "../index"
  * @param _request The empty request object
  * @returns Empty response
  */
-export async function ocaAccountLogoutClicked(controller: Controller, _request: EmptyRequest): Promise<Empty> {
-	await controller.handleOcaSignOut()
-	return Empty.create({})
+export async function ocaAccountLogoutClicked(
+	controller: Controller,
+	_request: EmptyRequest,
+): Promise<Empty> {
+	await controller.handleOcaSignOut();
+	return Empty.create({});
 }

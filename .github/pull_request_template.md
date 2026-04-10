@@ -2,7 +2,7 @@
 Thank you for contributing to Asi!
 
 ⚠️ Important: Before submitting this PR, please ensure you have:
-- For feature requests: Created a discussion in our Feature Requests discussions board https://github.com/Asi/Asi/discussions/categories/feature-requests and received approval from core maintainers before implementation
+- For feature requests: Created a discussion in our Feature Requests discussions board https://github.com/gautammanak1/asi1-vs-code/discussions/categories/feature-requests and received approval from core maintainers before implementation
 - For all changes: Link the associated issue/discussion in the "Related Issue" section below
 
 Limited exceptions:
@@ -60,7 +60,7 @@ We're not looking for exhaustive documentation - just evidence that you've thoug
 
 -   [ ] Changes are limited to a single feature, bugfix or chore (split larger changes into separate PRs)
 -   [ ] Tests are passing (`npm test`) and code is formatted and linted (`npm run format && npm run lint`)
--   [ ] I have reviewed [contributor guidelines](https://github.com/Asi/Asi/blob/main/CONTRIBUTING.md)
+-   [ ] I have reviewed [contributor guidelines](https://github.com/gautammanak1/asi1-vs-code/blob/main/CONTRIBUTING.md)
 
 ### Screenshots
 

@@ -1,43 +1,47 @@
-import { setTimeout as setTimeoutPromise } from "node:timers/promises"
-import { StateManager } from "@core/storage/StateManager"
-import { ModelInfo, openRouterDefaultModelId, openRouterDefaultModelInfo } from "@shared/api"
-import { shouldSkipReasoningForModel } from "@utils/model-utils"
-import axios from "axios"
-import OpenAI from "openai"
-import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions"
-import { AsiStorageMessage } from "@/shared/messages/content"
-import { createOpenAIClient, getAxiosSettings } from "@/shared/net"
-import { Logger } from "@/shared/services/Logger"
-import { ApiHandler, CommonApiHandlerOptions } from "../"
-import { withRetry } from "../retry"
-import { createOpenRouterStream } from "../transform/openrouter-stream"
-import { ApiStream, ApiStreamUsageChunk } from "../transform/stream"
-import { ToolCallProcessor } from "../transform/tool-call-processor"
-import { OpenRouterErrorResponse } from "./types"
+import { setTimeout as setTimeoutPromise } from "node:timers/promises";
+import { StateManager } from "@core/storage/StateManager";
+import {
+	ModelInfo,
+	openRouterDefaultModelId,
+	openRouterDefaultModelInfo,
+} from "@shared/api";
+import { shouldSkipReasoningForModel } from "@utils/model-utils";
+import axios from "axios";
+import OpenAI from "openai";
+import type { ChatCompletionTool as OpenAITool } from "openai/resources/chat/completions";
+import { AsiStorageMessage } from "@/shared/messages/content";
+import { createOpenAIClient, getAxiosSettings } from "@/shared/net";
+import { Logger } from "@/shared/services/Logger";
+import { ApiHandler, CommonApiHandlerOptions } from "../";
+import { withRetry } from "../retry";
+import { createOpenRouterStream } from "../transform/openrouter-stream";
+import { ApiStream, ApiStreamUsageChunk } from "../transform/stream";
+import { ToolCallProcessor } from "../transform/tool-call-processor";
+import { OpenRouterErrorResponse } from "./types";
 
 interface OpenRouterHandlerOptions extends CommonApiHandlerOptions {
-	openRouterApiKey?: string
-	openRouterModelId?: string
-	openRouterModelInfo?: ModelInfo
-	openRouterProviderSorting?: string
-	reasoningEffort?: string
-	thinkingBudgetTokens?: number
-	enableParallelToolCalling?: boolean
+	openRouterApiKey?: string;
+	openRouterModelId?: string;
+	openRouterModelInfo?: ModelInfo;
+	openRouterProviderSorting?: string;
+	reasoningEffort?: string;
+	thinkingBudgetTokens?: number;
+	enableParallelToolCalling?: boolean;
 }
 
 export class OpenRouterHandler implements ApiHandler {
-	private options: OpenRouterHandlerOptions
-	private client: OpenAI | undefined
-	lastGenerationId?: string
+	private options: OpenRouterHandlerOptions;
+	private client: OpenAI | undefined;
+	lastGenerationId?: string;
 
 	constructor(options: OpenRouterHandlerOptions) {
-		this.options = options
+		this.options = options;
 	}
 
 	private ensureClient(): OpenAI {
 		if (!this.client) {
 			if (!this.options.openRouterApiKey) {
-				throw new Error("OpenRouter API key is required")
+				throw new Error("OpenRouter API key is required");
 			}
 			try {
 				this.client = createOpenAIClient({
@@ -47,18 +51,22 @@ export class OpenRouterHandler implements ApiHandler {
 						"HTTP-Referer": "https://Asi.bot", // Optional, for including your app on openrouter.ai rankings.
 						"X-Title": "Asi", // Optional. Shows in rankings on openrouter.ai.
 					},
-				})
+				});
 			} catch (error: any) {
-				throw new Error(`Error creating OpenRouter client: ${error.message}`)
+				throw new Error(`Error creating OpenRouter client: ${error.message}`);
 			}
 		}
-		return this.client
+		return this.client;
 	}
 
 	@withRetry()
-	async *createMessage(systemPrompt: string, messages: AsiStorageMessage[], tools?: OpenAITool[]): ApiStream {
-		const client = this.ensureClient()
-		this.lastGenerationId = undefined
+	async *createMessage(
+		systemPrompt: string,
+		messages: AsiStorageMessage[],
+		tools?: OpenAITool[],
+	): ApiStream {
+		const client = this.ensureClient();
+		this.lastGenerationId = undefined;
 
 		const stream = await createOpenRouterStream(
 			client,
@@ -70,56 +78,67 @@ export class OpenRouterHandler implements ApiHandler {
 			this.options.openRouterProviderSorting,
 			tools,
 			this.options.enableParallelToolCalling,
-		)
+		);
 
-		let didOutputUsage = false
-		const toolCallProcessor = new ToolCallProcessor()
+		let didOutputUsage = false;
+		const toolCallProcessor = new ToolCallProcessor();
 
 		for await (const chunk of stream) {
 			// openrouter returns an error object instead of the openai sdk throwing an error
 			// Check for error field directly on chunk
 			if ("error" in chunk) {
-				const error = chunk.error as OpenRouterErrorResponse["error"]
-				Logger.error(`OpenRouter API Error: ${error?.code} - ${error?.message}`)
+				const error = chunk.error as OpenRouterErrorResponse["error"];
+				Logger.error(
+					`OpenRouter API Error: ${error?.code} - ${error?.message}`,
+				);
 				// Include metadata in the error message if available
-				const metadataStr = error.metadata ? `\nMetadata: ${JSON.stringify(error.metadata, null, 2)}` : ""
-				throw new Error(`OpenRouter API Error ${error.code}: ${error.message}${metadataStr}`)
+				const metadataStr = error.metadata
+					? `\nMetadata: ${JSON.stringify(error.metadata, null, 2)}`
+					: "";
+				throw new Error(
+					`OpenRouter API Error ${error.code}: ${error.message}${metadataStr}`,
+				);
 			}
 
 			// Check for error in choices[0].finish_reason
 			// OpenRouter may return errors in a non-standard way within choices
-			const choice = chunk.choices?.[0]
+			const choice = chunk.choices?.[0];
 			// Use type assertion since OpenRouter uses non-standard "error" finish_reason
 			if ((choice?.finish_reason as string) === "error") {
 				// Use type assertion since OpenRouter adds non-standard error property
-				const choiceWithError = choice as any
+				const choiceWithError = choice as any;
 				if (choiceWithError.error) {
-					const error = choiceWithError.error
+					const error = choiceWithError.error;
 					Logger.error(
 						`OpenRouter Mid-Stream Error: ${error?.code || "Unknown"} - ${error?.message || "Unknown error"}`,
-					)
+					);
 					// Format error details
-					const errorDetails = typeof error === "object" ? JSON.stringify(error, null, 2) : String(error)
-					throw new Error(`OpenRouter Mid-Stream Error: ${errorDetails}`)
+					const errorDetails =
+						typeof error === "object"
+							? JSON.stringify(error, null, 2)
+							: String(error);
+					throw new Error(`OpenRouter Mid-Stream Error: ${errorDetails}`);
 				}
 				// Fallback if error details are not available
-				throw new Error(`OpenRouter Mid-Stream Error: Stream terminated with error status but no error details provided`)
+				throw new Error(
+					`OpenRouter Mid-Stream Error: Stream terminated with error status but no error details provided`,
+				);
 			}
 
 			if (!this.lastGenerationId && chunk.id) {
-				this.lastGenerationId = chunk.id
+				this.lastGenerationId = chunk.id;
 			}
 
-			const delta = chunk.choices?.[0]?.delta
+			const delta = chunk.choices?.[0]?.delta;
 			if (delta?.content) {
 				yield {
 					type: "text",
 					text: delta.content,
-				}
+				};
 			}
 
 			if (delta?.tool_calls) {
-				yield* toolCallProcessor.processToolCallDeltas(delta.tool_calls)
+				yield* toolCallProcessor.processToolCallDeltas(delta.tool_calls);
 			}
 
 			// Reasoning tokens are returned separately from the content
@@ -132,8 +151,11 @@ export class OpenRouterHandler implements ApiHandler {
 			) {
 				yield {
 					type: "reasoning",
-					reasoning: typeof delta.reasoning === "string" ? delta.reasoning : JSON.stringify(delta.reasoning),
-				}
+					reasoning:
+						typeof delta.reasoning === "string"
+							? delta.reasoning
+							: JSON.stringify(delta.reasoning),
+				};
 			}
 
 			// OpenRouter passes reasoning details that we can pass back unmodified in api requests to preserve reasoning traces for model
@@ -141,95 +163,118 @@ export class OpenRouterHandler implements ApiHandler {
 			if (
 				delta &&
 				"reasoning_details" in delta &&
-				delta.reasoning_details &&
-				// @ts-expect-error-next-line
-				delta.reasoning_details.length && // exists and non-0
+				Array.isArray(delta.reasoning_details) &&
+				delta.reasoning_details.length > 0 &&
 				!shouldSkipReasoningForModel(this.options.openRouterModelId)
 			) {
 				yield {
 					type: "reasoning",
 					reasoning: "",
 					details: delta.reasoning_details,
-				}
+				};
 			}
 
 			if (!didOutputUsage && chunk.usage) {
-				// @ts-expect-error-next-line -- OpenRouter returns cache_write_tokens for Anthropic models
-				const cacheWriteTokens = chunk.usage.prompt_tokens_details?.cache_write_tokens || 0
+				const usage = chunk.usage as typeof chunk.usage & {
+					prompt_tokens_details?: {
+						cache_write_tokens?: number;
+						cached_tokens?: number;
+					};
+					cost?: number;
+					cost_details?: { upstream_inference_cost?: number };
+				};
+				const cacheWriteTokens =
+					usage.prompt_tokens_details?.cache_write_tokens || 0;
 				yield {
 					type: "usage",
 					cacheWriteTokens,
-					cacheReadTokens: chunk.usage.prompt_tokens_details?.cached_tokens || 0,
+					cacheReadTokens: usage.prompt_tokens_details?.cached_tokens || 0,
 					inputTokens:
-						(chunk.usage.prompt_tokens || 0) -
-						(chunk.usage.prompt_tokens_details?.cached_tokens || 0) -
+						(usage.prompt_tokens || 0) -
+						(usage.prompt_tokens_details?.cached_tokens || 0) -
 						(cacheWriteTokens || 0),
-					outputTokens: chunk.usage.completion_tokens || 0,
-					// @ts-expect-error-next-line
-					totalCost: (chunk.usage.cost || 0) + (chunk.usage.cost_details?.upstream_inference_cost || 0),
-				}
-				didOutputUsage = true
+					outputTokens: usage.completion_tokens || 0,
+					totalCost:
+						(usage.cost || 0) +
+						(usage.cost_details?.upstream_inference_cost || 0),
+				};
+				didOutputUsage = true;
 			}
 		}
 
 		// Fallback to generation endpoint if usage chunk not returned
 		if (!didOutputUsage) {
-			const apiStreamUsage = await this.getApiStreamUsage()
+			const apiStreamUsage = await this.getApiStreamUsage();
 			if (apiStreamUsage) {
-				yield apiStreamUsage
+				yield apiStreamUsage;
 			}
 		}
 	}
 
 	async getApiStreamUsage(): Promise<ApiStreamUsageChunk | undefined> {
 		if (this.lastGenerationId) {
-			await setTimeoutPromise(500) // FIXME: necessary delay to ensure generation endpoint is ready
+			await setTimeoutPromise(500); // FIXME: necessary delay to ensure generation endpoint is ready
 			try {
-				const generationIterator = this.fetchGenerationDetails(this.lastGenerationId)
-				const generation = (await generationIterator.next()).value
+				const generationIterator = this.fetchGenerationDetails(
+					this.lastGenerationId,
+				);
+				const generation = (await generationIterator.next()).value;
 				// Logger.log("OpenRouter generation details:", generation)
 				return {
 					type: "usage",
 					cacheWriteTokens: generation?.native_tokens_cache_write || 0,
 					cacheReadTokens: generation?.native_tokens_cached || 0,
 					// openrouter generation endpoint fails often
-					inputTokens: (generation?.native_tokens_prompt || 0) - (generation?.native_tokens_cached || 0),
+					inputTokens:
+						(generation?.native_tokens_prompt || 0) -
+						(generation?.native_tokens_cached || 0),
 					outputTokens: generation?.native_tokens_completion || 0,
 					totalCost: generation?.total_cost || 0,
-				}
+				};
 			} catch (error) {
 				// ignore if fails
-				Logger.error("Error fetching OpenRouter generation details:", error)
+				Logger.error("Error fetching OpenRouter generation details:", error);
 			}
 		}
-		return undefined
+		return undefined;
 	}
 
-	@withRetry({ maxRetries: 4, baseDelay: 250, maxDelay: 1000, retryAllErrors: true })
+	@withRetry({
+		maxRetries: 4,
+		baseDelay: 250,
+		maxDelay: 1000,
+		retryAllErrors: true,
+	})
 	async *fetchGenerationDetails(genId: string) {
 		// Logger.log("Fetching generation details for:", genId)
 		try {
-			const response = await axios.get(`https://openrouter.ai/api/v1/generation?id=${genId}`, {
-				headers: {
-					Authorization: `Bearer ${this.options.openRouterApiKey}`,
+			const response = await axios.get(
+				`https://openrouter.ai/api/v1/generation?id=${genId}`,
+				{
+					headers: {
+						Authorization: `Bearer ${this.options.openRouterApiKey}`,
+					},
+					timeout: 15_000, // this request hangs sometimes
+					...getAxiosSettings(),
 				},
-				timeout: 15_000, // this request hangs sometimes
-				...getAxiosSettings(),
-			})
-			yield response.data?.data
+			);
+			yield response.data?.data;
 		} catch (error) {
 			// ignore if fails
-			Logger.error("Error fetching OpenRouter generation details:", error)
-			throw error
+			Logger.error("Error fetching OpenRouter generation details:", error);
+			throw error;
 		}
 	}
 
 	getModel(): { id: string; info: ModelInfo } {
-		const modelId = this.options.openRouterModelId || openRouterDefaultModelId
-		const cachedModelInfo = StateManager.get().getModelInfo("openRouter", modelId)
+		const modelId = this.options.openRouterModelId || openRouterDefaultModelId;
+		const cachedModelInfo = StateManager.get().getModelInfo(
+			"openRouter",
+			modelId,
+		);
 		return {
 			id: modelId,
 			info: cachedModelInfo || openRouterDefaultModelInfo,
-		}
+		};
 	}
 }

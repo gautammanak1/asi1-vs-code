@@ -1,19 +1,19 @@
-import { StringRequest } from "@shared/proto/asi/common"
-import { DeleteHookRequest, HooksToggles } from "@shared/proto/asi/file"
-import { PenIcon, Trash2Icon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { FileServiceClient } from "@/services/grpc-client"
+import { StringRequest } from "@shared/proto/Asi/common";
+import { DeleteHookRequest, HooksToggles } from "@shared/proto/Asi/file";
+import { PenIcon, Trash2Icon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { FileServiceClient } from "@/services/grpc-client";
 
 interface HookRowProps {
-	hookName: string
-	enabled: boolean
-	absolutePath: string
-	isGlobal: boolean
-	isWindows: boolean
-	workspaceName?: string
-	onToggle: (hookName: string, newEnabled: boolean) => void
-	onDelete: (hooksToggles: HooksToggles) => void
+	hookName: string;
+	enabled: boolean;
+	absolutePath: string;
+	isGlobal: boolean;
+	isWindows: boolean;
+	workspaceName?: string;
+	onToggle: (hookName: string, newEnabled: boolean) => void;
+	onDelete: (hooksToggles: HooksToggles) => void;
 }
 
 const HookRow: React.FC<HookRowProps> = ({
@@ -27,10 +27,10 @@ const HookRow: React.FC<HookRowProps> = ({
 	onDelete,
 }) => {
 	const handleEditClick = () => {
-		FileServiceClient.openFile(StringRequest.create({ value: absolutePath })).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
-	}
+		FileServiceClient.openFile(
+			StringRequest.create({ value: absolutePath }),
+		).catch((err) => console.error("Failed to open file:", err));
+	};
 
 	const handleDeleteClick = () => {
 		FileServiceClient.deleteHook(
@@ -42,11 +42,11 @@ const HookRow: React.FC<HookRowProps> = ({
 		)
 			.then((response) => {
 				if (response.hooksToggles) {
-					onDelete(response.hooksToggles)
+					onDelete(response.hooksToggles);
 				}
 			})
-			.catch((err) => console.error("Failed to delete hook:", err))
-	}
+			.catch((err) => console.error("Failed to delete hook:", err));
+	};
 
 	return (
 		<div className="mb-2.5">
@@ -62,17 +62,26 @@ const HookRow: React.FC<HookRowProps> = ({
 							isWindows
 								? "Hook toggling is not yet supported on Windows in this foundation PR. Hooks execute when the hook file exists."
 								: undefined
-						}>
+						}
+					>
 						<Switch
 							checked={enabled}
 							className="mx-1"
 							disabled={isWindows}
 							key={hookName}
 							onClick={() => onToggle(hookName, !enabled)}
-							style={isWindows ? { opacity: 0.5, cursor: "not-allowed" } : undefined}
+							style={
+								isWindows ? { opacity: 0.5, cursor: "not-allowed" } : undefined
+							}
 						/>
 					</div>
-					<Button aria-label="Edit hook file" onClick={handleEditClick} size="xs" title="Edit hook file" variant="icon">
+					<Button
+						aria-label="Edit hook file"
+						onClick={handleEditClick}
+						size="xs"
+						title="Edit hook file"
+						variant="icon"
+					>
 						<PenIcon />
 					</Button>
 					<Button
@@ -80,13 +89,14 @@ const HookRow: React.FC<HookRowProps> = ({
 						onClick={handleDeleteClick}
 						size="xs"
 						title="Delete hook file"
-						variant="icon">
+						variant="icon"
+					>
 						<Trash2Icon />
 					</Button>
 				</div>
 			</div>
 		</div>
-	)
-}
+	);
+};
 
-export default HookRow
+export default HookRow;

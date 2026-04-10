@@ -1,10 +1,13 @@
-import { Empty, EmptyRequest } from "@shared/proto/asi/common"
-import { Controller } from ".."
+import { Empty, EmptyRequest } from "@shared/proto/Asi/common";
+import { Controller } from "..";
 
-export async function cancelBackgroundCommand(controller: Controller, _request: EmptyRequest): Promise<Empty> {
+export async function cancelBackgroundCommand(
+	controller: Controller,
+	_request: EmptyRequest,
+): Promise<Empty> {
 	const controllerWithCancel = controller as Controller & {
-		cancelBackgroundCommand: () => Promise<void>
-	}
-	await controllerWithCancel.cancelBackgroundCommand()
-	return Empty.create()
+		cancelBackgroundCommand: () => Promise<void>;
+	};
+	await controllerWithCancel.cancelBackgroundCommand();
+	return Empty.create();
 }

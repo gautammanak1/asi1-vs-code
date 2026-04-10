@@ -1,34 +1,51 @@
-import { mkdtempSync, type PathLike, type RmOptions, rmSync } from "node:fs"
-import * as os from "node:os"
-import * as path from "node:path"
-import { type ElectronApplication, expect, type Frame, type Page, test } from "@playwright/test"
-import { downloadAndUnzipVSCode, SilentReporter } from "@vscode/test-electron"
-import { _electron } from "playwright"
-import { AsiApiServerMock } from "../fixtures/server"
+import { mkdtempSync, type PathLike, type RmOptions, rmSync } from "node:fs";
+import * as os from "node:os";
+import * as path from "node:path";
+import {
+	type ElectronApplication,
+	expect,
+	type Frame,
+	type Page,
+	test,
+} from "@playwright/test";
+import { downloadAndUnzipVSCode, SilentReporter } from "@vscode/test-electron";
+import { _electron } from "playwright";
+import { AsiApiServerMock } from "../fixtures/server";
 
 interface E2ETestDirectories {
-	workspaceDir: string
-	multiRootWorkspaceDir: string
-	userDataDir: string
-	extensionsDir: string
+	workspaceDir: string;
+	multiRootWorkspaceDir: string;
+	userDataDir: string;
+	extensionsDir: string;
 }
 
 export interface E2ETestConfigs {
-	workspaceType: "single" | "multi"
-	channel: "stable" | "insiders"
+	workspaceType: "single" | "multi";
+	channel: "stable" | "insiders";
 }
 
 export class E2ETestHelper {
 	// Constants
-	public static readonly CODEBASE_ROOT_DIR = path.resolve(__dirname, "..", "..", "..", "..")
-	public static readonly E2E_TESTS_DIR = path.join(E2ETestHelper.CODEBASE_ROOT_DIR, "src", "test", "e2e")
+	public static readonly CODEBASE_ROOT_DIR = path.resolve(
+		__dirname,
+		"..",
+		"..",
+		"..",
+		"..",
+	);
+	public static readonly E2E_TESTS_DIR = path.join(
+		E2ETestHelper.CODEBASE_ROOT_DIR,
+		"src",
+		"test",
+		"e2e",
+	);
 
 	// Instance properties for caching
-	private cachedFrame: Frame | null = null
+	private cachedFrame: Frame | null = null;
 
 	// Path utilities
 	public static escapeToPath(text: string): string {
-		return text.trim().toLowerCase().replaceAll(/\W/g, "_")
+		return text.trim().toLowerCase().replaceAll(/\W/g, "_");
 	}
 
 	public static getResultsDir(testName = "", label?: string): string {
@@ -37,8 +54,8 @@ export class E2ETestHelper {
 			"test-results",
 			"playwright",
 			E2ETestHelper.escapeToPath(testName),
-		)
-		return label ? path.join(testDir, label) : testDir
+		);
+		return label ? path.join(testDir, label) : testDir;
 	}
 
 	/**
@@ -47,26 +64,35 @@ export class E2ETestHelper {
 	 * @param projectName The name of the test project (optional)
 	 * @returns A sanitized filename suitable for gRPC recorder logs
 	 */
-	public static generateTestFileName(testTitle: string, projectName?: string): string {
+	public static generateTestFileName(
+		testTitle: string,
+		projectName?: string,
+	): string {
 		// Create a base name from the test title
-		const baseName = E2ETestHelper.escapeToPath(testTitle)
+		const baseName = E2ETestHelper.escapeToPath(testTitle);
 
 		// Add project name if provided and different from default
-		const projectSuffix = projectName && projectName !== "e2e tests" ? `_${E2ETestHelper.escapeToPath(projectName)}` : ""
+		const projectSuffix =
+			projectName && projectName !== "e2e tests"
+				? `_${E2ETestHelper.escapeToPath(projectName)}`
+				: "";
 
-		return `${baseName}${projectSuffix}`
+		return `${baseName}${projectSuffix}`;
 	}
 
-	public static async waitUntil(predicate: () => boolean | Promise<boolean>, maxDelay = 10000): Promise<void> {
-		let delay = 10
-		const start = Date.now()
+	public static async waitUntil(
+		predicate: () => boolean | Promise<boolean>,
+		maxDelay = 10000,
+	): Promise<void> {
+		let delay = 10;
+		const start = Date.now();
 
 		while (!(await predicate())) {
 			if (Date.now() - start > maxDelay) {
-				throw new Error(`waitUntil timeout after ${maxDelay}ms`)
+				throw new Error(`waitUntil timeout after ${maxDelay}ms`);
 			}
-			await new Promise((resolve) => setTimeout(resolve, delay))
-			delay = Math.min(delay << 1, 1000) // Cap at 1s
+			await new Promise((resolve) => setTimeout(resolve, delay));
+			delay = Math.min(delay << 1, 1000); // Cap at 1s
 		}
 	}
 
@@ -74,77 +100,119 @@ export class E2ETestHelper {
 		const findSidebarFrame = async (): Promise<Frame | null> => {
 			// Check cached frame first
 			if (this.cachedFrame && !this.cachedFrame.isDetached()) {
-				return this.cachedFrame
+				return this.cachedFrame;
 			}
 
 			for (const frame of page.frames()) {
 				if (frame.isDetached()) {
-					continue
+					continue;
 				}
 
 				try {
-					const title = await frame.title()
-					if (title.startsWith("Asi")) {
-						this.cachedFrame = frame
-						return frame
+					const title = await frame.title();
+					if (/^(Asi|Fetch Coder)/i.test(title)) {
+						this.cachedFrame = frame;
+						return frame;
 					}
 				} catch (error: any) {
-					if (!error.message.includes("detached") && !error.message.includes("navigation")) {
-						throw error
+					if (
+						!error.message.includes("detached") &&
+						!error.message.includes("navigation")
+					) {
+						throw error;
 					}
 				}
 			}
-			return null
-		}
+			return null;
+		};
 
 		// Use longer timeout (30s) for sidebar - macOS CI runners can be slow
-		await E2ETestHelper.waitUntil(async () => (await findSidebarFrame()) !== null, 30000)
-		return (await findSidebarFrame()) || page.mainFrame()
+		await E2ETestHelper.waitUntil(
+			async () => (await findSidebarFrame()) !== null,
+			30000,
+		);
+		return (await findSidebarFrame()) || page.mainFrame();
 	}
 
-	public static async rmForRetries(path: PathLike, options?: RmOptions): Promise<void> {
-		const maxAttempts = 3 // Reduced from 5
+	public static async rmForRetries(
+		path: PathLike,
+		options?: RmOptions,
+	): Promise<void> {
+		const maxAttempts = 3; // Reduced from 5
 
 		for (let attempt = 1; attempt <= maxAttempts; attempt++) {
 			try {
-				rmSync(path, options)
-				return
+				rmSync(path, options);
+				return;
 			} catch (error) {
 				if (attempt === maxAttempts) {
-					throw new Error(`Failed to rmSync ${path} after ${maxAttempts} attempts: ${error}`)
+					throw new Error(
+						`Failed to rmSync ${path} after ${maxAttempts} attempts: ${error}`,
+					);
 				}
-				await new Promise((resolve) => setTimeout(resolve, 50 * attempt)) // Progressive delay
+				await new Promise((resolve) => setTimeout(resolve, 50 * attempt)); // Progressive delay
 			}
 		}
 	}
 
 	public async signin(webview: Frame): Promise<void> {
-		await webview.getByRole("button", { name: "Login to Asi" }).click({ delay: 100 })
+		const welcomeHeading = webview.getByRole("heading", {
+			name: "Welcome to Fetch Coder",
+		});
+		try {
+			await welcomeHeading.waitFor({ state: "visible", timeout: 20_000 });
+			const apiKey = webview.getByRole("textbox", { name: "ASI:One API Key" });
+			await apiKey.fill("e2e-test-api-key");
+			const letsGo = webview.getByRole("button", { name: "Let's go!" });
+			await expect(letsGo).toBeEnabled({ timeout: 20_000 });
+			await letsGo.click({ delay: 50 });
+		} catch {
+			// Welcome already completed for this profile
+		}
 
-		// Verify start up page is no longer visible
-		await expect(webview.getByRole("button", { name: "Login to Asi" })).not.toBeVisible()
+		const whatsNew = webview.getByRole("heading", { name: /^New in v/ });
+		try {
+			await whatsNew.waitFor({ state: "visible", timeout: 8_000 });
+			await webview
+				.getByRole("button", { name: "Close" })
+				.first()
+				.click({ delay: 50 });
+		} catch {
+			// Optional announcement
+		}
 
-		await webview.getByRole("button", { name: "Close" }).click({ delay: 50 })
+		await expect(webview.getByTestId("chat-input")).toBeVisible({
+			timeout: 45_000,
+		});
 	}
 
 	public static async openAsiSidebar(page: Page): Promise<void> {
-		await page.getByRole("tab", { name: /asi/ }).locator("a").click()
+		await page
+			.getByRole("tab", { name: /Fetch Coder/i })
+			.locator("a")
+			.click();
 	}
 
-	public static async runCommandPalette(page: Page, command: string): Promise<void> {
-		const editorMenu = page.locator("li").filter({ hasText: "[Extension Development Host]" }).first()
-		await editorMenu.click({ delay: 100 })
+	public static async runCommandPalette(
+		page: Page,
+		command: string,
+	): Promise<void> {
+		const editorMenu = page
+			.locator("li")
+			.filter({ hasText: "[Extension Development Host]" })
+			.first();
+		await editorMenu.click({ delay: 100 });
 		const editorSearchBar = page.getByRole("textbox", {
 			name: "Search files by name (append",
-		})
-		await editorSearchBar.click({ delay: 100 }) // Ensure focus
-		await editorSearchBar.fill(`>${command}`)
-		await page.keyboard.press("Enter")
+		});
+		await editorSearchBar.click({ delay: 100 }); // Ensure focus
+		await editorSearchBar.fill(`>${command}`);
+		await page.keyboard.press("Enter");
 	}
 
 	// Clear cached frame when needed
 	public clearCachedFrame(): void {
-		this.cachedFrame = null
+		this.cachedFrame = null;
 	}
 }
 
@@ -201,37 +269,51 @@ export const e2e = test
 		server: async ({}, use) => {
 			// Start server if it doesn't exist
 			if (!AsiApiServerMock.globalSharedServer) {
-				await AsiApiServerMock.startGlobalServer()
+				await AsiApiServerMock.startGlobalServer();
 			}
-			await use(AsiApiServerMock.globalSharedServer)
+			await use(AsiApiServerMock.globalSharedServer);
 		},
 	})
 	.extend<E2ETestDirectories>({
 		workspaceDir: async ({}, use) => {
-			await use(path.join(E2ETestHelper.E2E_TESTS_DIR, "fixtures", "workspace"))
+			await use(
+				path.join(E2ETestHelper.E2E_TESTS_DIR, "fixtures", "workspace"),
+			);
 		},
 		multiRootWorkspaceDir: async ({}, use) => {
 			// DOCS: https://code.visualstudio.com/docs/editing/workspaces/multi-root-workspaces
-			await use(path.join(E2ETestHelper.E2E_TESTS_DIR, "fixtures", "multiroots.code-workspace"))
+			await use(
+				path.join(
+					E2ETestHelper.E2E_TESTS_DIR,
+					"fixtures",
+					"multiroots.code-workspace",
+				),
+			);
 		},
 		userDataDir: async ({}, use) => {
-			await use(mkdtempSync(path.join(os.tmpdir(), "vsce")))
+			await use(mkdtempSync(path.join(os.tmpdir(), "vsce")));
 		},
 		extensionsDir: async ({}, use) => {
-			await use(mkdtempSync(path.join(os.tmpdir(), "vsce")))
+			await use(mkdtempSync(path.join(os.tmpdir(), "vsce")));
 		},
 	})
 	.extend<E2ETestConfigs>({
 		workspaceType: "single",
 		channel: "stable",
 	})
-	.extend<{ openVSCode: (workspacePath: string) => Promise<ElectronApplication> }>({
+	.extend<{
+		openVSCode: (workspacePath: string) => Promise<ElectronApplication>;
+	}>({
 		openVSCode: async ({ userDataDir, channel }, use, testInfo) => {
-			const executablePath = await downloadAndUnzipVSCode(channel, undefined, new SilentReporter())
+			const executablePath = await downloadAndUnzipVSCode(
+				channel,
+				undefined,
+				new SilentReporter(),
+			);
 
 			await use(async (workspacePath: string) => {
 				// Create isolated Asi data directory for this test
-				const AsiTestDir = mkdtempSync(path.join(os.tmpdir(), "Asi-e2e-"))
+				const AsiTestDir = mkdtempSync(path.join(os.tmpdir(), "Asi-e2e-"));
 
 				const app = await _electron.launch({
 					executablePath,
@@ -241,7 +323,10 @@ export const e2e = test
 						E2E_TEST: "true",
 						Asi_ENVIRONMENT: "local",
 						Asi_DIR: AsiTestDir, // Isolate test data from user's ~/.Asi
-						GRPC_RECORDER_FILE_NAME: E2ETestHelper.generateTestFileName(testInfo.title, testInfo.project.name),
+						GRPC_RECORDER_FILE_NAME: E2ETestHelper.generateTestFileName(
+							testInfo.title,
+							testInfo.project.name,
+						),
 						// GRPC_RECORDER_ENABLED: "true",
 						// GRPC_RECORDER_TESTS_FILTERS_ENABLED: "true"
 						// IS_DEV: "true",
@@ -262,89 +347,104 @@ export const e2e = test
 						`--extensionDevelopmentPath=${E2ETestHelper.CODEBASE_ROOT_DIR}`,
 						workspacePath,
 					],
-				})
-				await E2ETestHelper.waitUntil(() => app.windows().length > 0)
-				return app
-			})
+				});
+				await E2ETestHelper.waitUntil(() => app.windows().length > 0);
+				return app;
+			});
 		},
 	})
 	.extend<{ app: ElectronApplication; AsiTestDir: string }>({
-		app: async ({ openVSCode, userDataDir, extensionsDir, workspaceType, workspaceDir, multiRootWorkspaceDir }, use) => {
-			const workspacePath = workspaceType === "single" ? workspaceDir : multiRootWorkspaceDir
+		app: async (
+			{
+				openVSCode,
+				userDataDir,
+				extensionsDir,
+				workspaceType,
+				workspaceDir,
+				multiRootWorkspaceDir,
+			},
+			use,
+		) => {
+			const workspacePath =
+				workspaceType === "single" ? workspaceDir : multiRootWorkspaceDir;
 
 			// Track the AsiTestDir created in openVSCode
-			let AsiTestDir: string | undefined
-			const originalOpenVSCode = openVSCode
+			let AsiTestDir: string | undefined;
+			const originalOpenVSCode = openVSCode;
 			const wrappedOpenVSCode = async (wp: string) => {
-				const app = await originalOpenVSCode(wp)
+				const app = await originalOpenVSCode(wp);
 				// Extract Asi_DIR from the launched app's environment
 				// We'll need to pass it through the fixture chain
-				return app
-			}
+				return app;
+			};
 
-			const app = await openVSCode(workspacePath)
+			const app = await openVSCode(workspacePath);
 
 			try {
-				await use(app)
+				await use(app);
 			} finally {
-				await app.close()
+				await app.close();
 				// Cleanup in parallel - include AsiTestDir if it was created
 				const cleanupTasks = [
 					E2ETestHelper.rmForRetries(userDataDir, { recursive: true }),
 					E2ETestHelper.rmForRetries(extensionsDir, { recursive: true }),
-				]
+				];
 
 				// Clean up the isolated Asi data directory
 				// Find all temp directories matching our pattern
-				const tmpDir = os.tmpdir()
+				const tmpDir = os.tmpdir();
 				try {
-					const entries = require("node:fs").readdirSync(tmpDir)
+					const entries = require("node:fs").readdirSync(tmpDir);
 					for (const entry of entries) {
 						if (entry.startsWith("Asi-e2e-")) {
-							cleanupTasks.push(E2ETestHelper.rmForRetries(path.join(tmpDir, entry), { recursive: true }))
+							cleanupTasks.push(
+								E2ETestHelper.rmForRetries(path.join(tmpDir, entry), {
+									recursive: true,
+								}),
+							);
 						}
 					}
 				} catch (error) {
 					// Ignore cleanup errors
 				}
 
-				await Promise.allSettled(cleanupTasks)
+				await Promise.allSettled(cleanupTasks);
 			}
 		},
 		AsiTestDir: async ({}, use) => {
 			// This will be set by the openVSCode fixture
-			await use("")
+			await use("");
 		},
 	})
 	.extend<{ helper: E2ETestHelper }>({
 		helper: async ({}, use) => {
-			const helper = new E2ETestHelper()
-			await use(helper)
+			const helper = new E2ETestHelper();
+			await use(helper);
 		},
 	})
 	.extend({
 		page: async ({ app }, use) => {
-			const page = await app.firstWindow()
+			const page = await app.firstWindow();
 			try {
-				await use(page)
+				await use(page);
 			} finally {
 				// Ensure proper cleanup: Close the page if it's still open and not already closed by app.close()
 				// This provides a common teardown mechanism for all e2e tests without requiring explicit page.close() calls
 				if (!page.isClosed()) {
-					await page.close()
+					await page.close();
 				}
 			}
 		},
 	})
 	.extend<{ sidebar: Frame }>({
 		sidebar: async ({ page, helper, server }, use) => {
-			await E2ETestHelper.openAsiSidebar(page)
-			const sidebar = await helper.getSidebar(page)
-			await use(sidebar)
+			await E2ETestHelper.openAsiSidebar(page);
+			const sidebar = await helper.getSidebar(page);
+			await use(sidebar);
 		},
-	})
+	});
 
 export const E2E_WORKSPACE_TYPES = [
 	{ title: "Single Root", workspaceType: "single" },
 	{ title: "Multi-Roots", workspaceType: "multi" },
-] as const
+] as const;

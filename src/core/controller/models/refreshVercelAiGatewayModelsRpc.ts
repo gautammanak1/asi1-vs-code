@@ -1,8 +1,8 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { OpenRouterCompatibleModelInfo } from "@shared/proto/asi/models"
-import { toProtobufModels } from "../../../shared/proto-conversions/models/typeConversion"
-import { Controller } from ".."
-import { refreshVercelAiGatewayModels } from "./refreshVercelAiGatewayModels"
+import { EmptyRequest } from "@shared/proto/Asi/common";
+import { OpenRouterCompatibleModelInfo } from "@shared/proto/Asi/models";
+import { toProtobufModels } from "../../../shared/proto-conversions/models/typeConversion";
+import { Controller } from "..";
+import { refreshVercelAiGatewayModels } from "./refreshVercelAiGatewayModels";
 
 /**
  * Handles protobuf conversion for gRPC service
@@ -14,6 +14,8 @@ export async function refreshVercelAiGatewayModelsRpc(
 	controller: Controller,
 	_request: EmptyRequest,
 ): Promise<OpenRouterCompatibleModelInfo> {
-	const models = await refreshVercelAiGatewayModels(controller)
-	return OpenRouterCompatibleModelInfo.create({ models: toProtobufModels(models) })
+	const models = await refreshVercelAiGatewayModels(controller);
+	return OpenRouterCompatibleModelInfo.create({
+		models: toProtobufModels(models),
+	});
 }

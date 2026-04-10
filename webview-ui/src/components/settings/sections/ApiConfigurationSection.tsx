@@ -1,24 +1,28 @@
-import { UpdateSettingsRequest } from "@shared/proto/asi/state"
-import { Mode } from "@shared/storage/types"
-import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
-import { useState } from "react"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { StateServiceClient } from "@/services/grpc-client"
-import { TabButton } from "../../mcp/configuration/McpConfigurationView"
-import ApiOptions from "../ApiOptions"
-import Section from "../Section"
-import { syncModeConfigurations } from "../utils/providerUtils"
-import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers"
+import { UpdateSettingsRequest } from "@shared/proto/Asi/state";
+import { Mode } from "@shared/storage/types";
+import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react";
+import { useState } from "react";
+import { useExtensionState } from "@/context/ExtensionStateContext";
+import { StateServiceClient } from "@/services/grpc-client";
+import { TabButton } from "../../mcp/configuration/McpConfigurationView";
+import ApiOptions from "../ApiOptions";
+import Section from "../Section";
+import { syncModeConfigurations } from "../utils/providerUtils";
+import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers";
 
 interface ApiConfigurationSectionProps {
-	renderSectionHeader?: (tabId: string) => JSX.Element | null
-	initialModelTab?: "recommended" | "free"
+	renderSectionHeader?: (tabId: string) => JSX.Element | null;
+	initialModelTab?: "recommended" | "free";
 }
 
-const ApiConfigurationSection = ({ renderSectionHeader, initialModelTab }: ApiConfigurationSectionProps) => {
-	const { planActSeparateModelsSetting, mode, apiConfiguration } = useExtensionState()
-	const [currentTab, setCurrentTab] = useState<Mode>(mode)
-	const { handleFieldsChange } = useApiConfigurationHandlers()
+const ApiConfigurationSection = ({
+	renderSectionHeader,
+	initialModelTab,
+}: ApiConfigurationSectionProps) => {
+	const { planActSeparateModelsSetting, mode, apiConfiguration } =
+		useExtensionState();
+	const [currentTab, setCurrentTab] = useState<Mode>(mode);
+	const { handleFieldsChange } = useApiConfigurationHandlers();
 	return (
 		<div>
 			{renderSectionHeader?.("api-config")}
@@ -34,7 +38,8 @@ const ApiConfigurationSection = ({ renderSectionHeader, initialModelTab }: ApiCo
 								style={{
 									opacity: 1,
 									cursor: "pointer",
-								}}>
+								}}
+							>
 								Plan Mode
 							</TabButton>
 							<TabButton
@@ -44,18 +49,27 @@ const ApiConfigurationSection = ({ renderSectionHeader, initialModelTab }: ApiCo
 								style={{
 									opacity: 1,
 									cursor: "pointer",
-								}}>
+								}}
+							>
 								Act Mode
 							</TabButton>
 						</div>
 
 						{/* Content container */}
 						<div className="-mb-3">
-							<ApiOptions currentMode={currentTab} initialModelTab={initialModelTab} showModelOptions={true} />
+							<ApiOptions
+								currentMode={currentTab}
+								initialModelTab={initialModelTab}
+								showModelOptions={true}
+							/>
 						</div>
 					</div>
 				) : (
-					<ApiOptions currentMode={mode} initialModelTab={initialModelTab} showModelOptions={true} />
+					<ApiOptions
+						currentMode={mode}
+						initialModelTab={initialModelTab}
+						showModelOptions={true}
+					/>
 				)}
 
 				<div className="mb-[5px]">
@@ -63,27 +77,35 @@ const ApiConfigurationSection = ({ renderSectionHeader, initialModelTab }: ApiCo
 						checked={planActSeparateModelsSetting}
 						className="mb-[5px]"
 						onChange={async (e: any) => {
-							const checked = e.target.checked === true
+							const checked = e.target.checked === true;
 							try {
 								// If unchecking the toggle, wait a bit for state to update, then sync configurations
 								if (!checked) {
-									await syncModeConfigurations(apiConfiguration, currentTab, handleFieldsChange)
+									await syncModeConfigurations(
+										apiConfiguration,
+										currentTab,
+										handleFieldsChange,
+									);
 								}
 								await StateServiceClient.updateSettings(
 									UpdateSettingsRequest.create({
 										planActSeparateModelsSetting: checked,
 									}),
-								)
+								);
 							} catch (error) {
-								console.error("Failed to update separate models setting:", error)
+								console.error(
+									"Failed to update separate models setting:",
+									error,
+								);
 							}
-						}}>
+						}}
+					>
 						Use different models for Plan and Act modes
 					</VSCodeCheckbox>
 				</div>
 			</Section>
 		</div>
-	)
-}
+	);
+};
 
-export default ApiConfigurationSection
+export default ApiConfigurationSection;

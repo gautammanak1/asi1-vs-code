@@ -1,36 +1,36 @@
-import fs from "fs/promises"
-import path from "path"
-import { Logger } from "@/shared/services/Logger"
-import { version as AsiVersion } from "../../../package.json"
-import { getDistinctId } from "../../services/logging/distinctId"
-import { telemetryService } from "../../services/telemetry"
+import fs from "fs/promises";
+import path from "path";
+import { Logger } from "@/shared/services/Logger";
+import { version as AsiVersion } from "../../../package.json";
+import { getDistinctId } from "../../services/logging/distinctId";
+import { telemetryService } from "../../services/telemetry";
 import {
-    HookInput,
-    HookModelContext,
-    HookOutput,
-    NotificationData,
-    PostToolUseData,
-    PreCompactData,
-    PreToolUseData,
-    TaskCancelData,
-    TaskCompleteData,
-    TaskResumeData,
-    TaskStartData,
-    UserPromptSubmitData,
-} from "../../shared/proto/asi/hooks"
-import { getAllHooksDirs } from "../storage/disk"
-import { StateManager } from "../storage/StateManager"
-import { HookExecutionError } from "./HookError"
-import { HookProcess } from "./HookProcess"
+	HookInput,
+	HookModelContext,
+	HookOutput,
+	NotificationData,
+	PostToolUseData,
+	PreCompactData,
+	PreToolUseData,
+	TaskCancelData,
+	TaskCompleteData,
+	TaskResumeData,
+	TaskStartData,
+	UserPromptSubmitData,
+} from "../../shared/proto/Asi/hooks";
+import { getAllHooksDirs } from "../storage/disk";
+import { StateManager } from "../storage/StateManager";
+import { HookExecutionError } from "./HookError";
+import { HookProcess } from "./HookProcess";
 
 // Hook execution timeout (30 seconds)
-const HOOK_EXECUTION_TIMEOUT_MS = 30000
+const HOOK_EXECUTION_TIMEOUT_MS = 30000;
 
 // Maximum size for context modification (to prevent prompt overflow)
-const MAX_CONTEXT_MODIFICATION_SIZE = 50000 // ~50KB
+const MAX_CONTEXT_MODIFICATION_SIZE = 50000; // ~50KB
 
 // Exit code indicating cancellation/interruption (Unix SIGINT convention: 128 + signal 2)
-const EXIT_CODE_SIGINT = 130
+const EXIT_CODE_SIGINT = 130;
 
 /**
  * Validates hook output JSON structure.
@@ -57,7 +57,7 @@ function validateHookOutput(output: any): { valid: boolean; error?: string } {
 					null,
 					2,
 				),
-		}
+		};
 	}
 
 	// cancel is optional, but if provided must be a boolean
@@ -68,12 +68,19 @@ function validateHookOutput(output: any): { valid: boolean; error?: string } {
 				"Invalid hook output: 'cancel' must be a boolean.\n\n" +
 				`Received type: ${typeof output.cancel}\n\n` +
 				"Example valid response:\n" +
-				JSON.stringify({ cancel: true, errorMessage: "Cancelling task" }, null, 2),
-		}
+				JSON.stringify(
+					{ cancel: true, errorMessage: "Cancelling task" },
+					null,
+					2,
+				),
+		};
 	}
 
 	// contextModification is optional, but if provided must be a string
-	if (output.contextModification !== undefined && typeof output.contextModification !== "string") {
+	if (
+		output.contextModification !== undefined &&
+		typeof output.contextModification !== "string"
+	) {
 		return {
 			valid: false,
 			error:
@@ -81,61 +88,68 @@ function validateHookOutput(output: any): { valid: boolean; error?: string } {
 				`Received type: ${typeof output.contextModification}\n\n` +
 				"Example valid response:\n" +
 				JSON.stringify({ contextModification: "Context here" }, null, 2),
-		}
+		};
 	}
 
 	// errorMessage is optional, but if provided must be a string
-	if (output.errorMessage !== undefined && typeof output.errorMessage !== "string") {
+	if (
+		output.errorMessage !== undefined &&
+		typeof output.errorMessage !== "string"
+	) {
 		return {
 			valid: false,
 			error:
 				"Invalid hook output: 'errorMessage' must be a string.\n\n" +
 				`Received type: ${typeof output.errorMessage}\n\n` +
 				"Example valid response:\n" +
-				JSON.stringify({ cancel: true, errorMessage: "Error description" }, null, 2),
-		}
+				JSON.stringify(
+					{ cancel: true, errorMessage: "Error description" },
+					null,
+					2,
+				),
+		};
 	}
 
-	return { valid: true }
+	return { valid: true };
 }
 
 export interface Hooks {
 	PreToolUse: {
-		preToolUse: PreToolUseData
-	}
+		preToolUse: PreToolUseData;
+	};
 	PostToolUse: {
-		postToolUse: PostToolUseData
-	}
+		postToolUse: PostToolUseData;
+	};
 	UserPromptSubmit: {
-		userPromptSubmit: UserPromptSubmitData
-	}
+		userPromptSubmit: UserPromptSubmitData;
+	};
 	TaskStart: {
-		taskStart: TaskStartData
-	}
+		taskStart: TaskStartData;
+	};
 	TaskResume: {
-		taskResume: TaskResumeData
-	}
+		taskResume: TaskResumeData;
+	};
 	TaskCancel: {
-		taskCancel: TaskCancelData
-	}
+		taskCancel: TaskCancelData;
+	};
 	TaskComplete: {
-		taskComplete: TaskCompleteData
-	}
+		taskComplete: TaskCompleteData;
+	};
 	Notification: {
-		notification: NotificationData
-	}
+		notification: NotificationData;
+	};
 	PreCompact: {
-		preCompact: PreCompactData
-	}
+		preCompact: PreCompactData;
+	};
 }
 
 export interface HookModelInputContext {
-	provider?: string
-	slug?: string
+	provider?: string;
+	slug?: string;
 }
 
 // The names of all supported hooks. Hooks[N] is the type of data the hook takes as input.
-type HookName = keyof Hooks
+type HookName = keyof Hooks;
 
 /**
  * The hook input parameters for a named hook. These are the parameters the caller must
@@ -143,14 +157,14 @@ type HookName = keyof Hooks
  * hook system.
  */
 export type NamedHookInput<Name extends HookName> = {
-	taskId: string
-	model?: HookModelInputContext
-} & Hooks[Name]
+	taskId: string;
+	model?: HookModelInputContext;
+} & Hooks[Name];
 
 // We look up HookRunner.exec via symbol so that the combined hook runner can call
 // exec on its sub-runners without completing a new set of parameters for each one.
 // See CombinedHookRunner[exec]
-const exec = Symbol()
+const exec = Symbol();
 
 /**
  * Runs a hook script and returns the result.
@@ -172,11 +186,11 @@ export abstract class HookRunner<Name extends HookName> {
 	 * @returns The hook output containing shouldContinue, contextModification, and errorMessage
 	 */
 	async run(params: NamedHookInput<Name>): Promise<HookOutput> {
-		const input = HookInput.create(await this.completeParams(params))
-		return this[exec](input)
+		const input = HookInput.create(await this.completeParams(params));
+		return this[exec](input);
 	}
 
-	abstract [exec](params: HookInput): Promise<HookOutput>
+	abstract [exec](params: HookInput): Promise<HookOutput>;
 
 	/**
 	 * Completes the hook input by adding common metadata to caller-provided parameters.
@@ -195,26 +209,28 @@ export abstract class HookRunner<Name extends HookName> {
 	 * @param params The hook-specific input parameters (taskId + hook data)
 	 * @returns Complete HookInput ready to be serialized and sent to the hook script
 	 */
-	protected async completeParams(params: NamedHookInput<Name>): Promise<HookInput> {
+	protected async completeParams(
+		params: NamedHookInput<Name>,
+	): Promise<HookInput> {
 		const workspaceRoots =
 			StateManager.get()
 				.getGlobalStateKey("workspaceRoots")
-				?.map((root) => root.path) || []
+				?.map((root) => root.path) || [];
 
 		const model: HookModelContext = {
 			provider: params.model?.provider?.trim() || "unknown",
 			slug: params.model?.slug?.trim() || "unknown",
-		}
+		};
 
 		return {
-			AsiVersion,
+			clineVersion: AsiVersion,
 			hookName: this.hookName,
 			timestamp: Date.now().toString(),
 			workspaceRoots,
 			userId: getDistinctId(), // Always available: Asi User ID, machine ID, or generated UUID
 			...params,
 			model,
-		}
+		};
 	}
 }
 
@@ -236,7 +252,7 @@ class NoOpRunner<Name extends HookName> extends HookRunner<Name> {
 	override async [exec](_: HookInput): Promise<HookOutput> {
 		// HookOutput is a protobuf-generated type with non-optional fields.
 		// Protobuf defaults: cancel=false, contextModification="", errorMessage=""
-		return HookOutput.create({ cancel: false })
+		return HookOutput.create({ cancel: false });
 	}
 }
 
@@ -247,10 +263,10 @@ export type HookStreamCallback = (
 	line: string,
 	stream: "stdout" | "stderr",
 	meta?: {
-		source: "global" | "workspace"
-		scriptPath: string
+		source: "global" | "workspace";
+		scriptPath: string;
 	},
-) => void
+) => void;
 
 /**
  * Executes a hook script as a child process with real-time output streaming.
@@ -283,183 +299,211 @@ class StdioHookRunner<Name extends HookName> extends HookRunner<Name> {
 		private readonly toolName?: string,
 		private readonly cwd?: string,
 	) {
-		super(hookName)
+		super(hookName);
 	}
 
 	override async [exec](input: HookInput): Promise<HookOutput> {
-		const startTime = performance.now()
-		const taskId = this.taskId // Local const for type narrowing in closures
+		const startTime = performance.now();
+		const taskId = this.taskId; // Local const for type narrowing in closures
 
 		// Capture telemetry at the start of individual hook execution
 		if (taskId) {
 			telemetryService.safeCapture(
 				() =>
-					telemetryService.captureHookExecution(taskId, this.hookName, "started", {
-						source: this.source,
-						toolName: this.toolName,
-					}),
+					telemetryService.captureHookExecution(
+						taskId,
+						this.hookName,
+						"started",
+						{
+							source: this.source,
+							toolName: this.toolName,
+						},
+					),
 				"HookFactory.exec.started",
-			)
+			);
 		}
 
 		// Check if already aborted before starting
 		if (this.abortSignal?.aborted) {
-			throw HookExecutionError.cancellation(this.scriptPath)
+			throw HookExecutionError.cancellation(this.scriptPath);
 		}
 
 		// Serialize input to JSON
 		// NOTE: Proto3 by default omits empty strings (default values) from toJSON()
 		// To ensure hooks receive consistent data (e.g., {"prompt": ""} instead of {}),
 		// we manually construct the JSON object and explicitly include empty string fields
-		const jsonObj = HookInput.toJSON(input) as Record<string, any>
+		const jsonObj = HookInput.toJSON(input) as Record<string, any>;
 
 		// Ensure empty prompt strings are preserved in UserPromptSubmit data
-		if (jsonObj.userPromptSubmit && jsonObj.userPromptSubmit.prompt === undefined) {
-			jsonObj.userPromptSubmit.prompt = ""
+		if (
+			jsonObj.userPromptSubmit &&
+			jsonObj.userPromptSubmit.prompt === undefined
+		) {
+			jsonObj.userPromptSubmit.prompt = "";
 		}
 
-		const inputJson = JSON.stringify(jsonObj)
+		const inputJson = JSON.stringify(jsonObj);
 
 		// Create HookProcess for execution with streaming
-		const hookProcess = new HookProcess(this.scriptPath, HOOK_EXECUTION_TIMEOUT_MS, this.abortSignal, this.cwd)
+		const hookProcess = new HookProcess(
+			this.scriptPath,
+			HOOK_EXECUTION_TIMEOUT_MS,
+			this.abortSignal,
+			this.cwd,
+		);
 
 		// Set up streaming if callback is provided
 		if (this.streamCallback) {
-			const callback = this.streamCallback
+			const callback = this.streamCallback;
 			hookProcess.on("line", (line: string, stream: "stdout" | "stderr") => {
 				// NOTE: HookProcess emits a synthetic empty line (""), used as a "start of output" marker.
 				// Preserve it for now so downstream can keep existing behavior.
 				callback(line, stream, {
 					source: this.source,
 					scriptPath: this.scriptPath,
-				})
-			})
+				});
+			});
 		}
 
 		try {
 			// Execute the hook and wait for completion
-			await hookProcess.run(inputJson)
+			await hookProcess.run(inputJson);
 
 			// Get the complete stdout for JSON parsing
-			const stdout = hookProcess.getStdout()
-			const stderr = hookProcess.getStderr()
-			const exitCode = hookProcess.getExitCode()
+			const stdout = hookProcess.getStdout();
+			const stderr = hookProcess.getStderr();
+			const exitCode = hookProcess.getExitCode();
 
 			// Try to parse JSON output
 			const parseJsonOutput = (): HookOutput | null => {
 				try {
-					const outputData = JSON.parse(stdout)
+					const outputData = JSON.parse(stdout);
 
 					// Validate structure before creating HookOutput
-					const validation = validateHookOutput(outputData)
+					const validation = validateHookOutput(outputData);
 					if (!validation.valid) {
 						// Return null to indicate parsing failed, let caller decide what to do based on exit code
-						return null
+						return null;
 					}
 
-					const output = HookOutput.fromJSON(outputData)
+					const output = HookOutput.fromJSON(outputData);
 
 					// Validate and truncate context modification if too large
-					if (output.contextModification && output.contextModification.length > MAX_CONTEXT_MODIFICATION_SIZE) {
+					if (
+						output.contextModification &&
+						output.contextModification.length > MAX_CONTEXT_MODIFICATION_SIZE
+					) {
 						Logger.warn(
 							`Hook ${this.hookName} returned contextModification of ${output.contextModification.length} bytes, ` +
 								`truncating to ${MAX_CONTEXT_MODIFICATION_SIZE} bytes`,
-						)
+						);
 						output.contextModification =
-							output.contextModification.slice(0, MAX_CONTEXT_MODIFICATION_SIZE) +
-							"\n\n[... context truncated due to size limit ...]"
+							output.contextModification.slice(
+								0,
+								MAX_CONTEXT_MODIFICATION_SIZE,
+							) + "\n\n[... context truncated due to size limit ...]";
 					}
 
-					return output
+					return output;
 				} catch (parseError) {
 					// Try to extract JSON from stdout (it might have debug output before/after)
 					// Scan from the end to find the last complete JSON object
 					// This handles cases where hooks output debug info before the actual JSON response
 
-					const lines = stdout.split("\n")
-					let jsonCandidate = ""
-					let braceCount = 0
-					let startCollecting = false
+					const lines = stdout.split("\n");
+					let jsonCandidate = "";
+					let braceCount = 0;
+					let startCollecting = false;
 
 					// Scan from the end to find the last complete JSON object
 					for (let i = lines.length - 1; i >= 0; i--) {
-						const line = lines[i].trimEnd()
+						const line = lines[i].trimEnd();
 
 						// Count braces to track JSON object boundaries
 						for (let j = line.length - 1; j >= 0; j--) {
 							if (line[j] === "}") {
-								braceCount++
+								braceCount++;
 								if (!startCollecting) {
-									startCollecting = true
+									startCollecting = true;
 								}
 							} else if (line[j] === "{") {
-								braceCount--
+								braceCount--;
 							}
 						}
 
 						if (startCollecting) {
-							jsonCandidate = line + "\n" + jsonCandidate
+							jsonCandidate = line + "\n" + jsonCandidate;
 						}
 
 						// If we've closed all braces, we have a complete JSON object
 						if (startCollecting && braceCount === 0) {
-							break
+							break;
 						}
 					}
 
 					if (jsonCandidate.trim()) {
 						try {
 							// Trim everything before the first opening bracket
-							const trimmedCandidate = jsonCandidate.trim()
-							const firstBraceIndex = trimmedCandidate.indexOf("{")
+							const trimmedCandidate = jsonCandidate.trim();
+							const firstBraceIndex = trimmedCandidate.indexOf("{");
 							const cleanedJson =
-								firstBraceIndex !== -1 ? trimmedCandidate.slice(firstBraceIndex) : trimmedCandidate
+								firstBraceIndex !== -1
+									? trimmedCandidate.slice(firstBraceIndex)
+									: trimmedCandidate;
 
-							const outputData = JSON.parse(cleanedJson)
+							const outputData = JSON.parse(cleanedJson);
 
 							// Validate structure
-							const validation = validateHookOutput(outputData)
+							const validation = validateHookOutput(outputData);
 							if (!validation.valid) {
 								// Return null to indicate parsing failed
-								return null
+								return null;
 							}
 
-							const output = HookOutput.fromJSON(outputData)
+							const output = HookOutput.fromJSON(outputData);
 
 							// Validate and truncate context modification if too large
-							if (output.contextModification && output.contextModification.length > MAX_CONTEXT_MODIFICATION_SIZE) {
+							if (
+								output.contextModification &&
+								output.contextModification.length >
+									MAX_CONTEXT_MODIFICATION_SIZE
+							) {
 								Logger.warn(
 									`Hook ${this.hookName} returned contextModification of ${output.contextModification.length} bytes, ` +
 										`truncating to ${MAX_CONTEXT_MODIFICATION_SIZE} bytes`,
-								)
+								);
 								output.contextModification =
-									output.contextModification.slice(0, MAX_CONTEXT_MODIFICATION_SIZE) +
-									"\n\n[... context truncated due to size limit ...]"
+									output.contextModification.slice(
+										0,
+										MAX_CONTEXT_MODIFICATION_SIZE,
+									) + "\n\n[... context truncated due to size limit ...]";
 							}
 
-							return output
+							return output;
 						} catch (_extractError) {
 							// Couldn't extract valid JSON, return null
-							return null
+							return null;
 						}
 					}
 
 					// Couldn't parse JSON at all, return null
-					return null
+					return null;
 				}
-			}
+			};
 
-			const parsedOutput = parseJsonOutput()
+			const parsedOutput = parseJsonOutput();
 
 			// If we have valid JSON, honor it regardless of exit code
 			if (parsedOutput) {
-				const durationMs = performance.now() - startTime
+				const durationMs = performance.now() - startTime;
 
 				// Log warning if non-zero exit but valid JSON (for developers)
 				if (exitCode !== 0) {
-					Logger.warn(`[Hook ${this.hookName}] Exited with code ${exitCode} but provided valid JSON response`)
+					Logger.warn(
+						`[Hook ${this.hookName}] Exited with code ${exitCode} but provided valid JSON response`,
+					);
 					if (stderr) {
-						Logger.warn(`[Hook ${this.hookName}] stderr: ${stderr}`)
+						Logger.warn(`[Hook ${this.hookName}] stderr: ${stderr}`);
 					}
 				}
 
@@ -468,67 +512,89 @@ class StdioHookRunner<Name extends HookName> extends HookRunner<Name> {
 					if (parsedOutput.cancel) {
 						telemetryService.safeCapture(
 							() =>
-								telemetryService.captureHookExecution(taskId, this.hookName, "completed", {
-									source: this.source,
-									toolName: this.toolName,
-									durationMs,
-									exitCode: exitCode ?? EXIT_CODE_SIGINT,
-									cancelRequested: true,
-									contextModified: !!parsedOutput.contextModification,
-									contextSize: parsedOutput.contextModification?.length,
-								}),
+								telemetryService.captureHookExecution(
+									taskId,
+									this.hookName,
+									"completed",
+									{
+										source: this.source,
+										toolName: this.toolName,
+										durationMs,
+										exitCode: exitCode ?? EXIT_CODE_SIGINT,
+										cancelRequested: true,
+										contextModified: !!parsedOutput.contextModification,
+										contextSize: parsedOutput.contextModification?.length,
+									},
+								),
 							"HookFactory.exec.completed.cancel",
-						)
+						);
 					} else {
 						telemetryService.safeCapture(
 							() =>
-								telemetryService.captureHookExecution(taskId, this.hookName, "completed", {
-									source: this.source,
-									toolName: this.toolName,
-									durationMs,
-									exitCode: exitCode ?? 0,
-									cancelRequested: false,
-									contextModified: !!parsedOutput.contextModification,
-									contextSize: parsedOutput.contextModification?.length,
-								}),
+								telemetryService.captureHookExecution(
+									taskId,
+									this.hookName,
+									"completed",
+									{
+										source: this.source,
+										toolName: this.toolName,
+										durationMs,
+										exitCode: exitCode ?? 0,
+										cancelRequested: false,
+										contextModified: !!parsedOutput.contextModification,
+										contextSize: parsedOutput.contextModification?.length,
+									},
+								),
 							"HookFactory.exec.completed.success",
-						)
+						);
 					}
 				}
 
-				return parsedOutput
+				return parsedOutput;
 			}
 
 			// No valid JSON found
 			if (exitCode === 0) {
 				// Hook succeeded but didn't provide JSON - allow execution (no cancellation)
-				Logger.warn(`[Hook ${this.hookName}] Completed successfully but no JSON response found`)
-				const durationMs = performance.now() - startTime
+				Logger.warn(
+					`[Hook ${this.hookName}] Completed successfully but no JSON response found`,
+				);
+				const durationMs = performance.now() - startTime;
 
 				// Capture success telemetry even without JSON
 				if (taskId) {
 					telemetryService.safeCapture(
 						() =>
-							telemetryService.captureHookExecution(taskId, this.hookName, "completed", {
-								source: this.source,
-								toolName: this.toolName,
-								durationMs,
-								exitCode: 0,
-								cancelRequested: false,
-								contextModified: false,
-							}),
+							telemetryService.captureHookExecution(
+								taskId,
+								this.hookName,
+								"completed",
+								{
+									source: this.source,
+									toolName: this.toolName,
+									durationMs,
+									exitCode: 0,
+									cancelRequested: false,
+									contextModified: false,
+								},
+							),
 						"HookFactory.exec.completed.noJson",
-					)
+					);
 				}
 
 				return HookOutput.create({
 					cancel: false,
-				})
+				});
 			}
 			// Hook failed with non-zero exit - include hook name in error
-			throw HookExecutionError.execution(this.scriptPath, exitCode ?? 1, stderr, this.hookName)
+			throw HookExecutionError.execution(
+				this.scriptPath,
+				exitCode ?? 1,
+				stderr,
+				this.hookName,
+			);
 		} catch (error) {
-			const durationMs = performance.now() - startTime
+			const durationMs = performance.now() - startTime;
 
 			// If it's already a HookExecutionError, re-throw it
 			if (HookExecutionError.isHookError(error)) {
@@ -537,62 +603,90 @@ class StdioHookRunner<Name extends HookName> extends HookRunner<Name> {
 					if (error.errorInfo.type === "cancellation") {
 						telemetryService.safeCapture(
 							() =>
-								telemetryService.captureHookExecution(taskId, this.hookName, "cancelled", {
-									source: this.source,
-									toolName: this.toolName,
-								}),
+								telemetryService.captureHookExecution(
+									taskId,
+									this.hookName,
+									"cancelled",
+									{
+										source: this.source,
+										toolName: this.toolName,
+									},
+								),
 							"HookFactory.exec.error.cancellation",
-						)
+						);
 					} else if (error.errorInfo.type === "timeout") {
 						telemetryService.safeCapture(
 							() =>
-								telemetryService.captureHookExecution(taskId, this.hookName, "failed", {
-									source: this.source,
-									toolName: this.toolName,
-									durationMs,
-									errorType: "timeout",
-									errorMessage: error.message,
-								}),
+								telemetryService.captureHookExecution(
+									taskId,
+									this.hookName,
+									"failed",
+									{
+										source: this.source,
+										toolName: this.toolName,
+										durationMs,
+										errorType: "timeout",
+										errorMessage: error.message,
+									},
+								),
 							"HookFactory.exec.error.timeout",
-						)
+						);
 					} else {
 						telemetryService.safeCapture(
 							() =>
-								telemetryService.captureHookExecution(taskId, this.hookName, "failed", {
-									source: this.source,
-									toolName: this.toolName,
-									durationMs,
-									exitCode: error.errorInfo.exitCode ?? 1,
-									errorType: error.errorInfo.type as "execution" | "timeout" | "validation",
-									errorMessage: error.message,
-								}),
+								telemetryService.captureHookExecution(
+									taskId,
+									this.hookName,
+									"failed",
+									{
+										source: this.source,
+										toolName: this.toolName,
+										durationMs,
+										exitCode: error.errorInfo.exitCode ?? 1,
+										errorType: error.errorInfo.type as
+											| "execution"
+											| "timeout"
+											| "validation",
+										errorMessage: error.message,
+									},
+								),
 							"HookFactory.exec.error.failed",
-						)
+						);
 					}
 				}
-				throw error
+				throw error;
 			}
 
 			// Hook execution failed - categorize the error
-			const stderr = hookProcess.getStderr()
-			const exitCode = hookProcess.getExitCode()
+			const stderr = hookProcess.getStderr();
+			const exitCode = hookProcess.getExitCode();
 
 			// Check for timeout
 			if (error instanceof Error && error.message.includes("timed out")) {
 				if (taskId) {
 					telemetryService.safeCapture(
 						() =>
-							telemetryService.captureHookExecution(taskId, this.hookName, "failed", {
-								source: this.source,
-								toolName: this.toolName,
-								durationMs,
-								errorType: "timeout",
-								errorMessage: error.message,
-							}),
+							telemetryService.captureHookExecution(
+								taskId,
+								this.hookName,
+								"failed",
+								{
+									source: this.source,
+									toolName: this.toolName,
+									durationMs,
+									errorType: "timeout",
+									errorMessage: error.message,
+								},
+							),
 						"HookFactory.exec.catch.timeout",
-					)
+					);
 				}
-				throw HookExecutionError.timeout(this.scriptPath, HOOK_EXECUTION_TIMEOUT_MS, stderr, this.hookName)
+				throw HookExecutionError.timeout(
+					this.scriptPath,
+					HOOK_EXECUTION_TIMEOUT_MS,
+					stderr,
+					this.hookName,
+				);
 			}
 
 			// Check for cancellation
@@ -600,32 +694,48 @@ class StdioHookRunner<Name extends HookName> extends HookRunner<Name> {
 				if (taskId) {
 					telemetryService.safeCapture(
 						() =>
-							telemetryService.captureHookExecution(taskId, this.hookName, "cancelled", {
-								source: this.source,
-								toolName: this.toolName,
-							}),
+							telemetryService.captureHookExecution(
+								taskId,
+								this.hookName,
+								"cancelled",
+								{
+									source: this.source,
+									toolName: this.toolName,
+								},
+							),
 						"HookFactory.exec.catch.cancelled",
-					)
+					);
 				}
-				throw HookExecutionError.cancellation(this.scriptPath, this.hookName)
+				throw HookExecutionError.cancellation(this.scriptPath, this.hookName);
 			}
 
 			// Generic execution error - include hook name
 			if (taskId) {
 				telemetryService.safeCapture(
 					() =>
-						telemetryService.captureHookExecution(taskId, this.hookName, "failed", {
-							source: this.source,
-							toolName: this.toolName,
-							durationMs,
-							exitCode: exitCode ?? 1,
-							errorType: "execution",
-							errorMessage: error instanceof Error ? error.message : String(error),
-						}),
+						telemetryService.captureHookExecution(
+							taskId,
+							this.hookName,
+							"failed",
+							{
+								source: this.source,
+								toolName: this.toolName,
+								durationMs,
+								exitCode: exitCode ?? 1,
+								errorType: "execution",
+								errorMessage:
+									error instanceof Error ? error.message : String(error),
+							},
+						),
 					"HookFactory.exec.catch.execution",
-				)
+				);
 			}
-			throw HookExecutionError.execution(this.scriptPath, exitCode ?? 1, stderr, this.hookName)
+			throw HookExecutionError.execution(
+				this.scriptPath,
+				exitCode ?? 1,
+				stderr,
+				this.hookName,
+			);
 		}
 	}
 }
@@ -653,33 +763,35 @@ class CombinedHookRunner<Name extends HookName> extends HookRunner<Name> {
 		hookName: Name,
 		private readonly runners: readonly HookRunner<Name>[],
 	) {
-		super(hookName)
+		super(hookName);
 	}
 
 	override async [exec](input: HookInput): Promise<HookOutput> {
 		// Run all hooks in parallel
-		const results = await Promise.all(this.runners.map((runner) => runner[exec](input)))
+		const results = await Promise.all(
+			this.runners.map((runner) => runner[exec](input)),
+		);
 
 		// Merge results:
 		// - If any hook requests cancellation, set cancel to true
 		// - Combine context contributions from all hooks
 		// - Collect any error messages
 
-		const cancel = results.some((result) => result.cancel === true)
+		const cancel = results.some((result) => result.cancel === true);
 		const contextModification = results
 			.map((result) => result.contextModification?.trim())
 			.filter((mod) => mod)
-			.join("\n\n")
+			.join("\n\n");
 		const errorMessage = results
 			.map((result) => result.errorMessage?.trim())
 			.filter((msg) => msg)
-			.join("\n")
+			.join("\n");
 
 		return HookOutput.create({
 			cancel,
 			contextModification,
 			errorMessage,
-		})
+		});
 	}
 }
 
@@ -692,29 +804,29 @@ class CombinedHookRunner<Name extends HookName> extends HookRunner<Name> {
  */
 function isExpectedHookError(error: unknown): boolean {
 	if (!(error instanceof Error)) {
-		return false
+		return false;
 	}
 
-	const nodeError = error as NodeJS.ErrnoException
+	const nodeError = error as NodeJS.ErrnoException;
 
 	// Expected: File doesn't exist (most common case)
 	if (nodeError.code === "ENOENT") {
-		return true
+		return true;
 	}
 
 	// Expected: Permission denied (file not executable or not readable)
 	// Note: This is expected because users may have hooks in .Asirules that they don't want to execute
 	if (nodeError.code === "EACCES") {
-		return true
+		return true;
 	}
 
 	// Expected: Not a directory (one of the path components isn't a directory)
 	if (nodeError.code === "ENOTDIR") {
-		return true
+		return true;
 	}
 
 	// All other errors (EIO, EMFILE, etc.) are unexpected and should be propagated
-	return false
+	return false;
 }
 
 export class HookFactory {
@@ -726,11 +838,11 @@ export class HookFactory {
 	async getHookInfo<Name extends HookName>(
 		hookName: Name,
 	): Promise<{
-		scriptPaths: string[]
+		scriptPaths: string[];
 	}> {
-		const { HookDiscoveryCache } = await import("./HookDiscoveryCache")
-		const scripts = await HookDiscoveryCache.getInstance().get(hookName)
-		return { scriptPaths: scripts }
+		const { HookDiscoveryCache } = await import("./HookDiscoveryCache");
+		const scripts = await HookDiscoveryCache.getInstance().get(hookName);
+		return { scriptPaths: scripts };
 	}
 
 	/**
@@ -738,15 +850,25 @@ export class HookFactory {
 	 * @returns true if at least one hook script exists, false otherwise
 	 */
 	async hasHook<Name extends HookName>(hookName: Name): Promise<boolean> {
-		const scripts = await HookFactory.findHookScripts(hookName)
-		return scripts.length > 0
+		const scripts = await HookFactory.findHookScripts(hookName);
+		return scripts.length > 0;
 	}
 
 	/**
 	 * Create a hook runner without streaming support (backwards compatible)
 	 */
-	async create<Name extends HookName>(hookName: Name, taskId?: string, toolName?: string): Promise<HookRunner<Name>> {
-		return this.createWithStreaming(hookName, undefined, undefined, taskId, toolName)
+	async create<Name extends HookName>(
+		hookName: Name,
+		taskId?: string,
+		toolName?: string,
+	): Promise<HookRunner<Name>> {
+		return this.createWithStreaming(
+			hookName,
+			undefined,
+			undefined,
+			taskId,
+			toolName,
+		);
 	}
 
 	/**
@@ -777,41 +899,66 @@ export class HookFactory {
 		toolName?: string,
 	): Promise<HookRunner<Name>> {
 		// Use cache for hook discovery instead of direct file system scan
-		const { HookDiscoveryCache } = await import("./HookDiscoveryCache")
-		const scripts = await HookDiscoveryCache.getInstance().get(hookName)
+		const { HookDiscoveryCache } = await import("./HookDiscoveryCache");
+		const scripts = await HookDiscoveryCache.getInstance().get(hookName);
 
 		// Fetch hooks dirs once for source determination and telemetry
-		const hooksDirs = await getAllHooksDirs()
+		const hooksDirs = await getAllHooksDirs();
 
 		// Capture hook discovery telemetry
 		// Categorize scripts by location (global vs workspace)
-		const { globalCount, workspaceCount } = this.categorizeHookScripts(scripts, hooksDirs)
+		const { globalCount, workspaceCount } = this.categorizeHookScripts(
+			scripts,
+			hooksDirs,
+		);
 		if (scripts.length > 0) {
 			telemetryService.safeCapture(
-				() => telemetryService.captureHookDiscovery(hookName, globalCount, workspaceCount),
+				() =>
+					telemetryService.captureHookDiscovery(
+						hookName,
+						globalCount,
+						workspaceCount,
+					),
 				"HookFactory.createWithStreaming.discovery",
-			)
+			);
 		}
 
 		// Get workspace roots for cwd determination
-		const stateManager = StateManager.get()
-		const workspaceRoots = stateManager.getGlobalStateKey("workspaceRoots")
-		const primaryRootIndex = stateManager.getGlobalStateKey("primaryRootIndex") ?? 0
-		const primaryCwd = workspaceRoots?.[primaryRootIndex]?.path
+		const stateManager = StateManager.get();
+		const workspaceRoots = stateManager.getGlobalStateKey("workspaceRoots");
+		const primaryRootIndex =
+			stateManager.getGlobalStateKey("primaryRootIndex") ?? 0;
+		const primaryCwd = workspaceRoots?.[primaryRootIndex]?.path;
 
 		// Create runners with source and cwd determination for each script
 		// Global hooks run from primary workspace root
 		// Workspace-specific hooks run from their respective workspace root
 		const runners = scripts.map((script) => {
-			const source = this.determineScriptSource(script, hooksDirs)
-			const cwd = this.determineHookCwd(script, hooksDirs, workspaceRoots, primaryCwd)
-			return new StdioHookRunner(hookName, script, source, streamCallback, abortSignal, taskId, toolName, cwd)
-		})
+			const source = this.determineScriptSource(script, hooksDirs);
+			const cwd = this.determineHookCwd(
+				script,
+				hooksDirs,
+				workspaceRoots,
+				primaryCwd,
+			);
+			return new StdioHookRunner(
+				hookName,
+				script,
+				source,
+				streamCallback,
+				abortSignal,
+				taskId,
+				toolName,
+				cwd,
+			);
+		});
 
 		if (runners.length === 0) {
-			return new NoOpRunner(hookName)
+			return new NoOpRunner(hookName);
 		}
-		return runners.length === 1 ? runners[0] : new CombinedHookRunner(hookName, runners)
+		return runners.length === 1
+			? runners[0]
+			: new CombinedHookRunner(hookName, runners);
 	}
 
 	/**
@@ -819,18 +966,21 @@ export class HookFactory {
 	 * Global hooks are located in paths containing "Asi/Hooks" or "Asi/hooks".
 	 */
 	private static isGlobalHooksDir(dir: string): boolean {
-		return /[/\\][Cc]line[/\\][Hh]ooks/i.test(dir)
+		return /[/\\][Cc]line[/\\][Hh]ooks/i.test(dir);
 	}
 
 	/**
 	 * Determines if a single script is from global or workspace location
 	 */
-	private determineScriptSource(scriptPath: string, hooksDirs: string[]): "global" | "workspace" {
-		const containingDir = hooksDirs.find((dir) => scriptPath.startsWith(dir))
+	private determineScriptSource(
+		scriptPath: string,
+		hooksDirs: string[],
+	): "global" | "workspace" {
+		const containingDir = hooksDirs.find((dir) => scriptPath.startsWith(dir));
 		if (containingDir && HookFactory.isGlobalHooksDir(containingDir)) {
-			return "global"
+			return "global";
 		}
-		return "workspace" // Default to workspace if uncertain
+		return "workspace"; // Default to workspace if uncertain
 	}
 
 	/**
@@ -854,25 +1004,27 @@ export class HookFactory {
 		workspaceRoots: Array<{ path: string }> | undefined,
 		primaryCwd: string | undefined,
 	): string | undefined {
-		const containingDir = hooksDirs.find((dir) => scriptPath.startsWith(dir))
+		const containingDir = hooksDirs.find((dir) => scriptPath.startsWith(dir));
 
 		// If global hook, use primary workspace root
 		if (containingDir && HookFactory.isGlobalHooksDir(containingDir)) {
-			return primaryCwd
+			return primaryCwd;
 		}
 
 		// If workspace hook, find which workspace root it belongs to
 		// Workspace hooks are at: workspaceRoot/.Asirules/hooks/
 		// So find the workspace root whose path is a prefix of the containing hooks dir
 		if (containingDir && workspaceRoots) {
-			const workspaceRoot = workspaceRoots.find((root) => containingDir.startsWith(root.path))
+			const workspaceRoot = workspaceRoots.find((root) =>
+				containingDir.startsWith(root.path),
+			);
 			if (workspaceRoot) {
-				return workspaceRoot.path
+				return workspaceRoot.path;
 			}
 		}
 
 		// Fallback to primary cwd
-		return primaryCwd
+		return primaryCwd;
 	}
 
 	/**
@@ -884,24 +1036,27 @@ export class HookFactory {
 	 * @param hooksDirs Array of hooks directories (passed to avoid redundant fetches)
 	 * @returns Object with globalCount and workspaceCount
 	 */
-	private categorizeHookScripts(scripts: string[], hooksDirs: string[]): { globalCount: number; workspaceCount: number } {
+	private categorizeHookScripts(
+		scripts: string[],
+		hooksDirs: string[],
+	): { globalCount: number; workspaceCount: number } {
 		if (scripts.length === 0) {
-			return { globalCount: 0, workspaceCount: 0 }
+			return { globalCount: 0, workspaceCount: 0 };
 		}
 
-		let globalCount = 0
-		let workspaceCount = 0
+		let globalCount = 0;
+		let workspaceCount = 0;
 
 		for (const script of scripts) {
-			const containingDir = hooksDirs.find((dir) => script.startsWith(dir))
+			const containingDir = hooksDirs.find((dir) => script.startsWith(dir));
 			if (containingDir && HookFactory.isGlobalHooksDir(containingDir)) {
-				globalCount++
+				globalCount++;
 			} else {
-				workspaceCount++
+				workspaceCount++;
 			}
 		}
 
-		return { globalCount, workspaceCount }
+		return { globalCount, workspaceCount };
 	}
 
 	/**
@@ -910,12 +1065,13 @@ export class HookFactory {
 	 * (from .Asirules/hooks/ in each workspace root).
 	 */
 	private static async findHookScripts(hookName: HookName): Promise<string[]> {
-		const hookScripts = []
+		const hookScripts = [];
 		for (const hooksDir of await getAllHooksDirs()) {
-			hookScripts.push(HookFactory.findHookInHooksDir(hookName, hooksDir))
+			hookScripts.push(HookFactory.findHookInHooksDir(hookName, hooksDir));
 		}
-		const isDefined = (scriptPath: string | undefined): scriptPath is string => Boolean(scriptPath)
-		return (await Promise.all(hookScripts)).filter(isDefined)
+		const isDefined = (scriptPath: string | undefined): scriptPath is string =>
+			Boolean(scriptPath);
+		return (await Promise.all(hookScripts)).filter(isDefined);
 	}
 
 	/**
@@ -926,10 +1082,13 @@ export class HookFactory {
 	 * @returns the path to the hook to execute, or undefined if none found
 	 * @throws Error if an unexpected file system error occurs
 	 */
-	static async findHookInHooksDir(hookName: HookName, hooksDir: string): Promise<string | undefined> {
+	static async findHookInHooksDir(
+		hookName: HookName,
+		hooksDir: string,
+	): Promise<string | undefined> {
 		return process.platform === "win32"
 			? HookFactory.findWindowsHook(hookName, hooksDir)
-			: HookFactory.findUnixHook(hookName, hooksDir)
+			: HookFactory.findUnixHook(hookName, hooksDir);
 	}
 
 	/**
@@ -945,24 +1104,30 @@ export class HookFactory {
 	 * @returns the path to the hook to execute, or undefined if none found
 	 * @throws Error if an unexpected file system error occurs
 	 */
-	private static async findWindowsHook(hookName: HookName, hooksDir: string): Promise<string | undefined> {
-		const powerShell = path.join(hooksDir, `${hookName}.ps1`)
-		const powerShellExists = await HookFactory.isHookFile(powerShell, hookName)
+	private static async findWindowsHook(
+		hookName: HookName,
+		hooksDir: string,
+	): Promise<string | undefined> {
+		const powerShell = path.join(hooksDir, `${hookName}.ps1`);
+		const powerShellExists = await HookFactory.isHookFile(powerShell, hookName);
 
 		if (powerShellExists) {
-			return powerShell
+			return powerShell;
 		}
 
-		return undefined
+		return undefined;
 	}
 
-	private static async isHookFile(candidate: string, hookName: HookName): Promise<boolean> {
+	private static async isHookFile(
+		candidate: string,
+		hookName: HookName,
+	): Promise<boolean> {
 		try {
-			const stat = await fs.stat(candidate)
-			return stat.isFile()
+			const stat = await fs.stat(candidate);
+			return stat.isFile();
 		} catch (error) {
-			HookFactory.handleHookDiscoveryError(error, hookName, candidate)
-			return false
+			HookFactory.handleHookDiscoveryError(error, hookName, candidate);
+			return false;
 		}
 	}
 
@@ -979,16 +1144,22 @@ export class HookFactory {
 	 * @returns the path to the hook to execute, or undefined if none found
 	 * @throws Error if an unexpected file system error occurs
 	 */
-	private static async findUnixHook(hookName: HookName, hooksDir: string): Promise<string | undefined> {
-		const candidate = path.join(hooksDir, hookName)
+	private static async findUnixHook(
+		hookName: HookName,
+		hooksDir: string,
+	): Promise<string | undefined> {
+		const candidate = path.join(hooksDir, hookName);
 
 		try {
-			const [stat, _] = await Promise.all([fs.stat(candidate), fs.access(candidate, fs.constants.X_OK)])
-			return stat.isFile() ? candidate : undefined
+			const [stat, _] = await Promise.all([
+				fs.stat(candidate),
+				fs.access(candidate, fs.constants.X_OK),
+			]);
+			return stat.isFile() ? candidate : undefined;
 		} catch (error) {
-			HookFactory.handleHookDiscoveryError(error, hookName, candidate)
+			HookFactory.handleHookDiscoveryError(error, hookName, candidate);
 			// Expected errors (missing/non-executable hook) return no match.
-			return undefined
+			return undefined;
 		}
 	}
 
@@ -1002,13 +1173,17 @@ export class HookFactory {
 	 * @param candidate the file path that was being checked
 	 * @throws Error if the error is unexpected
 	 */
-	private static handleHookDiscoveryError(error: unknown, hookName: HookName, candidate: string): void {
+	private static handleHookDiscoveryError(
+		error: unknown,
+		hookName: HookName,
+		candidate: string,
+	): void {
 		if (!isExpectedHookError(error)) {
 			throw new Error(
 				`Unexpected error while searching for hook '${hookName}' at '${candidate}': ${
 					error instanceof Error ? error.message : String(error)
 				}`,
-			)
+			);
 		}
 	}
 }

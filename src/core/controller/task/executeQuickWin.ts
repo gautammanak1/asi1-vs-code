@@ -1,7 +1,7 @@
-import { Empty } from "@shared/proto/asi/common"
-import { ExecuteQuickWinRequest } from "@shared/proto/asi/task"
-import { Logger } from "@/shared/services/Logger"
-import type { Controller } from "../index"
+import { Empty } from "@shared/proto/Asi/common";
+import { ExecuteQuickWinRequest } from "@shared/proto/Asi/task";
+import { Logger } from "@/shared/services/Logger";
+import type { Controller } from "../index";
 
 /**
  * Executes a quick win task with command and title
@@ -12,7 +12,7 @@ import type { Controller } from "../index"
  * @example
  * // Usage from webview:
  * import { TaskServiceClient } from "@/services/grpc-client"
- * import { ExecuteQuickWinRequest } from "@shared/proto/asi/task"
+ * import { ExecuteQuickWinRequest } from "@shared/proto/Asi/task"
  *
  * const request: ExecuteQuickWinRequest = {
  *   command: "npm install",
@@ -23,14 +23,19 @@ import type { Controller } from "../index"
  *   .then(() => Logger.log("Quick win executed successfully"))
  *   .catch(error => Logger.error("Failed to execute quick win:", error))
  */
-export async function executeQuickWin(controller: Controller, request: ExecuteQuickWinRequest): Promise<Empty> {
+export async function executeQuickWin(
+	controller: Controller,
+	request: ExecuteQuickWinRequest,
+): Promise<Empty> {
 	try {
-		const { command, title } = request
-		Logger.log(`Received executeQuickWin: command='${command}', title='${title}'`)
-		await controller.initTask(title)
-		return Empty.create({})
+		const { command, title } = request;
+		Logger.log(
+			`Received executeQuickWin: command='${command}', title='${title}'`,
+		);
+		await controller.initTask(title);
+		return Empty.create({});
 	} catch (error) {
-		Logger.error("Failed to execute quick win:", error)
-		throw error
+		Logger.error("Failed to execute quick win:", error);
+		throw error;
 	}
 }

@@ -43,7 +43,7 @@ git push origin v<version>
 ### 4) Trigger publish workflow
 
 Tell the maintainer to run:
-https://github.com/Asi/Asi/actions/workflows/publish.yml
+https://github.com/gautammanak1/asi1-vs-code/actions/workflows/publish.yml
 
 Use `v<version>` as the release tag.
 

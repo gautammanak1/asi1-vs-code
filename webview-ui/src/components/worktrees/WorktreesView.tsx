@@ -1,130 +1,179 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { NewTaskRequest } from "@shared/proto/asi/task"
-import type { MergeWorktreeResult, Worktree as WorktreeProto } from "@shared/proto/asi/worktree"
+import { EmptyRequest } from "@shared/proto/Asi/common";
+import { NewTaskRequest } from "@shared/proto/Asi/task";
+import type {
+	MergeWorktreeResult,
+	Worktree as WorktreeProto,
+} from "@shared/proto/Asi/worktree";
 import {
-    CreateWorktreeIncludeRequest,
-    DeleteWorktreeRequest,
-    MergeWorktreeRequest,
-    SwitchWorktreeRequest,
-} from "@shared/proto/asi/worktree"
-import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react"
-import { AlertCircle, Check, ExternalLink, FolderOpen, GitBranch, GitMerge, Loader2, Plus, Trash2, X } from "lucide-react"
-import { memo, useCallback, useEffect, useState } from "react"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { FileServiceClient, TaskServiceClient, WorktreeServiceClient } from "@/services/grpc-client"
-import { getEnvironmentColor } from "@/utils/environmentColors"
-import CreateWorktreeModal from "./CreateWorktreeModal"
-import DeleteWorktreeModal from "./DeleteWorktreeModal"
+	CreateWorktreeIncludeRequest,
+	DeleteWorktreeRequest,
+	MergeWorktreeRequest,
+	SwitchWorktreeRequest,
+} from "@shared/proto/Asi/worktree";
+import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react";
+import {
+	AlertCircle,
+	Check,
+	ExternalLink,
+	FolderOpen,
+	GitBranch,
+	GitMerge,
+	Loader2,
+	Plus,
+	Trash2,
+	X,
+} from "lucide-react";
+import { memo, useCallback, useEffect, useState } from "react";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useExtensionState } from "@/context/ExtensionStateContext";
+import {
+	FileServiceClient,
+	TaskServiceClient,
+	WorktreeServiceClient,
+} from "@/services/grpc-client";
+import { getEnvironmentColor } from "@/utils/environmentColors";
+import CreateWorktreeModal from "./CreateWorktreeModal";
+import DeleteWorktreeModal from "./DeleteWorktreeModal";
 
 type WorktreesViewProps = {
-	onDone: () => void
-}
+	onDone: () => void;
+};
 
 const WorktreesView = ({ onDone }: WorktreesViewProps) => {
-	const { environment } = useExtensionState()
-	const [worktrees, setWorktrees] = useState<WorktreeProto[]>([])
-	const [isLoading, setIsLoading] = useState(true)
-	const [error, setError] = useState<string | null>(null)
-	const [isGitRepo, setIsGitRepo] = useState(true)
-	const [isMultiRoot, setIsMultiRoot] = useState(false)
-	const [isSubfolder, setIsSubfolder] = useState(false)
-	const [gitRootPath, setGitRootPath] = useState("")
-	const [showCreateForm, setShowCreateForm] = useState(false)
-	const [deleteWorktree, setDeleteWorktree] = useState<WorktreeProto | null>(null)
+	const { environment } = useExtensionState();
+	const [worktrees, setWorktrees] = useState<WorktreeProto[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [error, setError] = useState<string | null>(null);
+	const [isGitRepo, setIsGitRepo] = useState(true);
+	const [isMultiRoot, setIsMultiRoot] = useState(false);
+	const [isSubfolder, setIsSubfolder] = useState(false);
+	const [gitRootPath, setGitRootPath] = useState("");
+	const [showCreateForm, setShowCreateForm] = useState(false);
+	const [deleteWorktree, setDeleteWorktree] = useState<WorktreeProto | null>(
+		null,
+	);
 
 	// Merge worktree state
-	const [mergeWorktree, setMergeWorktree] = useState<WorktreeProto | null>(null)
-	const [isMerging, setIsMerging] = useState(false)
-	const [mergeError, setMergeError] = useState<string | null>(null)
-	const [mergeResult, setMergeResult] = useState<MergeWorktreeResult | null>(null)
-	const [deleteAfterMerge, setDeleteAfterMerge] = useState(true)
+	const [mergeWorktree, setMergeWorktree] = useState<WorktreeProto | null>(
+		null,
+	);
+	const [isMerging, setIsMerging] = useState(false);
+	const [mergeError, setMergeError] = useState<string | null>(null);
+	const [mergeResult, setMergeResult] = useState<MergeWorktreeResult | null>(
+		null,
+	);
+	const [deleteAfterMerge, setDeleteAfterMerge] = useState(true);
 
 	// .worktreeinclude status
-	const [hasWorktreeInclude, setHasWorktreeInclude] = useState(false)
-	const [hasGitignore, setHasGitignore] = useState(false)
-	const [gitignoreContent, setGitignoreContent] = useState("")
-	const [isCreatingWorktreeInclude, setIsCreatingWorktreeInclude] = useState(false)
+	const [hasWorktreeInclude, setHasWorktreeInclude] = useState(false);
+	const [hasGitignore, setHasGitignore] = useState(false);
+	const [gitignoreContent, setGitignoreContent] = useState("");
+	const [isCreatingWorktreeInclude, setIsCreatingWorktreeInclude] =
+		useState(false);
 
 	// Check if a worktree is the main/primary worktree (first one, typically the original clone)
 	const isMainWorktree = useCallback(
 		(worktree: WorktreeProto) => {
 			// The main worktree is typically the first one listed and is where .git directory lives
 			// It's also usually the one that's marked as "bare" or is the original clone location
-			if (worktrees.length === 0) return false
-			return worktree.path === worktrees[0]?.path || worktree.isBare
+			if (worktrees.length === 0) return false;
+			return worktree.path === worktrees[0]?.path || worktree.isBare;
 		},
 		[worktrees],
-	)
+	);
 
 	// Load worktrees - only updates state if data changed to prevent flickering
 	const loadWorktrees = useCallback(async () => {
 		try {
-			const response = await WorktreeServiceClient.listWorktrees(EmptyRequest.create({}))
+			const response = await WorktreeServiceClient.listWorktrees(
+				EmptyRequest.create({}),
+			);
 			// Only update state if data actually changed (prevents flickering)
 			setWorktrees((prev) => {
-				const newData = JSON.stringify(response.worktrees)
-				const oldData = JSON.stringify(prev)
-				return newData === oldData ? prev : response.worktrees
-			})
-			setIsGitRepo((prev) => (prev === response.isGitRepo ? prev : response.isGitRepo))
-			setIsMultiRoot((prev) => (prev === response.isMultiRoot ? prev : response.isMultiRoot))
-			setIsSubfolder((prev) => (prev === response.isSubfolder ? prev : response.isSubfolder))
-			setGitRootPath((prev) => (prev === response.gitRootPath ? prev : response.gitRootPath))
-			setError((prev) => (response.error ? response.error : prev === null ? null : prev))
+				const newData = JSON.stringify(response.worktrees);
+				const oldData = JSON.stringify(prev);
+				return newData === oldData ? prev : response.worktrees;
+			});
+			setIsGitRepo((prev) =>
+				prev === response.isGitRepo ? prev : response.isGitRepo,
+			);
+			setIsMultiRoot((prev) =>
+				prev === response.isMultiRoot ? prev : response.isMultiRoot,
+			);
+			setIsSubfolder((prev) =>
+				prev === response.isSubfolder ? prev : response.isSubfolder,
+			);
+			setGitRootPath((prev) =>
+				prev === response.gitRootPath ? prev : response.gitRootPath,
+			);
+			setError((prev) =>
+				response.error ? response.error : prev === null ? null : prev,
+			);
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to load worktrees")
+			setError(err instanceof Error ? err.message : "Failed to load worktrees");
 		} finally {
-			setIsLoading(false)
+			setIsLoading(false);
 		}
-	}, [])
+	}, []);
 
 	// Load .worktreeinclude status
 	const loadWorktreeIncludeStatus = useCallback(async () => {
 		try {
-			const status = await WorktreeServiceClient.getWorktreeIncludeStatus(EmptyRequest.create({}))
-			setHasWorktreeInclude(status.exists)
-			setHasGitignore(status.hasGitignore)
-			setGitignoreContent(status.gitignoreContent)
+			const status = await WorktreeServiceClient.getWorktreeIncludeStatus(
+				EmptyRequest.create({}),
+			);
+			setHasWorktreeInclude(status.exists);
+			setHasGitignore(status.hasGitignore);
+			setGitignoreContent(status.gitignoreContent);
 		} catch (err) {
-			console.error("Failed to load worktree include status:", err)
+			console.error("Failed to load worktree include status:", err);
 		}
-	}, [])
+	}, []);
 
 	// Create .worktreeinclude file and open it in editor
 	const handleCreateWorktreeInclude = useCallback(async () => {
-		setIsCreatingWorktreeInclude(true)
+		setIsCreatingWorktreeInclude(true);
 		try {
 			const result = await WorktreeServiceClient.createWorktreeInclude(
 				CreateWorktreeIncludeRequest.create({
 					content: gitignoreContent,
 				}),
-			)
+			);
 			if (result.success) {
-				setHasWorktreeInclude(true)
+				setHasWorktreeInclude(true);
 				// Open the file in the editor
-				await FileServiceClient.openFileRelativePath({ value: ".worktreeinclude" })
+				await FileServiceClient.openFileRelativePath({
+					value: ".worktreeinclude",
+				});
 			} else {
-				setError(result.message)
+				setError(result.message);
 			}
 		} catch (err) {
-			setError(err instanceof Error ? err.message : "Failed to create .worktreeinclude")
+			setError(
+				err instanceof Error
+					? err.message
+					: "Failed to create .worktreeinclude",
+			);
 		} finally {
-			setIsCreatingWorktreeInclude(false)
+			setIsCreatingWorktreeInclude(false);
 		}
-	}, [gitignoreContent])
+	}, [gitignoreContent]);
 
 	// Initial load
 	useEffect(() => {
-		loadWorktrees()
-		loadWorktreeIncludeStatus()
-	}, [loadWorktrees, loadWorktreeIncludeStatus])
+		loadWorktrees();
+		loadWorktreeIncludeStatus();
+	}, [loadWorktrees, loadWorktreeIncludeStatus]);
 
 	// Poll for updates every 3 seconds while the view is open
 	useEffect(() => {
-		const interval = setInterval(loadWorktrees, 3000)
-		return () => clearInterval(interval)
-	}, [loadWorktrees])
+		const interval = setInterval(loadWorktrees, 3000);
+		return () => clearInterval(interval);
+	}, [loadWorktrees]);
 
 	const handleDeleteWorktree = useCallback(
 		async (path: string, deleteBranch: boolean, branchName: string) => {
@@ -136,61 +185,66 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 						deleteBranch,
 						branchName,
 					}),
-				)
+				);
 
 				if (!result.success) {
-					setError(result.message)
+					setError(result.message);
 				} else {
-					await loadWorktrees()
+					await loadWorktrees();
 				}
 			} catch (err) {
-				setError(err instanceof Error ? err.message : "Failed to delete worktree")
+				setError(
+					err instanceof Error ? err.message : "Failed to delete worktree",
+				);
 			}
 		},
 		[loadWorktrees],
-	)
+	);
 
-	const handleSwitchWorktree = useCallback(async (path: string, newWindow: boolean) => {
-		try {
-			await WorktreeServiceClient.switchWorktree(
-				SwitchWorktreeRequest.create({
-					path,
-					newWindow,
-				}),
-			)
-		} catch (err) {
-			console.error("Failed to switch worktree:", err)
-		}
-	}, [])
+	const handleSwitchWorktree = useCallback(
+		async (path: string, newWindow: boolean) => {
+			try {
+				await WorktreeServiceClient.switchWorktree(
+					SwitchWorktreeRequest.create({
+						path,
+						newWindow,
+					}),
+				);
+			} catch (err) {
+				console.error("Failed to switch worktree:", err);
+			}
+		},
+		[],
+	);
 
 	// Get the main branch name (first worktree's branch, usually main/master)
 	const getMainBranch = useCallback(() => {
-		if (worktrees.length === 0) return "main"
-		return worktrees[0]?.branch || "main"
-	}, [worktrees])
+		if (worktrees.length === 0) return "main";
+		return worktrees[0]?.branch || "main";
+	}, [worktrees]);
 
 	// Open merge modal for a worktree
 	const openMergeModal = useCallback((worktree: WorktreeProto) => {
-		setMergeWorktree(worktree)
-		setMergeError(null)
-		setMergeResult(null)
-		setDeleteAfterMerge(true)
-	}, [])
+		setMergeWorktree(worktree);
+		setMergeError(null);
+		setMergeResult(null);
+		setDeleteAfterMerge(true);
+	}, []);
 
 	// Close merge modal
 	const closeMergeModal = useCallback(() => {
-		setMergeWorktree(null)
-		setMergeError(null)
-		setMergeResult(null)
-	}, [])
+		setMergeWorktree(null);
+		setMergeError(null);
+		setMergeResult(null);
+	}, []);
 
 	// Handle merge
 	const handleMergeWorktree = useCallback(async () => {
-		if (!mergeWorktree) return
+		if (!mergeWorktree) return;
 
-		setIsMerging(true)
-		setMergeError(null)
-		setMergeResult(null)
+		setIsMerging(true);
+		setMergeError(null);
+		setMergeResult(null);
 
 		try {
 			const result = await WorktreeServiceClient.mergeWorktree(
@@ -199,42 +253,46 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 					targetBranch: getMainBranch(),
 					deleteAfterMerge,
 				}),
-			)
+			);
 
-			setMergeResult(result)
+			setMergeResult(result);
 
 			if (result.success) {
 				// Reload worktrees to reflect changes
-				await loadWorktrees()
+				await loadWorktrees();
 			} else if (!result.hasConflicts) {
-				setMergeError(result.message)
+				setMergeError(result.message);
 			}
 		} catch (err) {
-			setMergeError(err instanceof Error ? err.message : "Failed to merge worktree")
+			setMergeError(
+				err instanceof Error ? err.message : "Failed to merge worktree",
+			);
 		} finally {
-			setIsMerging(false)
+			setIsMerging(false);
 		}
-	}, [mergeWorktree, getMainBranch, deleteAfterMerge, loadWorktrees])
+	}, [mergeWorktree, getMainBranch, deleteAfterMerge, loadWorktrees]);
 
 	// Ask Asi to resolve conflicts
 	const handleAskAsiToResolve = useCallback(async () => {
-		if (!mergeResult || !mergeResult.hasConflicts) return
+		if (!mergeResult || !mergeResult.hasConflicts) return;
 
-		const conflictList = mergeResult.conflictingFiles.join(", ")
+		const conflictList = mergeResult.conflictingFiles.join(", ");
 		const prompt = `I tried to merge branch '${mergeResult.sourceBranch}' into '${mergeResult.targetBranch}' but there are merge conflicts in the following files: ${conflictList}
 
-Please help me resolve these merge conflicts, then complete the merge, and delete the worktree at: ${mergeWorktree?.path}`
+Please help me resolve these merge conflicts, then complete the merge, and delete the worktree at: ${mergeWorktree?.path}`;
 
 		try {
 			// Create a new task with this prompt
-			await TaskServiceClient.newTask(NewTaskRequest.create({ text: prompt }))
-			closeMergeModal()
+			await TaskServiceClient.newTask(NewTaskRequest.create({ text: prompt }));
+			closeMergeModal();
 			// Close worktrees view to show the chat with the new task
-			onDone()
+			onDone();
 		} catch (err) {
-			setMergeError(err instanceof Error ? err.message : "Failed to create task for Asi")
+			setMergeError(
+				err instanceof Error ? err.message : "Failed to create task for Asi",
+			);
 		}
-	}, [mergeResult, mergeWorktree, closeMergeModal, onDone])
+	}, [mergeResult, mergeWorktree, closeMergeModal, onDone]);
 
 	return (
 		<div className="fixed inset-0 flex flex-col overflow-hidden">
@@ -250,14 +308,16 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 			<div className="flex-1 overflow-y-auto p-5">
 				{/* Description */}
 				<p className="text-sm text-[var(--vscode-descriptionForeground)] m-0 mb-4">
-					Git worktrees let you work on multiple branches at the same time, each in its own folder. Open worktrees in
-					their own windows so Asi can work on multiple tasks in parallel.{" "}
+					Git worktrees let you work on multiple branches at the same time, each
+					in its own folder. Open worktrees in their own windows so Asi can work
+					on multiple tasks in parallel.{" "}
 					<a
 						className="text-[var(--vscode-textLink-foreground)] hover:text-[var(--vscode-textLink-activeForeground)]"
 						href="https://docs.fetch.ai/features/worktrees"
 						rel="noopener noreferrer"
 						style={{ fontSize: "inherit" }}
-						target="_blank">
+						target="_blank"
+					>
 						Learn more
 					</a>
 				</p>
@@ -269,7 +329,8 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 						style={{
 							border: "1px solid var(--vscode-widget-border)",
 							backgroundColor: "var(--vscode-list-hoverBackground)",
-						}}>
+						}}
+					>
 						{hasWorktreeInclude ? (
 							<p className="text-sm text-[var(--vscode-testing-iconPassed)] m-0">
 								<Check className="w-4 h-4 inline-block align-text-bottom mr-1" />
@@ -279,7 +340,8 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 									href="https://docs.fetch.ai/features/worktrees#worktreeinclude"
 									rel="noopener noreferrer"
 									style={{ fontSize: "inherit" }}
-									target="_blank">
+									target="_blank"
+								>
 									Learn more
 								</a>
 							</p>
@@ -300,7 +362,8 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 										href="https://docs.fetch.ai/features/worktrees#worktreeinclude"
 										rel="noopener noreferrer"
 										style={{ fontSize: "inherit" }}
-										target="_blank">
+										target="_blank"
+									>
 										Learn more
 									</a>
 								</p>
@@ -308,7 +371,8 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 									<VSCodeButton
 										appearance="secondary"
 										disabled={isCreatingWorktreeInclude}
-										onClick={handleCreateWorktreeInclude}>
+										onClick={handleCreateWorktreeInclude}
+									>
 										{isCreatingWorktreeInclude ? (
 											<>
 												<Loader2 className="w-3 h-3 mr-1 animate-spin" />
@@ -328,24 +392,31 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 				{isLoading ? (
 					<div className="flex items-center justify-center min-h-32 py-8">
 						<Loader2 className="w-6 h-6 animate-spin text-[var(--vscode-descriptionForeground)]" />
-						<span className="ml-2 text-[var(--vscode-descriptionForeground)]">Loading...</span>
+						<span className="ml-2 text-[var(--vscode-descriptionForeground)]">
+							Loading...
+						</span>
 					</div>
 				) : isMultiRoot ? (
 					<div className="flex flex-col items-center justify-center min-h-32 py-8 text-center">
 						<AlertCircle className="w-8 h-8 text-[var(--vscode-inputValidation-warningForeground)] mb-2 shrink-0" />
-						<p className="text-[var(--vscode-foreground)] font-medium mb-1">Multi-folder workspace detected</p>
+						<p className="text-[var(--vscode-foreground)] font-medium mb-1">
+							Multi-folder workspace detected
+						</p>
 						<p className="text-[var(--vscode-descriptionForeground)] text-sm">
-							Worktrees are not supported when multiple folders are open in the same workspace. Please open a single
-							repository folder to use this feature.
+							Worktrees are not supported when multiple folders are open in the
+							same workspace. Please open a single repository folder to use this
+							feature.
 						</p>
 					</div>
 				) : isSubfolder ? (
 					<div className="flex flex-col items-center justify-center min-h-32 py-8 text-center">
 						<AlertCircle className="w-8 h-8 text-[var(--vscode-inputValidation-warningForeground)] mb-2 shrink-0" />
-						<p className="text-[var(--vscode-foreground)] font-medium mb-1">Subfolder of a git repository</p>
+						<p className="text-[var(--vscode-foreground)] font-medium mb-1">
+							Subfolder of a git repository
+						</p>
 						<p className="text-[var(--vscode-descriptionForeground)] text-sm">
-							You have a subfolder open instead of the repository root. Please open the root folder to use
-							worktrees:
+							You have a subfolder open instead of the repository root. Please
+							open the root folder to use worktrees:
 						</p>
 						<code className="mt-2 px-2 py-1 bg-[var(--vscode-textCodeBlock-background)] rounded text-sm break-all">
 							{gitRootPath}
@@ -355,21 +426,28 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 					<div className="flex flex-col items-center justify-center min-h-32 py-8 text-center">
 						<AlertCircle className="w-8 h-8 text-[var(--vscode-descriptionForeground)] mb-2 shrink-0" />
 						<p className="text-[var(--vscode-descriptionForeground)]">
-							Worktrees require a git repository. Please initialize git to use worktrees.
+							Worktrees require a git repository. Please initialize git to use
+							worktrees.
 						</p>
 					</div>
 				) : error ? (
 					<div className="flex flex-col items-center justify-center min-h-32 py-8 text-center">
 						<AlertCircle className="w-8 h-8 text-[var(--vscode-errorForeground)] mb-2 shrink-0" />
 						<p className="text-[var(--vscode-errorForeground)]">{error}</p>
-						<VSCodeButton appearance="secondary" className="mt-3" onClick={loadWorktrees}>
+						<VSCodeButton
+							appearance="secondary"
+							className="mt-3"
+							onClick={loadWorktrees}
+						>
 							Retry
 						</VSCodeButton>
 					</div>
 				) : worktrees.length === 0 ? (
 					<div className="flex flex-col items-center justify-center min-h-32 py-8 text-center">
 						<GitBranch className="w-8 h-8 text-[var(--vscode-descriptionForeground)] mb-2 shrink-0" />
-						<p className="text-[var(--vscode-descriptionForeground)]">No worktrees found.</p>
+						<p className="text-[var(--vscode-descriptionForeground)]">
+							No worktrees found.
+						</p>
 					</div>
 				) : (
 					<>
@@ -382,7 +460,8 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 											? "border-[var(--vscode-focusBorder)] bg-[var(--vscode-list-activeSelectionBackground)]"
 											: "border-[var(--vscode-panel-border)]"
 									}`}
-									key={worktree.path}>
+									key={worktree.path}
+								>
 									{/* Branch name, badges, and action buttons - wraps on small screens */}
 									<div className="flex flex-wrap items-center justify-between gap-2 mb-1">
 										{/* Left side: branch name and badges */}
@@ -390,7 +469,10 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 											<div className="flex items-center gap-2">
 												<GitBranch className="w-4 h-4 flex-shrink-0 text-[var(--vscode-button-background)]" />
 												<span className="font-medium break-all">
-													{worktree.branch || (worktree.isDetached ? "HEAD (detached)" : "unknown")}
+													{worktree.branch ||
+														(worktree.isDetached
+															? "HEAD (detached)"
+															: "unknown")}
 												</span>
 											</div>
 											{isMainWorktree(worktree) && (
@@ -401,7 +483,8 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 														</span>
 													</TooltipTrigger>
 													<TooltipContent side="bottom">
-														The original worktree where your .git directory lives.
+														The original worktree where your .git directory
+														lives.
 													</TooltipContent>
 												</Tooltip>
 											)}
@@ -431,21 +514,31 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 														<TooltipTrigger asChild>
 															<VSCodeButton
 																appearance="icon"
-																onClick={() => handleSwitchWorktree(worktree.path, false)}>
+																onClick={() =>
+																	handleSwitchWorktree(worktree.path, false)
+																}
+															>
 																<FolderOpen className="w-4 h-4" />
 															</VSCodeButton>
 														</TooltipTrigger>
-														<TooltipContent side="bottom">Open in current window</TooltipContent>
+														<TooltipContent side="bottom">
+															Open in current window
+														</TooltipContent>
 													</Tooltip>
 													<Tooltip>
 														<TooltipTrigger asChild>
 															<VSCodeButton
 																appearance="icon"
-																onClick={() => handleSwitchWorktree(worktree.path, true)}>
+																onClick={() =>
+																	handleSwitchWorktree(worktree.path, true)
+																}
+															>
 																<ExternalLink className="w-4 h-4" />
 															</VSCodeButton>
 														</TooltipTrigger>
-														<TooltipContent side="bottom">Open in new window</TooltipContent>
+														<TooltipContent side="bottom">
+															Open in new window
+														</TooltipContent>
 													</Tooltip>
 												</>
 											)}
@@ -455,7 +548,8 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 														<TooltipTrigger asChild>
 															<VSCodeButton
 																appearance="icon"
-																onClick={() => openMergeModal(worktree)}>
+																onClick={() => openMergeModal(worktree)}
+															>
 																<GitMerge className="w-4 h-4 text-[var(--vscode-testing-iconPassed)]" />
 															</VSCodeButton>
 														</TooltipTrigger>
@@ -467,11 +561,14 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 														<TooltipTrigger asChild>
 															<VSCodeButton
 																appearance="icon"
-																onClick={() => setDeleteWorktree(worktree)}>
+																onClick={() => setDeleteWorktree(worktree)}
+															>
 																<Trash2 className="w-4 h-4 text-[var(--vscode-errorForeground)]" />
 															</VSCodeButton>
 														</TooltipTrigger>
-														<TooltipContent side="bottom">Delete this worktree</TooltipContent>
+														<TooltipContent side="bottom">
+															Delete this worktree
+														</TooltipContent>
 													</Tooltip>
 												</>
 											)}
@@ -494,8 +591,13 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 					className="flex-none px-5 py-3"
 					style={{
 						borderTop: "1px solid var(--vscode-panel-border)",
-					}}>
-					<VSCodeButton disabled={isLoading} onClick={() => setShowCreateForm(true)} style={{ width: "100%" }}>
+					}}
+				>
+					<VSCodeButton
+						disabled={isLoading}
+						onClick={() => setShowCreateForm(true)}
+						style={{ width: "100%" }}
+					>
 						<Plus className="w-4 h-4 mr-1" />
 						New Worktree
 					</VSCodeButton>
@@ -503,13 +605,23 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 			)}
 
 			{/* Create Worktree Modal */}
-			<CreateWorktreeModal onClose={() => setShowCreateForm(false)} onSuccess={loadWorktrees} open={showCreateForm} />
+			<CreateWorktreeModal
+				onClose={() => setShowCreateForm(false)}
+				onSuccess={loadWorktrees}
+				open={showCreateForm}
+			/>
 
 			{/* Delete Worktree Modal */}
 			<DeleteWorktreeModal
 				branchName={deleteWorktree?.branch || ""}
 				onClose={() => setDeleteWorktree(null)}
-				onConfirm={(deleteBranch) => handleDeleteWorktree(deleteWorktree!.path, deleteBranch, deleteWorktree!.branch)}
+				onConfirm={(deleteBranch) =>
+					handleDeleteWorktree(
+						deleteWorktree!.path,
+						deleteBranch,
+						deleteWorktree!.branch,
+					)
+				}
 				open={!!deleteWorktree}
 				worktreePath={deleteWorktree?.path || ""}
 			/>
@@ -520,16 +632,18 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 					className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
 					onClick={(e) => {
 						if (e.target === e.currentTarget && !isMerging) {
-							closeMergeModal()
+							closeMergeModal();
 						}
-					}}>
+					}}
+				>
 					<div className="bg-[var(--vscode-editor-background)] border border-[var(--vscode-panel-border)] rounded-lg p-5 w-[450px] max-w-[90vw] relative">
 						{/* Close button */}
 						<button
 							className="absolute top-3 right-3 p-1 rounded hover:bg-[var(--vscode-toolbar-hoverBackground)] text-[var(--vscode-descriptionForeground)] hover:text-[var(--vscode-foreground)] cursor-pointer"
 							disabled={isMerging}
 							onClick={closeMergeModal}
-							type="button">
+							type="button"
+						>
 							<X className="w-4 h-4" />
 						</button>
 
@@ -555,7 +669,9 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 								<div className="flex items-start gap-2 p-3 rounded bg-[var(--vscode-inputValidation-warningBackground)] border border-[var(--vscode-inputValidation-warningBorder)]">
 									<AlertCircle className="w-5 h-5 flex-shrink-0 text-[var(--vscode-inputValidation-warningForeground)] mt-0.5" />
 									<div>
-										<p className="text-sm font-medium m-0 mb-1">Merge conflicts detected</p>
+										<p className="text-sm font-medium m-0 mb-1">
+											Merge conflicts detected
+										</p>
 										<p className="text-sm text-[var(--vscode-descriptionForeground)] m-0 mb-2">
 											The following files have conflicts:
 										</p>
@@ -573,10 +689,17 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 								</div>
 
 								<div className="flex flex-col gap-2">
-									<VSCodeButton onClick={handleAskAsiToResolve} style={{ width: "100%" }}>
+									<VSCodeButton
+										onClick={handleAskAsiToResolve}
+										style={{ width: "100%" }}
+									>
 										Ask Asi to Resolve
 									</VSCodeButton>
-									<VSCodeButton appearance="secondary" onClick={closeMergeModal} style={{ width: "100%" }}>
+									<VSCodeButton
+										appearance="secondary"
+										onClick={closeMergeModal}
+										style={{ width: "100%" }}
+									>
 										I'll Resolve Manually
 									</VSCodeButton>
 								</div>
@@ -599,23 +722,38 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 								<label className="flex items-center gap-2 cursor-pointer">
 									<VSCodeCheckbox
 										checked={deleteAfterMerge}
-										onChange={(e) => setDeleteAfterMerge((e.target as HTMLInputElement).checked)}
+										onChange={(e) =>
+											setDeleteAfterMerge(
+												(e.target as HTMLInputElement).checked,
+											)
+										}
 									/>
-									<span className="text-sm">Delete worktree after successful merge</span>
+									<span className="text-sm">
+										Delete worktree after successful merge
+									</span>
 								</label>
 
 								{mergeError && (
 									<div className="flex items-start gap-2 p-3 rounded bg-[var(--vscode-inputValidation-errorBackground)] border border-[var(--vscode-inputValidation-errorBorder)]">
 										<AlertCircle className="w-4 h-4 flex-shrink-0 text-[var(--vscode-errorForeground)] mt-0.5" />
-										<p className="text-sm text-[var(--vscode-errorForeground)] m-0">{mergeError}</p>
+										<p className="text-sm text-[var(--vscode-errorForeground)] m-0">
+											{mergeError}
+										</p>
 									</div>
 								)}
 
 								<div className="flex justify-end gap-2">
-									<VSCodeButton appearance="secondary" disabled={isMerging} onClick={closeMergeModal}>
+									<VSCodeButton
+										appearance="secondary"
+										disabled={isMerging}
+										onClick={closeMergeModal}
+									>
 										Cancel
 									</VSCodeButton>
-									<VSCodeButton disabled={isMerging} onClick={handleMergeWorktree}>
+									<VSCodeButton
+										disabled={isMerging}
+										onClick={handleMergeWorktree}
+									>
 										{isMerging ? (
 											<>
 												<Loader2 className="w-4 h-4 mr-1 animate-spin" />
@@ -635,7 +773,7 @@ Please help me resolve these merge conflicts, then complete the merge, and delet
 				</div>
 			)}
 		</div>
-	)
-}
+	);
+};
 
-export default memo(WorktreesView)
+export default memo(WorktreesView);

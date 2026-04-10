@@ -1,61 +1,73 @@
-import type { HookOutputStreamMeta } from "@shared/ExtensionMessage"
-import { AsiMessage } from "@shared/ExtensionMessage"
-import type { HookOutput } from "@shared/proto/asi/hooks"
-import { Logger } from "@/shared/services/Logger"
-import { MessageStateHandler } from "../task/message-state"
-import { HookExecutionError } from "./HookError"
-import type { HookModelInputContext } from "./hook-factory"
-import { HookFactory } from "./hook-factory"
+import type { HookOutputStreamMeta } from "@shared/ExtensionMessage";
+import { AsiMessage } from "@shared/ExtensionMessage";
+import type { HookOutput } from "@shared/proto/Asi/hooks";
+import { Logger } from "@/shared/services/Logger";
+import { MessageStateHandler } from "../task/message-state";
+import { HookExecutionError } from "./HookError";
+import type { HookModelInputContext } from "./hook-factory";
+import { HookFactory } from "./hook-factory";
 
 export interface HookExecutionOptions<Name extends keyof Hooks = any> {
-	hookName: Name
-	hookInput: Hooks[Name]
-	isCancellable: boolean
-	say: (type: any, text?: string, images?: string[], files?: string[], partial?: boolean) => Promise<number | undefined>
+	hookName: Name;
+	hookInput: Hooks[Name];
+	isCancellable: boolean;
+	say: (
+		type: any,
+		text?: string,
+		images?: string[],
+		files?: string[],
+		partial?: boolean,
+	) => Promise<number | undefined>;
 	setActiveHookExecution?: (execution: {
-		hookName: string
-		toolName: string | undefined
-		messageTs: number
-		abortController: AbortController
-	}) => Promise<void>
-	clearActiveHookExecution?: () => Promise<void>
-	messageStateHandler: MessageStateHandler
-	taskId: string
-	hooksEnabled: boolean
-	model?: HookModelInputContext
-	toolName?: string // Optional tool name for PreToolUse/PostToolUse hooks
-	pendingToolInfo?: any // Optional metadata about pending tool execution for PreToolUse
+		hookName: string;
+		toolName: string | undefined;
+		messageTs: number;
+		abortController: AbortController;
+	}) => Promise<void>;
+	clearActiveHookExecution?: () => Promise<void>;
+	messageStateHandler: MessageStateHandler;
+	taskId: string;
+	hooksEnabled: boolean;
+	model?: HookModelInputContext;
+	toolName?: string; // Optional tool name for PreToolUse/PostToolUse hooks
+	pendingToolInfo?: any; // Optional metadata about pending tool execution for PreToolUse
 }
 
 // Import Hooks type from HookFactory
-type Hooks = import("./hook-factory").Hooks
+type Hooks = import("./hook-factory").Hooks;
 
 export interface HookExecutionResult {
-	cancel?: boolean
-	contextModification?: string
-	errorMessage?: string
-	wasCancelled: boolean
+	cancel?: boolean;
+	contextModification?: string;
+	errorMessage?: string;
+	wasCancelled: boolean;
 }
 
 function fromHookOutput(output: HookOutput): HookExecutionResult {
 	// HookOutput is protobuf-generated, so fields are defaulted (e.g. ""). Treat empty
 	// strings as “unset” in the hook executor API.
-	const contextModification = output.contextModification?.trim() ? output.contextModification : undefined
-	const errorMessage = output.errorMessage?.trim() ? output.errorMessage : undefined
+	const contextModification = output.contextModification?.trim()
+		? output.contextModification
+		: undefined;
+	const errorMessage = output.errorMessage?.trim()
+		? output.errorMessage
+		: undefined;
 
 	return {
 		cancel: output.cancel,
 		contextModification,
 		errorMessage,
 		wasCancelled: false,
-	}
+	};
 }
 
 /**
  * Executes a hook with standardized error handling, status tracking, and cleanup.
  * This consolidates the common pattern used across all hook execution sites.
  */
-export async function executeHook<Name extends keyof Hooks>(options: HookExecutionOptions<Name>): Promise<HookExecutionResult> {
+export async function executeHook<Name extends keyof Hooks>(
+	options: HookExecutionOptions<Name>,
+): Promise<HookExecutionResult> {
 	const {
 		hookName,
 		hookInput,
@@ -66,33 +78,33 @@ export async function executeHook<Name extends keyof Hooks>(options: HookExecuti
 		messageStateHandler,
 		taskId,
 		hooksEnabled,
-	} = options
+	} = options;
 
 	// Early return if hooks are disabled
 	if (!hooksEnabled) {
 		return {
 			wasCancelled: false,
-		}
+		};
 	}
 
 	// Check if the hook exists
-	const hookFactory = new HookFactory()
-	const hasHook = await hookFactory.hasHook(hookName)
+	const hookFactory = new HookFactory();
+	const hasHook = await hookFactory.hasHook(hookName);
 
 	if (!hasHook) {
-		return { wasCancelled: false }
+		return { wasCancelled: false };
 	}
 
-	let hookMessageTs: number | undefined
-	const abortController = new AbortController()
+	let hookMessageTs: number | undefined;
+	const abortController = new AbortController();
 
 	// Declare hookInfo with empty default - populated inside try block.
 	// If getHookInfo throws, error handlers will use the empty default.
-	let hookInfo: { scriptPaths: string[] } = { scriptPaths: [] }
+	let hookInfo: { scriptPaths: string[] } = { scriptPaths: [] };
 
 	try {
 		// Get hook info including script paths
-		hookInfo = await hookFactory.getHookInfo(hookName)
+		hookInfo = await hookFactory.getHookInfo(hookName);
 
 		// Show hook execution indicator and capture timestamp
 		const hookMetadata = {
@@ -100,45 +112,55 @@ export async function executeHook<Name extends keyof Hooks>(options: HookExecuti
 			...(options.toolName && { toolName: options.toolName }),
 			status: "running",
 			scriptPaths: hookInfo.scriptPaths,
-			...(options.pendingToolInfo && { pendingToolInfo: options.pendingToolInfo }),
-		}
-		hookMessageTs = await say("hook_status", JSON.stringify(hookMetadata))
+			...(options.pendingToolInfo && {
+				pendingToolInfo: options.pendingToolInfo,
+			}),
+		};
+		hookMessageTs = await say("hook_status", JSON.stringify(hookMetadata));
 
 		// Reorder messages immediately so hook UI appears above tool UI
 		// This must happen right after creating the hook message, before the hook runs
 		if (hookName === "PreToolUse") {
-			await reorderHookAndToolMessages(messageStateHandler)
+			await reorderHookAndToolMessages(messageStateHandler);
 		}
 
 		// Track active hook execution for cancellation (only if cancellable and message was created)
-		if (isCancellable && hookMessageTs !== undefined && setActiveHookExecution) {
+		if (
+			isCancellable &&
+			hookMessageTs !== undefined &&
+			setActiveHookExecution
+		) {
 			await setActiveHookExecution({
 				hookName,
 				toolName: options.toolName,
 				messageTs: hookMessageTs,
 				abortController,
-			})
+			});
 		}
 
 		// Create streaming callback
-		const streamCallback = async (line: string, stream: "stdout" | "stderr", meta?: HookOutputStreamMeta) => {
+		const streamCallback = async (
+			line: string,
+			stream: "stdout" | "stderr",
+			meta?: HookOutputStreamMeta,
+		) => {
 			// Preserve script identity for multi-hook (global + workspace) scenarios.
 			// Without this, concurrent hooks interleave output and it's hard to tell which
 			// script produced which line (and can look like only one hook is printing).
 			//
 			// NOTE: We keep backward compatibility by encoding metadata into the string.
 			// The CLI prints this as-is in verbose mode.
-			const prefixParts: string[] = []
-			if (meta?.source) prefixParts.push(meta.source)
-			prefixParts.push(stream)
+			const prefixParts: string[] = [];
+			if (meta?.source) prefixParts.push(meta.source);
+			prefixParts.push(stream);
 			// Use a shortened path for readability; full path is still available in hook_status.
 			if (meta?.scriptPath) {
-				const parts = meta.scriptPath.split(/[/\\]/).filter(Boolean)
-				prefixParts.push(parts.slice(-3).join("/"))
+				const parts = meta.scriptPath.split(/[/\\]/).filter(Boolean);
+				prefixParts.push(parts.slice(-3).join("/"));
 			}
-			const prefix = prefixParts.length ? `[${prefixParts.join(" ")}] ` : ""
-			await say("hook_output_stream", prefix + line)
-		}
+			const prefix = prefixParts.length ? `[${prefixParts.join(" ")}] ` : "";
+			await say("hook_output_stream", prefix + line);
+		};
 
 		// Create and execute hook
 		const hook = await hookFactory.createWithStreaming(
@@ -147,19 +169,23 @@ export async function executeHook<Name extends keyof Hooks>(options: HookExecuti
 			isCancellable ? abortController.signal : undefined,
 			taskId,
 			options.toolName,
-		)
+		);
 
 		const result = await hook.run({
 			taskId,
 			...hookInput,
 			model: options.model,
-		})
+		});
 
-		Logger.log(`[${hookName} Hook]`, result)
+		Logger.log(`[${hookName} Hook]`, result);
 
 		// NoOp hooks return proto defaults; preserve the minimal legacy return shape.
-		if (result.cancel === false && result.contextModification === "" && result.errorMessage === "") {
-			return { wasCancelled: false }
+		if (
+			result.cancel === false &&
+			result.contextModification === "" &&
+			result.errorMessage === ""
+		) {
+			return { wasCancelled: false };
 		}
 
 		// Check if hook wants to cancel
@@ -173,15 +199,15 @@ export async function executeHook<Name extends keyof Hooks>(options: HookExecuti
 					exitCode: 130,
 					hasJsonResponse: true,
 					scriptPaths: hookInfo.scriptPaths,
-				})
+				});
 			}
 
-			return fromHookOutput(result)
+			return fromHookOutput(result);
 		}
 
 		// Clear active hook execution after successful completion (only if cancellable)
 		if (isCancellable && clearActiveHookExecution) {
-			await clearActiveHookExecution()
+			await clearActiveHookExecution();
 		}
 
 		// Update hook status to completed (only if not cancelled)
@@ -193,14 +219,14 @@ export async function executeHook<Name extends keyof Hooks>(options: HookExecuti
 				exitCode: 0,
 				hasJsonResponse: true,
 				scriptPaths: hookInfo.scriptPaths,
-			})
+			});
 		}
 
-		return fromHookOutput(result)
+		return fromHookOutput(result);
 	} catch (hookError) {
 		// Clear active hook execution (only if cancellable)
 		if (isCancellable && clearActiveHookExecution) {
-			await clearActiveHookExecution()
+			await clearActiveHookExecution();
 		}
 
 		// Check if this was a user cancellation via abort controller
@@ -212,19 +238,19 @@ export async function executeHook<Name extends keyof Hooks>(options: HookExecuti
 					status: "cancelled",
 					exitCode: 130,
 					scriptPaths: hookInfo.scriptPaths,
-				})
+				});
 			}
 
 			return {
 				cancel: true,
 				wasCancelled: true,
-			}
+			};
 		}
 
 		// Update hook status to failed for actual errors
 		// Extract structured error info if available
-		const isStructuredError = HookExecutionError.isHookError(hookError)
-		const errorInfo = isStructuredError ? hookError.errorInfo : null
+		const isStructuredError = HookExecutionError.isHookError(hookError);
+		const errorInfo = isStructuredError ? hookError.errorInfo : null;
 
 		if (hookMessageTs !== undefined) {
 			await updateHookMessage(messageStateHandler, hookMessageTs, {
@@ -240,11 +266,11 @@ export async function executeHook<Name extends keyof Hooks>(options: HookExecuti
 						scriptPath: errorInfo.scriptPath,
 					},
 				}),
-			})
+			});
 		}
 
 		// Log error for non-cancellable hooks or unexpected errors
-		Logger.error(`${hookName} hook failed:`, hookError)
+		Logger.error(`${hookName} hook failed:`, hookError);
 
 		// Return safe defaults for all fields to avoid undefined property access
 		return {
@@ -252,7 +278,7 @@ export async function executeHook<Name extends keyof Hooks>(options: HookExecuti
 			contextModification: undefined,
 			errorMessage: undefined,
 			wasCancelled: false,
-		}
+		};
 	}
 }
 
@@ -264,12 +290,14 @@ async function updateHookMessage(
 	hookMessageTs: number,
 	metadata: Record<string, any>,
 ): Promise<void> {
-	const AsiMessages = messageStateHandler.getAsiMessages()
-	const hookMessageIndex = AsiMessages.findIndex((m: AsiMessage) => m.ts === hookMessageTs)
+	const AsiMessages = messageStateHandler.getAsiMessages();
+	const hookMessageIndex = AsiMessages.findIndex(
+		(m: AsiMessage) => m.ts === hookMessageTs,
+	);
 	if (hookMessageIndex !== -1) {
 		await messageStateHandler.updateAsiMessage(hookMessageIndex, {
 			text: JSON.stringify(metadata),
-		})
+		});
 	}
 }
 
@@ -283,45 +311,55 @@ async function updateHookMessage(
  * 3. Delete the tool message
  * 4. Re-add the tool message at the end (after hook messages)
  */
-async function reorderHookAndToolMessages(messageStateHandler: MessageStateHandler): Promise<void> {
-	const AsiMessages = messageStateHandler.getAsiMessages()
+async function reorderHookAndToolMessages(
+	messageStateHandler: MessageStateHandler,
+): Promise<void> {
+	const AsiMessages = messageStateHandler.getAsiMessages();
 
 	// Define all message types that represent tool executions with PreToolUse hooks
-	const toolMessageTypes = ["tool", "command", "use_mcp_server", "browser_action_launch"]
+	const toolMessageTypes = [
+		"tool",
+		"command",
+		"use_mcp_server",
+		"browser_action_launch",
+	];
 
 	// Find the most recent tool message
-	let lastToolMessageIndex = -1
+	let lastToolMessageIndex = -1;
 	for (let i = AsiMessages.length - 1; i >= 0; i--) {
-		const msgType = AsiMessages[i].ask || AsiMessages[i].say
+		const msgType = AsiMessages[i].ask || AsiMessages[i].say;
 		if (msgType && toolMessageTypes.includes(msgType)) {
-			lastToolMessageIndex = i
-			break
+			lastToolMessageIndex = i;
+			break;
 		}
 	}
 
 	if (lastToolMessageIndex === -1) {
-		return // No tool message found, nothing to reorder
+		return; // No tool message found, nothing to reorder
 	}
 
 	// Check if there are any hook messages after the tool message
-	let hasHookMessagesAfterTool = false
+	let hasHookMessagesAfterTool = false;
 	for (let i = lastToolMessageIndex + 1; i < AsiMessages.length; i++) {
-		if (AsiMessages[i].say === "hook_status" || AsiMessages[i].say === "hook_output_stream") {
-			hasHookMessagesAfterTool = true
-			break
+		if (
+			AsiMessages[i].say === "hook_status" ||
+			AsiMessages[i].say === "hook_output_stream"
+		) {
+			hasHookMessagesAfterTool = true;
+			break;
 		}
 	}
 
 	if (!hasHookMessagesAfterTool) {
-		return // No reordering needed
+		return; // No reordering needed
 	}
 
 	// Store the tool message (deep copy to preserve all properties)
-	const toolMessage = { ...AsiMessages[lastToolMessageIndex] }
+	const toolMessage = { ...AsiMessages[lastToolMessageIndex] };
 
 	// Delete the tool message at its current position
-	await messageStateHandler.deleteAsiMessage(lastToolMessageIndex)
+	await messageStateHandler.deleteAsiMessage(lastToolMessageIndex);
 
 	// Re-add the tool message at the end (after hook messages)
-	await messageStateHandler.addToAsiMessages(toolMessage)
+	await messageStateHandler.addToAsiMessages(toolMessage);
 }

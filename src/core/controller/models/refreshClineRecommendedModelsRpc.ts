@@ -1,16 +1,19 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { AsiRecommendedModel, AsiRecommendedModelsResponse } from "@shared/proto/asi/models"
-import type { Controller } from "../index"
-import { refreshClineRecommendedModels } from "./refreshClineRecommendedModels"
+import { EmptyRequest } from "@shared/proto/Asi/common";
+import {
+	ClineRecommendedModel,
+	ClineRecommendedModelsResponse,
+} from "@shared/proto/Asi/models";
+import type { Controller } from "../index";
+import { refreshClineRecommendedModels } from "./refreshClineRecommendedModels";
 
 export async function refreshClineRecommendedModelsRpc(
 	_controller: Controller,
 	_request: EmptyRequest,
-): Promise<AsiRecommendedModelsResponse> {
-	const models = await refreshClineRecommendedModels()
-	return AsiRecommendedModelsResponse.create({
+): Promise<ClineRecommendedModelsResponse> {
+	const models = await refreshClineRecommendedModels();
+	return ClineRecommendedModelsResponse.create({
 		recommended: models.recommended.map((model) =>
-			AsiRecommendedModel.create({
+			ClineRecommendedModel.create({
 				id: model.id,
 				name: model.name,
 				description: model.description,
@@ -18,12 +21,12 @@ export async function refreshClineRecommendedModelsRpc(
 			}),
 		),
 		free: models.free.map((model) =>
-			AsiRecommendedModel.create({
+			ClineRecommendedModel.create({
 				id: model.id,
 				name: model.name,
 				description: model.description,
 				tags: model.tags,
 			}),
 		),
-	})
+	});
 }

@@ -1,44 +1,55 @@
-import { EmptyRequest } from "@shared/proto/asi/common"
-import { AddRemoteMcpServerRequest, McpServers } from "@shared/proto/asi/mcp"
-import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
-import { VSCodeButton, VSCodeLink, VSCodeRadio, VSCodeRadioGroup, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
-import { useState } from "react"
-import { LINKS } from "@/constants"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { McpServiceClient } from "@/services/grpc-client"
+import { EmptyRequest } from "@shared/proto/Asi/common";
+import { AddRemoteMcpServerRequest, McpServers } from "@shared/proto/Asi/mcp";
+import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion";
+import {
+	VSCodeButton,
+	VSCodeLink,
+	VSCodeRadio,
+	VSCodeRadioGroup,
+	VSCodeTextField,
+} from "@vscode/webview-ui-toolkit/react";
+import { useState } from "react";
+import { LINKS } from "@/constants";
+import { useExtensionState } from "@/context/ExtensionStateContext";
+import { McpServiceClient } from "@/services/grpc-client";
 
-type TransportType = "streamableHttp" | "sse"
+type TransportType = "streamableHttp" | "sse";
 
-const AddRemoteServerForm = ({ onServerAdded }: { onServerAdded: () => void }) => {
-	const [serverName, setServerName] = useState("")
-	const [serverUrl, setServerUrl] = useState("")
-	const [transportType, setTransportType] = useState<TransportType>("streamableHttp")
-	const [isSubmitting, setIsSubmitting] = useState(false)
-	const [error, setError] = useState("")
-	const { setMcpServers } = useExtensionState()
+const AddRemoteServerForm = ({
+	onServerAdded,
+}: {
+	onServerAdded: () => void;
+}) => {
+	const [serverName, setServerName] = useState("");
+	const [serverUrl, setServerUrl] = useState("");
+	const [transportType, setTransportType] =
+		useState<TransportType>("streamableHttp");
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [error, setError] = useState("");
+	const { setMcpServers } = useExtensionState();
 
 	const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-		e.preventDefault()
+		e.preventDefault();
 
 		if (!serverName.trim()) {
-			setError("Server name is required")
-			return
+			setError("Server name is required");
+			return;
 		}
 
 		if (!serverUrl.trim()) {
-			setError("Server URL is required")
-			return
+			setError("Server URL is required");
+			return;
 		}
 
 		try {
-			new URL(serverUrl)
+			new URL(serverUrl);
 		} catch (_err) {
-			setError("Invalid URL format")
-			return
+			setError("Invalid URL format");
+			return;
 		}
 
-		setError("")
-		setIsSubmitting(true)
+		setError("");
+		setIsSubmitting(true);
 
 		try {
 			const servers: McpServers = await McpServiceClient.addRemoteMcpServer(
@@ -47,27 +58,31 @@ const AddRemoteServerForm = ({ onServerAdded }: { onServerAdded: () => void }) =
 					serverUrl: serverUrl.trim(),
 					transportType: transportType,
 				}),
-			)
+			);
 
-			setIsSubmitting(false)
+			setIsSubmitting(false);
 
-			const mcpServers = convertProtoMcpServersToMcpServers(servers.mcpServers)
-			setMcpServers(mcpServers)
+			const mcpServers = convertProtoMcpServersToMcpServers(servers.mcpServers);
+			setMcpServers(mcpServers);
 
-			setServerName("")
-			setServerUrl("")
-			onServerAdded()
+			setServerName("");
+			setServerUrl("");
+			onServerAdded();
 		} catch (error) {
-			setIsSubmitting(false)
-			setError(error instanceof Error ? error.message : "Failed to add server")
+			setIsSubmitting(false);
+			setError(error instanceof Error ? error.message : "Failed to add server");
 		}
-	}
+	};
 
 	return (
 		<div className="p-4 px-5">
 			<div className="text-(--vscode-foreground) mb-2">
-				Add a remote MCP server by providing a name and its URL endpoint. Learn more{" "}
-				<VSCodeLink href={LINKS.DOCUMENTATION.REMOTE_MCP_SERVER_DOCS} style={{ display: "inline" }}>
+				Add a remote MCP server by providing a name and its URL endpoint. Learn
+				more{" "}
+				<VSCodeLink
+					href={LINKS.DOCUMENTATION.REMOTE_MCP_SERVER_DOCS}
+					style={{ display: "inline" }}
+				>
 					here.
 				</VSCodeLink>
 			</div>
@@ -78,11 +93,12 @@ const AddRemoteServerForm = ({ onServerAdded }: { onServerAdded: () => void }) =
 						className="w-full"
 						disabled={isSubmitting}
 						onChange={(e) => {
-							setServerName((e.target as HTMLInputElement).value)
-							setError("")
+							setServerName((e.target as HTMLInputElement).value);
+							setError("");
 						}}
 						placeholder="mcp-server"
-						value={serverName}>
+						value={serverName}
+					>
 						Server Name
 					</VSCodeTextField>
 				</div>
@@ -92,25 +108,35 @@ const AddRemoteServerForm = ({ onServerAdded }: { onServerAdded: () => void }) =
 						className="w-full mr-4"
 						disabled={isSubmitting}
 						onChange={(e) => {
-							setServerUrl((e.target as HTMLInputElement).value)
-							setError("")
+							setServerUrl((e.target as HTMLInputElement).value);
+							setError("");
 						}}
 						placeholder="https://example.com/mcp-server"
-						value={serverUrl}>
+						value={serverUrl}
+					>
 						Server URL
 					</VSCodeTextField>
 				</div>
 
 				<div className="mb-3">
-					<label className={`block text-sm font-medium mb-2 ${isSubmitting ? "opacity-50" : ""}`}>Transport Type</label>
+					<label
+						className={`block text-sm font-medium mb-2 ${isSubmitting ? "opacity-50" : ""}`}
+					>
+						Transport Type
+					</label>
 					<VSCodeRadioGroup
 						disabled={isSubmitting}
 						onChange={(e) => {
-							const value = (e.target as HTMLInputElement).value as TransportType
-							setTransportType(value)
+							const value = (e.target as HTMLInputElement)
+								.value as TransportType;
+							setTransportType(value);
 						}}
-						value={transportType}>
-						<VSCodeRadio checked={transportType === "streamableHttp"} value="streamableHttp">
+						value={transportType}
+					>
+						<VSCodeRadio
+							checked={transportType === "streamableHttp"}
+							value="streamableHttp"
+						>
 							Streamable HTTP
 						</VSCodeRadio>
 						<VSCodeRadio checked={transportType === "sse"} value="sse">
@@ -119,7 +145,9 @@ const AddRemoteServerForm = ({ onServerAdded }: { onServerAdded: () => void }) =
 					</VSCodeRadioGroup>
 				</div>
 
-				{error && <div className="mb-3 text-(--vscode-errorForeground)">{error}</div>}
+				{error && (
+					<div className="mb-3 text-(--vscode-errorForeground)">{error}</div>
+				)}
 
 				<VSCodeButton className="w-full" disabled={isSubmitting} type="submit">
 					{isSubmitting ? "Connecting..." : "Add Server"}
@@ -128,16 +156,19 @@ const AddRemoteServerForm = ({ onServerAdded }: { onServerAdded: () => void }) =
 				<VSCodeButton
 					appearance="secondary"
 					onClick={() => {
-						McpServiceClient.openMcpSettings(EmptyRequest.create({})).catch((error) => {
-							console.error("Error opening MCP settings:", error)
-						})
+						McpServiceClient.openMcpSettings(EmptyRequest.create({})).catch(
+							(error) => {
+								console.error("Error opening MCP settings:", error);
+							},
+						);
 					}}
-					style={{ width: "100%", marginBottom: "5px", marginTop: 15 }}>
+					style={{ width: "100%", marginBottom: "5px", marginTop: 15 }}
+				>
 					Edit Configuration
 				</VSCodeButton>
 			</form>
 		</div>
-	)
-}
+	);
+};
 
-export default AddRemoteServerForm
+export default AddRemoteServerForm;

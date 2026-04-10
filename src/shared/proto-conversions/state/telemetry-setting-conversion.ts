@@ -1,34 +1,38 @@
-import { TelemetrySettingEnum } from "@shared/proto/asi/state"
-import { TelemetrySetting } from "../../TelemetrySetting"
+import { TelemetrySettingEnum } from "@shared/proto/Asi/state";
+import { TelemetrySetting } from "../../TelemetrySetting";
 
 /**
  * Converts a domain TelemetrySetting string to a proto TelemetrySettingEnum
  */
-export function convertDomainTelemetrySettingToProto(setting: TelemetrySetting): TelemetrySettingEnum {
+export function convertDomainTelemetrySettingToProto(
+	setting: TelemetrySetting,
+): TelemetrySettingEnum {
 	switch (setting) {
 		case "unset":
-			return TelemetrySettingEnum.UNSET
+			return TelemetrySettingEnum.UNSET;
 		case "enabled":
-			return TelemetrySettingEnum.ENABLED
+			return TelemetrySettingEnum.ENABLED;
 		case "disabled":
-			return TelemetrySettingEnum.DISABLED
+			return TelemetrySettingEnum.DISABLED;
 		default:
-			return TelemetrySettingEnum.UNSET
+			return TelemetrySettingEnum.UNSET;
 	}
 }
 
 /**
  * Converts a proto TelemetrySettingEnum to a domain TelemetrySetting string
  */
-export function convertProtoTelemetrySettingToDomain(setting: TelemetrySettingEnum): TelemetrySetting {
+export function convertProtoTelemetrySettingToDomain(
+	setting: TelemetrySettingEnum,
+): TelemetrySetting {
 	switch (setting) {
 		case TelemetrySettingEnum.UNSET:
-			return "unset"
+			return "unset";
 		case TelemetrySettingEnum.ENABLED:
-			return "enabled"
+			return "enabled";
 		case TelemetrySettingEnum.DISABLED:
-			return "disabled"
+			return "disabled";
 		default:
-			return "unset"
+			return "unset";
 	}
 }

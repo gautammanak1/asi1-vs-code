@@ -1,107 +1,108 @@
-import { CheckpointRestoreRequest } from "@shared/proto/asi/checkpoints"
-import { Int64Request } from "@shared/proto/asi/common"
-import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
-import { useEffect, useRef, useState } from "react"
-import { useClickAway } from "react-use"
-import styled from "styled-components"
-import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock"
-import { useExtensionState } from "@/context/ExtensionStateContext"
-import { CheckpointsServiceClient } from "@/services/grpc-client"
+import { CheckpointRestoreRequest } from "@shared/proto/Asi/checkpoints";
+import { Int64Request } from "@shared/proto/Asi/common";
+import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
+import { useEffect, useRef, useState } from "react";
+import { useClickAway } from "react-use";
+import styled from "styled-components";
+import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock";
+import { useExtensionState } from "@/context/ExtensionStateContext";
+import { CheckpointsServiceClient } from "@/services/grpc-client";
 
 interface CheckpointOverlayProps {
-	messageTs?: number
+	messageTs?: number;
 }
 
 export const CheckpointOverlay = ({ messageTs }: CheckpointOverlayProps) => {
-	const [compareDisabled, setCompareDisabled] = useState(false)
-	const [restoreTaskDisabled, setRestoreTaskDisabled] = useState(false)
-	const [restoreWorkspaceDisabled, setRestoreWorkspaceDisabled] = useState(false)
-	const [restoreBothDisabled, setRestoreBothDisabled] = useState(false)
-	const [showRestoreConfirm, setShowRestoreConfirm] = useState(false)
-	const [hasMouseEntered, setHasMouseEntered] = useState(false)
-	const containerRef = useRef<HTMLDivElement>(null)
-	const tooltipRef = useRef<HTMLDivElement>(null)
-	const { onRelinquishControl } = useExtensionState()
+	const [compareDisabled, setCompareDisabled] = useState(false);
+	const [restoreTaskDisabled, setRestoreTaskDisabled] = useState(false);
+	const [restoreWorkspaceDisabled, setRestoreWorkspaceDisabled] =
+		useState(false);
+	const [restoreBothDisabled, setRestoreBothDisabled] = useState(false);
+	const [showRestoreConfirm, setShowRestoreConfirm] = useState(false);
+	const [hasMouseEntered, setHasMouseEntered] = useState(false);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const tooltipRef = useRef<HTMLDivElement>(null);
+	const { onRelinquishControl } = useExtensionState();
 
 	useClickAway(containerRef, () => {
 		if (showRestoreConfirm) {
-			setShowRestoreConfirm(false)
-			setHasMouseEntered(false)
+			setShowRestoreConfirm(false);
+			setHasMouseEntered(false);
 		}
-	})
+	});
 
 	// Use the onRelinquishControl hook instead of message event
 	useEffect(() => {
 		return onRelinquishControl(() => {
-			setCompareDisabled(false)
-			setRestoreTaskDisabled(false)
-			setRestoreWorkspaceDisabled(false)
-			setRestoreBothDisabled(false)
-			setShowRestoreConfirm(false)
-		})
-	}, [onRelinquishControl])
+			setCompareDisabled(false);
+			setRestoreTaskDisabled(false);
+			setRestoreWorkspaceDisabled(false);
+			setRestoreBothDisabled(false);
+			setShowRestoreConfirm(false);
+		});
+	}, [onRelinquishControl]);
 
 	const handleRestoreTask = async () => {
-		setRestoreTaskDisabled(true)
+		setRestoreTaskDisabled(true);
 		try {
 			await CheckpointsServiceClient.checkpointRestore(
 				CheckpointRestoreRequest.create({
 					number: messageTs,
 					restoreType: "task",
 				}),
-			)
+			);
 		} catch (err) {
-			console.error("Checkpoint restore task error:", err)
-			setRestoreTaskDisabled(false)
+			console.error("Checkpoint restore task error:", err);
+			setRestoreTaskDisabled(false);
 		}
-	}
+	};
 
 	const handleRestoreWorkspace = async () => {
-		setRestoreWorkspaceDisabled(true)
+		setRestoreWorkspaceDisabled(true);
 		try {
 			await CheckpointsServiceClient.checkpointRestore(
 				CheckpointRestoreRequest.create({
 					number: messageTs,
 					restoreType: "workspace",
 				}),
-			)
+			);
 		} catch (err) {
-			console.error("Checkpoint restore workspace error:", err)
-			setRestoreWorkspaceDisabled(false)
+			console.error("Checkpoint restore workspace error:", err);
+			setRestoreWorkspaceDisabled(false);
 		}
-	}
+	};
 
 	const handleRestoreBoth = async () => {
-		setRestoreBothDisabled(true)
+		setRestoreBothDisabled(true);
 		try {
 			await CheckpointsServiceClient.checkpointRestore(
 				CheckpointRestoreRequest.create({
 					number: messageTs,
 					restoreType: "taskAndWorkspace",
 				}),
-			)
+			);
 		} catch (err) {
-			console.error("Checkpoint restore both error:", err)
-			setRestoreBothDisabled(false)
+			console.error("Checkpoint restore both error:", err);
+			setRestoreBothDisabled(false);
 		}
-	}
+	};
 
 	const handleMouseEnter = () => {
-		setHasMouseEntered(true)
-	}
+		setHasMouseEntered(true);
+	};
 
 	const handleMouseLeave = () => {
 		if (hasMouseEntered) {
-			setShowRestoreConfirm(false)
-			setHasMouseEntered(false)
+			setShowRestoreConfirm(false);
+			setHasMouseEntered(false);
 		}
-	}
+	};
 
 	const handleControlsMouseLeave = (e: React.MouseEvent) => {
-		const tooltipElement = tooltipRef.current
+		const tooltipElement = tooltipRef.current;
 
 		if (tooltipElement && showRestoreConfirm) {
-			const tooltipRect = tooltipElement.getBoundingClientRect()
+			const tooltipRect = tooltipElement.getBoundingClientRect();
 
 			// If mouse is moving towards the tooltip, don't close it
 			if (
@@ -110,57 +111,76 @@ export const CheckpointOverlay = ({ messageTs }: CheckpointOverlayProps) => {
 				e.clientX >= tooltipRect.left &&
 				e.clientX <= tooltipRect.right
 			) {
-				return
+				return;
 			}
 		}
 
-		setShowRestoreConfirm(false)
-		setHasMouseEntered(false)
-	}
+		setShowRestoreConfirm(false);
+		setHasMouseEntered(false);
+	};
 
 	return (
-		<CheckpointControls className="hover:opacity-100" onMouseLeave={handleControlsMouseLeave}>
+		<CheckpointControls
+			className="hover:opacity-100"
+			onMouseLeave={handleControlsMouseLeave}
+		>
 			<VSCodeButton
 				appearance="secondary"
 				disabled={compareDisabled}
 				onClick={async () => {
-					setCompareDisabled(true)
+					setCompareDisabled(true);
 					try {
 						await CheckpointsServiceClient.checkpointDiff(
 							Int64Request.create({
 								value: messageTs,
 							}),
-						)
+						);
 					} catch (err) {
-						console.error("CheckpointDiff error:", err)
+						console.error("CheckpointDiff error:", err);
 					} finally {
-						setCompareDisabled(false)
+						setCompareDisabled(false);
 					}
 				}}
 				style={{ cursor: compareDisabled ? "wait" : "pointer" }}
-				title="Compare">
-				<i className="codicon codicon-diff-multiple" style={{ position: "absolute" }} />
+				title="Compare"
+			>
+				<i
+					className="codicon codicon-diff-multiple"
+					style={{ position: "absolute" }}
+				/>
 			</VSCodeButton>
 			<div ref={containerRef} style={{ position: "relative" }}>
 				<VSCodeButton
 					appearance="secondary"
 					onClick={() => setShowRestoreConfirm(true)}
 					style={{ cursor: "pointer" }}
-					title="Restore">
-					<i className="codicon codicon-discard" style={{ position: "absolute" }} />
+					title="Restore"
+				>
+					<i
+						className="codicon codicon-discard"
+						style={{ position: "absolute" }}
+					/>
 				</VSCodeButton>
 				{showRestoreConfirm && (
-					<RestoreConfirmTooltip onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave} ref={tooltipRef}>
+					<RestoreConfirmTooltip
+						onMouseEnter={handleMouseEnter}
+						onMouseLeave={handleMouseLeave}
+						ref={tooltipRef}
+					>
 						<RestoreOption>
 							<VSCodeButton
 								disabled={restoreBothDisabled}
 								onClick={handleRestoreBoth}
 								style={{
 									cursor: restoreBothDisabled ? "wait" : "pointer",
-								}}>
+								}}
+							>
 								Restore Task and Workspace
 							</VSCodeButton>
-							<p>Restores the task and your project's files back to a snapshot taken at this point</p>
+							<p>
+								Restores the task and your project's files back to a snapshot
+								taken at this point
+							</p>
 						</RestoreOption>
 						<RestoreOption>
 							<VSCodeButton
@@ -168,10 +188,13 @@ export const CheckpointOverlay = ({ messageTs }: CheckpointOverlayProps) => {
 								onClick={handleRestoreTask}
 								style={{
 									cursor: restoreTaskDisabled ? "wait" : "pointer",
-								}}>
+								}}
+							>
 								Restore Task Only
 							</VSCodeButton>
-							<p>Deletes messages after this point (does not affect workspace)</p>
+							<p>
+								Deletes messages after this point (does not affect workspace)
+							</p>
 						</RestoreOption>
 						<RestoreOption>
 							<VSCodeButton
@@ -179,17 +202,21 @@ export const CheckpointOverlay = ({ messageTs }: CheckpointOverlayProps) => {
 								onClick={handleRestoreWorkspace}
 								style={{
 									cursor: restoreWorkspaceDisabled ? "wait" : "pointer",
-								}}>
+								}}
+							>
 								Restore Workspace Only
 							</VSCodeButton>
-							<p>Restores your project's files to a snapshot taken at this point (task may become out of sync)</p>
+							<p>
+								Restores your project's files to a snapshot taken at this point
+								(task may become out of sync)
+							</p>
 						</RestoreOption>
 					</RestoreConfirmTooltip>
 				)}
 			</div>
 		</CheckpointControls>
-	)
-}
+	);
+};
 
 export const CheckpointControls = styled.div`
 	position: absolute;
@@ -215,7 +242,7 @@ export const CheckpointControls = styled.div`
 		top: 50%;
 		transform: translate(-50%, -50%);
 	}
-`
+`;
 
 const RestoreOption = styled.div`
 	&:not(:last-child) {
@@ -239,7 +266,7 @@ const RestoreOption = styled.div`
 		width: 100%;
 		margin-bottom: 10px;
 	}
-`
+`;
 
 const RestoreConfirmTooltip = styled.div`
 	position: absolute;
@@ -287,4 +314,4 @@ const RestoreConfirmTooltip = styled.div`
 		white-space: normal;
 		word-wrap: break-word;
 	}
-`
+`;

@@ -1,3 +1,3 @@
-[submodule "evals/Asi-bench"]
-	path = evals/Asi-bench
-	url = https://github.com/Asi/Asi-bench.git
+[submodule "evals/asi1-vs-code"]
+	path = evals/asi1-vs-code
+	url = https://github.com/gautammanak1/asi1-vs-code.git

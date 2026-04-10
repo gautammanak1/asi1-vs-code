@@ -1,6 +1,6 @@
-import { HostProvider } from "@/hosts/host-provider"
-import { EmptyRequest } from "@/shared/proto/asi/common"
-import { Logger } from "@/shared/services/Logger"
+import { HostProvider } from "@/hosts/host-provider";
+import { EmptyRequest } from "@/shared/proto/Asi/common";
+import { Logger } from "@/shared/services/Logger";
 
 /**
  * Checks if the current workspace has multiple root folders open.
@@ -19,10 +19,12 @@ import { Logger } from "@/shared/services/Logger"
  */
 export async function isMultiRootWorkspace(): Promise<boolean> {
 	try {
-		const workspacePaths = await HostProvider.workspace.getWorkspacePaths(EmptyRequest.create({}))
-		return workspacePaths.paths.length > 1
+		const workspacePaths = await HostProvider.workspace.getWorkspacePaths(
+			EmptyRequest.create({}),
+		);
+		return workspacePaths.paths.length > 1;
 	} catch (error) {
-		Logger.error("Failed to detect multi-root workspace", error)
-		return false
+		Logger.error("Failed to detect multi-root workspace", error);
+		return false;
 	}
 }

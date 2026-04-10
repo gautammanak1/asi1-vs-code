@@ -1,49 +1,66 @@
-import { StringRequest } from "@shared/proto/asi/common"
-import { DeleteSkillRequest, RuleFileRequest } from "@shared/proto/index.Asi"
-import { REMOTE_URI_SCHEME } from "@shared/remote-config/constants"
-import { EyeIcon, InfoIcon, PenIcon, Trash2Icon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { FileServiceClient } from "@/services/grpc-client"
+import { StringRequest } from "@shared/proto/Asi/common";
+import { DeleteSkillRequest, RuleFileRequest } from "@shared/proto/index.Asi";
+import { REMOTE_URI_SCHEME } from "@shared/remote-config/constants";
+import { EyeIcon, InfoIcon, PenIcon, Trash2Icon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { FileServiceClient } from "@/services/grpc-client";
 
 function isWin32Path(filePath: string): boolean {
-	return /^[a-zA-Z]:\\/.test(filePath)
+	return /^[a-zA-Z]:\\/.test(filePath);
 }
 
 function splitPath(filePath: string): string[] {
-	const win32 = isWin32Path(filePath)
-	return filePath.split(win32 ? "\\" : "/")
+	const win32 = isWin32Path(filePath);
+	return filePath.split(win32 ? "\\" : "/");
 }
 
 function getDisplayNameFromPath(filePath: string): string {
-	const parts = splitPath(filePath)
-	return parts.at(-1) || filePath
+	const parts = splitPath(filePath);
+	return parts.at(-1) || filePath;
 }
 
 function getSkillDisplayNameFromSkillMdPath(filePath: string): string {
-	const parts = splitPath(filePath)
-	const displayName = getDisplayNameFromPath(filePath)
+	const parts = splitPath(filePath);
+	const displayName = getDisplayNameFromPath(filePath);
 	// Path is like /path/to/skill-name/SKILL.md, we want skill-name
-	return parts.at(-2) || displayName
+	return parts.at(-2) || displayName;
 }
 
 const RuleRow: React.FC<{
-	rulePath: string
-	enabled: boolean
-	isGlobal: boolean
-	ruleType: string
-	toggleRule: (rulePath: string, enabled: boolean) => void
-	isRemote?: boolean
-	alwaysEnabled?: boolean
-	onDeleteSkill?: () => void
-}> = ({ rulePath, enabled, isGlobal, toggleRule, ruleType, isRemote = false, alwaysEnabled = false, onDeleteSkill }) => {
-	const displayName = getDisplayNameFromPath(rulePath)
-	const skillDisplayName = getSkillDisplayNameFromSkillMdPath(rulePath)
+	rulePath: string;
+	enabled: boolean;
+	isGlobal: boolean;
+	ruleType: string;
+	toggleRule: (rulePath: string, enabled: boolean) => void;
+	isRemote?: boolean;
+	alwaysEnabled?: boolean;
+	onDeleteSkill?: () => void;
+}> = ({
+	rulePath,
+	enabled,
+	isGlobal,
+	toggleRule,
+	ruleType,
+	isRemote = false,
+	alwaysEnabled = false,
+	onDeleteSkill,
+}) => {
+	const displayName = getDisplayNameFromPath(rulePath);
+	const skillDisplayName = getSkillDisplayNameFromSkillMdPath(rulePath);
 
 	// For remote rules, the rulePath is already the display name
-	const finalDisplayName = isRemote ? rulePath : ruleType === "skill" ? skillDisplayName : displayName
-	const isDisabled = isRemote && alwaysEnabled
+	const finalDisplayName = isRemote
+		? rulePath
+		: ruleType === "skill"
+			? skillDisplayName
+			: displayName;
+	const isDisabled = isRemote && alwaysEnabled;
 
 	const getRuleTypeIcon = () => {
 		switch (ruleType) {
@@ -54,7 +71,8 @@ const RuleRow: React.FC<{
 						style={{ verticalAlign: "middle" }}
 						viewBox="0 0 24 24"
 						width="16"
-						xmlns="http://www.w3.org/2000/svg">
+						xmlns="http://www.w3.org/2000/svg"
+					>
 						<g fill="none" stroke="currentColor" strokeWidth="1.2">
 							<path d="M12 4L5 8l7 4 7-4-7-4z" fill="rgba(255,255,255,0.2)" />
 							<path d="M5 8v8l7 4v-8L5 8z" fill="rgba(255,255,255,0.1)" />
@@ -64,7 +82,7 @@ const RuleRow: React.FC<{
 							<line x1="12" x2="12" y1="12" y2="20" />
 						</g>
 					</svg>
-				)
+				);
 			case "windsurf":
 				return (
 					<svg
@@ -72,15 +90,19 @@ const RuleRow: React.FC<{
 						style={{ verticalAlign: "middle" }}
 						viewBox="0 0 24 24"
 						width="16"
-						xmlns="http://www.w3.org/2000/svg">
+						xmlns="http://www.w3.org/2000/svg"
+					>
 						<g fill="currentColor" stroke="currentColor" strokeWidth="1">
 							<path d="M6 18L16 5L14 18H6z" fill="currentColor" />
 							<line strokeWidth="1.5" x1="14" x2="16" y1="18" y2="5" />
-							<path d="M4 19h12c0.5 0 1-0.3 1-1s-0.3-1-1-1H4c-0.5 0-1 0.3-1 1s0.3 1 1 1z" fill="currentColor" />
+							<path
+								d="M4 19h12c0.5 0 1-0.3 1-1s-0.3-1-1-1H4c-0.5 0-1 0.3-1 1s0.3 1 1 1z"
+								fill="currentColor"
+							/>
 							<line strokeWidth="1" x1="14" x2="16" y1="13" y2="9" />
 						</g>
 					</svg>
-				)
+				);
 			case "agents":
 				return (
 					<svg
@@ -88,25 +110,34 @@ const RuleRow: React.FC<{
 						style={{ verticalAlign: "middle" }}
 						viewBox="0 0 24 24"
 						width="16"
-						xmlns="http://www.w3.org/2000/svg">
-						<g fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5">
+						xmlns="http://www.w3.org/2000/svg"
+					>
+						<g
+							fill="none"
+							stroke="currentColor"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth="1.5"
+						>
 							<circle cx="12" cy="8" r="3" />
 							<path d="M12 14c-4 0-6 2-6 4v2h12v-2c0-2-2-4-6-4z" />
 						</g>
 					</svg>
-				)
+				);
 			default:
-				return null
+				return null;
 		}
-	}
+	};
 
 	const handleEditClick = () => {
 		// For remote rules, use the special remote:// URI format
-		const filePath = isRemote ? `${REMOTE_URI_SCHEME}${ruleType === "workflow" ? "workflow" : "rule"}/${rulePath}` : rulePath
-		FileServiceClient.openFile(StringRequest.create({ value: filePath })).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
-	}
+		const filePath = isRemote
+			? `${REMOTE_URI_SCHEME}${ruleType === "workflow" ? "workflow" : "rule"}/${rulePath}`
+			: rulePath;
+		FileServiceClient.openFile(StringRequest.create({ value: filePath })).catch(
+			(err) => console.error("Failed to open file:", err),
+		);
+	};
 
 	const handleDeleteClick = () => {
 		if (ruleType === "skill") {
@@ -117,7 +148,7 @@ const RuleRow: React.FC<{
 				}),
 			)
 				.then(() => onDeleteSkill?.())
-				.catch((err) => console.error("Failed to delete skill:", err))
+				.catch((err) => console.error("Failed to delete skill:", err));
 		} else {
 			FileServiceClient.deleteRuleFile(
 				RuleFileRequest.create({
@@ -125,15 +156,20 @@ const RuleRow: React.FC<{
 					isGlobal,
 					type: ruleType || "Asi",
 				}),
-			).catch((err) => console.error("Failed to delete rule file:", err))
+			).catch((err) => console.error("Failed to delete rule file:", err));
 		}
-	}
+	};
 
 	return (
 		<div className="mb-2.5">
 			<div className="flex items-center px-2 py-4 rounded bg-text-block-background max-h-4">
-				<span className="flex-1 overflow-hidden break-all whitespace-normal flex items-center mr-1" title={rulePath}>
-					{getRuleTypeIcon() && <span className="mr-1.5">{getRuleTypeIcon()}</span>}
+				<span
+					className="flex-1 overflow-hidden break-all whitespace-normal flex items-center mr-1"
+					title={rulePath}
+				>
+					{getRuleTypeIcon() && (
+						<span className="mr-1.5">{getRuleTypeIcon()}</span>
+					)}
 					<span className="ph-no-capture">{finalDisplayName}</span>
 					{ruleType === "agents" && (
 						<Tooltip>
@@ -141,7 +177,8 @@ const RuleRow: React.FC<{
 								<InfoIcon className="ml-1.5 opacity-70 size-[0.85rem]" />
 							</TooltipTrigger>
 							<TooltipContent>
-								Searches recursively for all AGENTS.md files in the workspace when a top-level AGENTS.md exists
+								Searches recursively for all AGENTS.md files in the workspace
+								when a top-level AGENTS.md exists
 							</TooltipContent>
 						</Tooltip>
 					)}
@@ -155,14 +192,19 @@ const RuleRow: React.FC<{
 						disabled={isDisabled}
 						key={rulePath}
 						onClick={() => toggleRule(rulePath, !enabled)}
-						title={isDisabled ? "This rule is required and cannot be disabled" : undefined}
+						title={
+							isDisabled
+								? "This rule is required and cannot be disabled"
+								: undefined
+						}
 					/>
 					<Button
 						aria-label={isRemote ? "View rule file" : "Edit rule file"}
 						onClick={handleEditClick}
 						size="xs"
 						title={isRemote ? "View rule file (read-only)" : "Edit rule file"}
-						variant="icon">
+						variant="icon"
+					>
 						{isRemote ? <EyeIcon /> : <PenIcon />}
 					</Button>
 					<Button
@@ -171,13 +213,14 @@ const RuleRow: React.FC<{
 						onClick={handleDeleteClick}
 						size="xs"
 						title="Delete rule file"
-						variant="icon">
+						variant="icon"
+					>
 						<Trash2Icon />
 					</Button>
 				</div>
 			</div>
 		</div>
-	)
-}
+	);
+};
 
-export default RuleRow
+export default RuleRow;

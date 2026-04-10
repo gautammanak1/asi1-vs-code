@@ -1,58 +1,66 @@
-import { cn } from "@heroui/react"
-import { StringRequest } from "@shared/proto/asi/common"
-import React, { memo, useLayoutEffect, useRef, useState } from "react"
-import { useWindowSize } from "react-use"
-import { FileServiceClient } from "@/services/grpc-client"
+import { cn } from "@heroui/react";
+import { StringRequest } from "@shared/proto/Asi/common";
+import React, { memo, useLayoutEffect, useRef, useState } from "react";
+import { useWindowSize } from "react-use";
+import { FileServiceClient } from "@/services/grpc-client";
 
 interface ThumbnailsProps {
-	images: string[]
-	files: string[]
-	style?: React.CSSProperties
-	setImages?: React.Dispatch<React.SetStateAction<string[]>>
-	setFiles?: React.Dispatch<React.SetStateAction<string[]>>
-	onHeightChange?: (height: number) => void
-	className?: string
+	images: string[];
+	files: string[];
+	style?: React.CSSProperties;
+	setImages?: React.Dispatch<React.SetStateAction<string[]>>;
+	setFiles?: React.Dispatch<React.SetStateAction<string[]>>;
+	onHeightChange?: (height: number) => void;
+	className?: string;
 }
 
-const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange, className }: ThumbnailsProps) => {
-	const [hoveredIndex, setHoveredIndex] = useState<string | null>(null)
-	const containerRef = useRef<HTMLDivElement>(null)
-	const { width } = useWindowSize()
+const Thumbnails = ({
+	images,
+	files,
+	style,
+	setImages,
+	setFiles,
+	onHeightChange,
+	className,
+}: ThumbnailsProps) => {
+	const [hoveredIndex, setHoveredIndex] = useState<string | null>(null);
+	const containerRef = useRef<HTMLDivElement>(null);
+	const { width } = useWindowSize();
 
 	useLayoutEffect(() => {
 		if (containerRef.current) {
-			let height = containerRef.current.clientHeight
+			let height = containerRef.current.clientHeight;
 			// some browsers return 0 for clientHeight
 			if (!height) {
-				height = containerRef.current.getBoundingClientRect().height
+				height = containerRef.current.getBoundingClientRect().height;
 			}
-			onHeightChange?.(height)
+			onHeightChange?.(height);
 		}
-		setHoveredIndex(null)
-	}, [images, files, width, onHeightChange])
+		setHoveredIndex(null);
+	}, [images, files, width, onHeightChange]);
 
 	const handleDeleteImages = (index: number) => {
-		setImages?.((prevImages) => prevImages.filter((_, i) => i !== index))
-	}
+		setImages?.((prevImages) => prevImages.filter((_, i) => i !== index));
+	};
 
 	const handleDeleteFiles = (index: number) => {
-		setFiles?.((prevFiles) => prevFiles.filter((_, i) => i !== index))
-	}
+		setFiles?.((prevFiles) => prevFiles.filter((_, i) => i !== index));
+	};
 
-	const isDeletableImages = setImages !== undefined
-	const isDeletableFiles = setFiles !== undefined
+	const isDeletableImages = setImages !== undefined;
+	const isDeletableFiles = setFiles !== undefined;
 
 	const handleImageClick = (image: string) => {
-		FileServiceClient.openImage(StringRequest.create({ value: image })).catch((err) =>
-			console.error("Failed to open image:", err),
-		)
-	}
+		FileServiceClient.openImage(StringRequest.create({ value: image })).catch(
+			(err) => console.error("Failed to open image:", err),
+		);
+	};
 
 	const handleFileClick = (filePath: string) => {
-		FileServiceClient.openFile(StringRequest.create({ value: filePath })).catch((err) =>
-			console.error("Failed to open file:", err),
-		)
-	}
+		FileServiceClient.openFile(StringRequest.create({ value: filePath })).catch(
+			(err) => console.error("Failed to open file:", err),
+		);
+	};
 
 	return (
 		<div
@@ -62,13 +70,15 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 				gap: 5,
 				rowGap: 3,
 				...style,
-			}}>
+			}}
+		>
 			{images.map((image, index) => (
 				<div
 					key={`image-${index}`}
 					onMouseEnter={() => setHoveredIndex(`image-${index}`)}
 					onMouseLeave={() => setHoveredIndex(null)}
-					style={{ position: "relative" }}>
+					style={{ position: "relative" }}
+				>
 					<img
 						alt={`Thumbnail image-${index + 1}`}
 						onClick={() => handleImageClick(image)}
@@ -96,28 +106,31 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 								justifyContent: "center",
 								alignItems: "center",
 								cursor: "pointer",
-							}}>
+							}}
+						>
 							<span
 								className="codicon codicon-close"
 								style={{
 									color: "var(--vscode-foreground)",
 									fontSize: 10,
 									fontWeight: "bold",
-								}}></span>
+								}}
+							></span>
 						</div>
 					)}
 				</div>
 			))}
 
 			{files.map((filePath, index) => {
-				const fileName = filePath.split(/[\\/]/).pop() || filePath
+				const fileName = filePath.split(/[\\/]/).pop() || filePath;
 
 				return (
 					<div
 						key={`file-${index}`}
 						onMouseEnter={() => setHoveredIndex(`file-${index}`)}
 						onMouseLeave={() => setHoveredIndex(null)}
-						style={{ position: "relative" }}>
+						style={{ position: "relative" }}
+					>
 						<div
 							onClick={() => handleFileClick(filePath)}
 							style={{
@@ -131,13 +144,15 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 								flexDirection: "column",
 								alignItems: "center",
 								justifyContent: "center",
-							}}>
+							}}
+						>
 							<span
 								className="codicon codicon-file"
 								style={{
 									fontSize: 16,
 									color: "var(--vscode-foreground)",
-								}}></span>
+								}}
+							></span>
 							<span
 								style={{
 									fontSize: 7,
@@ -148,7 +163,8 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 									whiteSpace: "nowrap",
 									textAlign: "center",
 								}}
-								title={fileName}>
+								title={fileName}
+							>
 								{fileName}
 							</span>
 						</div>
@@ -167,21 +183,23 @@ const Thumbnails = ({ images, files, style, setImages, setFiles, onHeightChange,
 									justifyContent: "center",
 									alignItems: "center",
 									cursor: "pointer",
-								}}>
+								}}
+							>
 								<span
 									className="codicon codicon-close"
 									style={{
 										color: "var(--vscode-foreground)",
 										fontSize: 10,
 										fontWeight: "bold",
-									}}></span>
+									}}
+								></span>
 							</div>
 						)}
 					</div>
-				)
+				);
 			})}
 		</div>
-	)
-}
+	);
+};
 
-export default memo(Thumbnails)
+export default memo(Thumbnails);

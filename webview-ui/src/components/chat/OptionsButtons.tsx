@@ -1,9 +1,12 @@
-import { AskResponseRequest } from "@shared/proto/asi/task"
-import styled from "styled-components"
-import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock"
-import { TaskServiceClient } from "@/services/grpc-client"
+import { AskResponseRequest } from "@shared/proto/Asi/task";
+import styled from "styled-components";
+import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock";
+import { TaskServiceClient } from "@/services/grpc-client";
 
-const OptionButton = styled.button<{ isSelected?: boolean; isNotSelectable?: boolean }>`
+const OptionButton = styled.button<{
+	isSelected?: boolean;
+	isNotSelectable?: boolean;
+}>`
 	padding: 8px 12px;
 	background: ${(props) => (props.isSelected ? "var(--vscode-focusBorder)" : CODE_BLOCK_BG_COLOR)};
 	color: ${(props) => (props.isSelected ? "white" : "var(--vscode-input-foreground)")};
@@ -21,7 +24,7 @@ const OptionButton = styled.button<{ isSelected?: boolean; isNotSelectable?: boo
 			color: white;
 		}
 	`}
-`
+`;
 
 export const OptionsButtons = ({
 	options,
@@ -29,16 +32,16 @@ export const OptionsButtons = ({
 	isActive,
 	inputValue,
 }: {
-	options?: string[]
-	selected?: string
-	isActive?: boolean
-	inputValue?: string
+	options?: string[];
+	selected?: string;
+	isActive?: boolean;
+	inputValue?: string;
 }) => {
 	if (!options?.length) {
-		return null
+		return null;
 	}
 
-	const hasSelected = selected !== undefined && options.includes(selected)
+	const hasSelected = selected !== undefined && options.includes(selected);
 
 	return (
 		<div
@@ -46,7 +49,8 @@ export const OptionsButtons = ({
 				display: "flex",
 				flexDirection: "column",
 				gap: "8px",
-			}}>
+			}}
+		>
 			{/* <div style={{ color: "var(--vscode-descriptionForeground)", fontSize: "11px", textTransform: "uppercase" }}>
 				SELECT ONE:
 			</div> */}
@@ -59,7 +63,7 @@ export const OptionsButtons = ({
 					key={index}
 					onClick={async () => {
 						if (hasSelected || !isActive) {
-							return
+							return;
 						}
 						try {
 							await TaskServiceClient.askResponse(
@@ -68,14 +72,15 @@ export const OptionsButtons = ({
 									text: option + (inputValue ? `: ${inputValue?.trim()}` : ""),
 									images: [],
 								}),
-							)
+							);
 						} catch (error) {
-							console.error("Error sending option response:", error)
+							console.error("Error sending option response:", error);
 						}
-					}}>
+					}}
+				>
 					<span className="ph-no-capture">{option}</span>
 				</OptionButton>
 			))}
 		</div>
-	)
-}
+	);
+};

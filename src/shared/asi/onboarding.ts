@@ -1,4 +1,4 @@
-import type { OnboardingModel } from "@shared/proto/asi/state"
+import type { OnboardingModel } from "@shared/proto/Asi/state";
 
 /**
  * Onboarding model list (fork: no third‑party model marketing).
@@ -21,4 +21,4 @@ export const Asi_ONBOARDING_MODELS: OnboardingModel[] = [
 			tiers: [],
 		},
 	},
-]
+];

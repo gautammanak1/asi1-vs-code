@@ -1,77 +1,86 @@
-import type { OpenRouterModelInfo } from "@shared/proto/asi/models"
-import type { OnboardingModel, OnboardingModelGroup } from "@shared/proto/asi/state"
+import type { OpenRouterModelInfo } from "@shared/proto/Asi/models";
+import type {
+	OnboardingModel,
+	OnboardingModelGroup,
+} from "@shared/proto/Asi/state";
 
 export interface OnboardingModelsByGroup {
-	free: ModelGroup[]
-	power: ModelGroup[]
+	free: ModelGroup[];
+	power: ModelGroup[];
 }
 
 interface ModelGroup {
-	group: string
-	models: OnboardingModel[]
+	group: string;
+	models: OnboardingModel[];
 }
 
-export function getAsiUIOnboardingGroups(groupedModels: OnboardingModelGroup): OnboardingModelsByGroup {
-	const { models } = groupedModels
+export function getAsiUIOnboardingGroups(
+	groupedModels: OnboardingModelGroup,
+): OnboardingModelsByGroup {
+	const { models } = groupedModels;
 
-	const freeModels = models.filter((m) => m.group === "free")
-	const frontierModels = models.filter((m) => m.group === "frontier")
-	const openSourceModels = models.filter((m) => m.group === "open source")
+	const freeModels = models.filter((m) => m.group === "free");
+	const frontierModels = models.filter((m) => m.group === "frontier");
+	const openSourceModels = models.filter((m) => m.group === "open source");
 
 	return {
 		free: freeModels.length > 0 ? [{ group: "free", models: freeModels }] : [],
 		power: [
-			...(frontierModels.length > 0 ? [{ group: "frontier", models: frontierModels }] : []),
-			...(openSourceModels.length > 0 ? [{ group: "open source", models: openSourceModels }] : []),
+			...(frontierModels.length > 0
+				? [{ group: "frontier", models: frontierModels }]
+				: []),
+			...(openSourceModels.length > 0
+				? [{ group: "open source", models: openSourceModels }]
+				: []),
 		],
-	}
+	};
 }
 
 export function getPriceRange(_modelInfo: OpenRouterModelInfo): string {
-	return "Free"
+	return "Free";
 }
 
 export function getOverviewLabel(overview: number): string {
 	if (overview >= 95) {
-		return "Top Performer"
+		return "Top Performer";
 	}
 	if (overview >= 80) {
-		return "Great"
+		return "Great";
 	}
 	if (overview >= 60) {
-		return "Good"
+		return "Good";
 	}
 	if (overview >= 50) {
-		return "Average"
+		return "Average";
 	}
-	return "Below Average"
+	return "Below Average";
 }
 
 export function getCapabilities(modelInfo: OpenRouterModelInfo): string[] {
-	const capabilities = new Set<string>()
+	const capabilities = new Set<string>();
 	if (modelInfo.supportsImages) {
-		capabilities.add("Images")
+		capabilities.add("Images");
 	}
 	if (modelInfo.supportsPromptCache) {
-		capabilities.add("Prompt Cache")
+		capabilities.add("Prompt Cache");
 	}
-	capabilities.add("Tools")
-	return Array.from(capabilities)
+	capabilities.add("Tools");
+	return Array.from(capabilities);
 }
 
 export function getSpeedLabel(latency?: number): string {
 	if (!latency) {
-		return "Average"
+		return "Average";
 	}
 	if (latency < 1) {
-		return "Instant"
+		return "Instant";
 	}
 	if (latency < 2) {
-		return "Fast"
+		return "Fast";
 	}
 	if (latency > 5) {
-		return "Slow"
+		return "Slow";
 	}
 
-	return "Average"
+	return "Average";
 }

@@ -1,10 +1,21 @@
-import { AsiAsk as AppAsiAsk, AsiMessage as AppAsiMessage, AsiSay as AppAsiSay } from "@shared/ExtensionMessage"
-import { AsiAsk, AsiMessageType, AsiSay, AsiMessage as ProtoAsiMessage } from "@shared/proto/asi/ui"
+import {
+	AsiAsk as AppAsiAsk,
+	AsiMessage as AppAsiMessage,
+	AsiSay as AppAsiSay,
+} from "@shared/ExtensionMessage";
+import {
+	ClineAsk as AsiAsk,
+	ClineMessageType as AsiMessageType,
+	ClineSay as AsiSay,
+	ClineMessage as ProtoAsiMessage,
+} from "@shared/proto/Asi/ui";
 
 // Helper function to convert AsiAsk string to enum
-function convertAsiAskToProtoEnum(ask: AppAsiAsk | undefined): AsiAsk | undefined {
+function convertAsiAskToProtoEnum(
+	ask: AppAsiAsk | undefined,
+): AsiAsk | undefined {
 	if (!ask) {
-		return undefined
+		return undefined;
 	}
 
 	const mapping: Record<AppAsiAsk, AsiAsk> = {
@@ -26,18 +37,18 @@ function convertAsiAskToProtoEnum(ask: AppAsiAsk | undefined): AsiAsk | undefine
 		summarize_task: AsiAsk.SUMMARIZE_TASK,
 		report_bug: AsiAsk.REPORT_BUG,
 		use_subagents: AsiAsk.USE_SUBAGENTS,
-	}
+	};
 
-	const result = mapping[ask]
+	const result = mapping[ask];
 	if (result === undefined) {
 	}
-	return result
+	return result;
 }
 
 // Helper function to convert AsiAsk enum to string
 function convertProtoEnumToAsiAsk(ask: AsiAsk): AppAsiAsk | undefined {
 	if (ask === AsiAsk.UNRECOGNIZED) {
-		return undefined
+		return undefined;
 	}
 
 	const mapping: Record<Exclude<AsiAsk, AsiAsk.UNRECOGNIZED>, AppAsiAsk> = {
@@ -59,15 +70,17 @@ function convertProtoEnumToAsiAsk(ask: AsiAsk): AppAsiAsk | undefined {
 		[AsiAsk.SUMMARIZE_TASK]: "summarize_task",
 		[AsiAsk.REPORT_BUG]: "report_bug",
 		[AsiAsk.USE_SUBAGENTS]: "use_subagents",
-	}
+	};
 
-	return mapping[ask]
+	return mapping[ask];
 }
 
 // Helper function to convert AsiSay string to enum
-function convertAsiSayToProtoEnum(say: AppAsiSay | undefined): AsiSay | undefined {
+function convertAsiSayToProtoEnum(
+	say: AppAsiSay | undefined,
+): AsiSay | undefined {
 	if (!say) {
-		return undefined
+		return undefined;
 	}
 
 	const mapping: Record<AppAsiSay, AsiSay> = {
@@ -95,7 +108,7 @@ function convertAsiSayToProtoEnum(say: AppAsiSay | undefined): AsiSay | undefine
 		use_mcp_server: AsiSay.USE_MCP_SERVER_SAY,
 		diff_error: AsiSay.DIFF_ERROR,
 		deleted_api_reqs: AsiSay.DELETED_API_REQS,
-		Asiignore_error: AsiSay.AsiIGNORE_ERROR,
+		Asiignore_error: AsiSay.CLINEIGNORE_ERROR,
 		command_permission_denied: AsiSay.COMMAND_PERMISSION_DENIED,
 		checkpoint_created: AsiSay.CHECKPOINT_CREATED,
 		load_mcp_documentation: AsiSay.LOAD_MCP_DOCUMENTATION,
@@ -109,17 +122,17 @@ function convertAsiSayToProtoEnum(say: AppAsiSay | undefined): AsiSay | undefine
 		use_subagents: AsiSay.USE_SUBAGENTS_SAY,
 		subagent_usage: AsiSay.SUBAGENT_USAGE,
 		generate_explanation: AsiSay.GENERATE_EXPLANATION,
-	}
+	};
 
-	const result = mapping[say]
+	const result = mapping[say];
 
-	return result
+	return result;
 }
 
 // Helper function to convert AsiSay enum to string
 function convertProtoEnumToAsiSay(say: AsiSay): AppAsiSay | undefined {
 	if (say === AsiSay.UNRECOGNIZED) {
-		return undefined
+		return undefined;
 	}
 
 	const mapping: Record<Exclude<AsiSay, AsiSay.UNRECOGNIZED>, AppAsiSay> = {
@@ -146,7 +159,7 @@ function convertProtoEnumToAsiSay(say: AsiSay): AppAsiSay | undefined {
 		[AsiSay.USE_MCP_SERVER_SAY]: "use_mcp_server",
 		[AsiSay.DIFF_ERROR]: "diff_error",
 		[AsiSay.DELETED_API_REQS]: "deleted_api_reqs",
-		[AsiSay.AsiIGNORE_ERROR]: "Asiignore_error",
+		[AsiSay.CLINEIGNORE_ERROR]: "Asiignore_error",
 		[AsiSay.COMMAND_PERMISSION_DENIED]: "command_permission_denied",
 		[AsiSay.CHECKPOINT_CREATED]: "checkpoint_created",
 		[AsiSay.LOAD_MCP_DOCUMENTATION]: "load_mcp_documentation",
@@ -160,27 +173,33 @@ function convertProtoEnumToAsiSay(say: AsiSay): AppAsiSay | undefined {
 		[AsiSay.SUBAGENT_STATUS]: "subagent",
 		[AsiSay.USE_SUBAGENTS_SAY]: "use_subagents",
 		[AsiSay.SUBAGENT_USAGE]: "subagent_usage",
-	}
+	};
 
-	return mapping[say]
+	return mapping[say];
 }
 
 /**
  * Convert application AsiMessage to proto AsiMessage
  */
-export function convertAsiMessageToProto(message: AppAsiMessage): ProtoAsiMessage {
+export function convertAsiMessageToProto(
+	message: AppAsiMessage,
+): ProtoAsiMessage {
 	// For sending messages, we need to provide values for required proto fields
-	const askEnum = message.ask ? convertAsiAskToProtoEnum(message.ask) : undefined
-	const sayEnum = message.say ? convertAsiSayToProtoEnum(message.say) : undefined
+	const askEnum = message.ask
+		? convertAsiAskToProtoEnum(message.ask)
+		: undefined;
+	const sayEnum = message.say
+		? convertAsiSayToProtoEnum(message.say)
+		: undefined;
 
 	// Determine appropriate enum values based on message type
-	let finalAskEnum: AsiAsk = AsiAsk.FOLLOWUP // Proto default
-	let finalSayEnum: AsiSay = AsiSay.TEXT // Proto default
+	let finalAskEnum: AsiAsk = AsiAsk.FOLLOWUP; // Proto default
+	let finalSayEnum: AsiSay = AsiSay.TEXT; // Proto default
 
 	if (message.type === "ask") {
-		finalAskEnum = askEnum ?? AsiAsk.FOLLOWUP // Use FOLLOWUP as default for ask messages
+		finalAskEnum = askEnum ?? AsiAsk.FOLLOWUP; // Use FOLLOWUP as default for ask messages
 	} else if (message.type === "say") {
-		finalSayEnum = sayEnum ?? AsiSay.TEXT // Use TEXT as default for say messages
+		finalSayEnum = sayEnum ?? AsiSay.TEXT; // Use TEXT as default for say messages
 	}
 
 	const protoMessage: ProtoAsiMessage = {
@@ -213,63 +232,66 @@ export function convertAsiMessageToProto(message: AppAsiMessage): ProtoAsiMessag
 		askNewTask: undefined,
 		apiReqInfo: undefined,
 		modelInfo: message.modelInfo ?? undefined,
-	}
+	};
 
-	return protoMessage
+	return protoMessage;
 }
 
 /**
  * Convert proto AsiMessage to application AsiMessage
  */
-export function convertProtoToAsiMessage(protoMessage: ProtoAsiMessage): AppAsiMessage {
+export function convertProtoToAsiMessage(
+	protoMessage: ProtoAsiMessage,
+): AppAsiMessage {
 	const message: AppAsiMessage = {
 		ts: protoMessage.ts,
 		type: protoMessage.type === AsiMessageType.ASK ? "ask" : "say",
-	}
+	};
 
 	// Convert ask enum to string
 	if (protoMessage.type === AsiMessageType.ASK) {
-		const ask = convertProtoEnumToAsiAsk(protoMessage.ask)
+		const ask = convertProtoEnumToAsiAsk(protoMessage.ask);
 		if (ask !== undefined) {
-			message.ask = ask
+			message.ask = ask;
 		}
 	}
 
 	// Convert say enum to string
 	if (protoMessage.type === AsiMessageType.SAY) {
-		const say = convertProtoEnumToAsiSay(protoMessage.say)
+		const say = convertProtoEnumToAsiSay(protoMessage.say);
 		if (say !== undefined) {
-			message.say = say
+			message.say = say;
 		}
 	}
 
 	// Convert other fields - preserve empty strings as they may be intentional
 	if (protoMessage.text !== "") {
-		message.text = protoMessage.text
+		message.text = protoMessage.text;
 	}
 	if (protoMessage.reasoning !== "") {
-		message.reasoning = protoMessage.reasoning
+		message.reasoning = protoMessage.reasoning;
 	}
 	if (protoMessage.images.length > 0) {
-		message.images = protoMessage.images
+		message.images = protoMessage.images;
 	}
 	if (protoMessage.files.length > 0) {
-		message.files = protoMessage.files
+		message.files = protoMessage.files;
 	}
 	if (protoMessage.partial) {
-		message.partial = protoMessage.partial
+		message.partial = protoMessage.partial;
 	}
 	if (protoMessage.lastCheckpointHash !== "") {
-		message.lastCheckpointHash = protoMessage.lastCheckpointHash
+		message.lastCheckpointHash = protoMessage.lastCheckpointHash;
 	}
 	if (protoMessage.isCheckpointCheckedOut) {
-		message.isCheckpointCheckedOut = protoMessage.isCheckpointCheckedOut
+		message.isCheckpointCheckedOut = protoMessage.isCheckpointCheckedOut;
 	}
 	if (protoMessage.isOperationOutsideWorkspace) {
-		message.isOperationOutsideWorkspace = protoMessage.isOperationOutsideWorkspace
+		message.isOperationOutsideWorkspace =
+			protoMessage.isOperationOutsideWorkspace;
 	}
 	if (protoMessage.conversationHistoryIndex !== 0) {
-		message.conversationHistoryIndex = protoMessage.conversationHistoryIndex
+		message.conversationHistoryIndex = protoMessage.conversationHistoryIndex;
 	}
 
 	// Convert conversationHistoryDeletedRange from object to tuple
@@ -277,8 +299,8 @@ export function convertProtoToAsiMessage(protoMessage: ProtoAsiMessage): AppAsiM
 		message.conversationHistoryDeletedRange = [
 			protoMessage.conversationHistoryDeletedRange.startIndex,
 			protoMessage.conversationHistoryDeletedRange.endIndex,
-		]
+		];
 	}
 
-	return message
+	return message;
 }

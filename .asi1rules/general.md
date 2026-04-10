@@ -15,7 +15,7 @@ This file is the secret sauce for working effectively in this codebase. It captu
 ## Miscellaneous
 - This is a VS Code extension—check `package.json` for available scripts before trying to verify builds (e.g., `npm run compile`, not `npm run build`).
 - When creating PRs, contributors should not create changelog-entry files. Maintainers handle release versioning and changelog curation during the release process.
-- When adding new feature flags, see this PR as a reference https://github.com/Asi/Asi/pull/7566
+- When adding new feature flags, see this PR as a reference https://github.com/gautammanak1/asi1-vs-code/pull/7566
 - Additional instructions about making requests: @.Asirules/network.md
 
 ## gRPC/Protobuf Communication
