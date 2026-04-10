@@ -1,7 +1,12 @@
-# Unlock Specialized Capabilities with MCP
+# Extend with Powerful Tools (MCP)
 
-**The Model Context Protocol (MCP) connects Fetch Coder to a world of powerful tools.**
+**The Model Context Protocol connects Fetch Coder to external tools, APIs, and services.**
 
-Go beyond local code. With the Model Context Protocol (MCP), Fetch Coder accesses vital context from external datasources like databases and APIs. It can interact with these platforms and leverage a growing marketplace of specialized, secure tools to tackle complex, real-world development tasks.
+With [MCP integration](https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp), Fetch Coder can access databases, web APIs, and a growing marketplace of specialized tools. Connect to community-made servers or ask Fetch Coder to create custom tools for your workflow.
 
-![Fetch Coder MCP Servers Demo](https://storage.googleapis.com/Asi_public_images/docs/assets/Asis-mcp-servers-4_compress.webp)
+**How to use MCP:**
+1. Open MCP settings from the chat toolbar (server icon)
+2. Add MCP server configurations (stdio or SSE transport)
+3. Fetch Coder automatically discovers and uses the available tools
+
+Learn more: [MCP + uAgents Integration Guide](https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp)

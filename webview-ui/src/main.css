@@ -28,6 +28,7 @@ body {
 	height: 100%;
 	width: 100%;
 	background-color: var(--vscode-sideBar-background);
+	font-family: "Lexend", var(--vscode-font-family), sans-serif;
 }
 
 #root {

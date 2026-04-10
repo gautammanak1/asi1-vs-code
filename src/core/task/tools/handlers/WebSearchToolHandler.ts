@@ -56,8 +56,8 @@ export class WebSearchToolHandler implements IFullyManagedTool {
 			// Check if Asi web tools are enabled (both user setting and feature flag)
 			const AsiWebToolsEnabled = config.services.stateManager.getGlobalSettingsKey("AsiWebToolsEnabled")
 			const featureFlagEnabled = featureFlagsService.getWebtoolsEnabled()
-			if (provider !== "Asi" || !AsiWebToolsEnabled || !featureFlagEnabled) {
-				return formatResponse.toolError("Asi web tools are currently disabled.")
+			if (!AsiWebToolsEnabled || !featureFlagEnabled) {
+				return formatResponse.toolError("Web search tools are currently disabled. Enable them in Settings.")
 			}
 
 			// Validate required parameters

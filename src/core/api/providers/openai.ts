@@ -20,6 +20,7 @@ interface OpenAiHandlerOptions extends CommonApiHandlerOptions {
 	openAiModelId?: string
 	openAiModelInfo?: OpenAiCompatibleModelInfo
 	reasoningEffort?: string
+	webSearchEnabled?: boolean
 }
 
 export class OpenAiHandler implements ApiHandler {
@@ -75,14 +76,22 @@ export class OpenAiHandler implements ApiHandler {
 			maxTokens = undefined
 		}
 
-		const stream = await client.chat.completions.create({
+		const requestParams: Record<string, any> = {
 			model: modelId,
 			messages: openAiMessages,
 			temperature,
 			max_tokens: maxTokens,
+			...getOpenAIToolParams(tools),
+		}
+
+		if (this.options.webSearchEnabled) {
+			requestParams.web_search = true
+		}
+
+		const stream = await client.chat.completions.create({
+			...requestParams,
 			stream: true,
 			stream_options: { include_usage: true },
-			...getOpenAIToolParams(tools),
 		})
 
 		const toolCallProcessor = new ToolCallProcessor()
@@ -133,14 +142,29 @@ export class OpenAiHandler implements ApiHandler {
 					inputTokens: chunk.usage.prompt_tokens || 0,
 					outputTokens: chunk.usage.completion_tokens || 0,
 					cacheReadTokens: chunk.usage.prompt_tokens_details?.cached_tokens || 0,
-					// @ts-expect-error-next-line
+					// @ts-ignore prompt_cache_miss_tokens is ASI:One-specific
 					cacheWriteTokens: chunk.usage.prompt_cache_miss_tokens || 0,
 				}
 			}
 		}
 
-		if (yieldedContentChunks === 0 && chunkCount > 0) {
-			Logger.warn(`[OpenAiHandler] Stream completed with ${chunkCount} chunk(s) but no text, reasoning, or tool_call content was extracted.`)
+		if (yieldedContentChunks === 0) {
+			Logger.warn(`[OpenAiHandler] Stream produced no content (${chunkCount} chunks). Falling back to non-streaming request.`)
+			const fallback = await client.chat.completions.create({
+				...requestParams,
+				stream: false,
+			})
+			const fallbackContent = fallback.choices?.[0]?.message?.content
+			if (fallbackContent) {
+				yield { type: "text", text: fallbackContent }
+			}
+			if (fallback.usage) {
+				yield {
+					type: "usage",
+					inputTokens: fallback.usage.prompt_tokens || 0,
+					outputTokens: fallback.usage.completion_tokens || 0,
+				}
+			}
 		}
 	}
 

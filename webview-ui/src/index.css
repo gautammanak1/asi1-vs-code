@@ -1,6 +1,7 @@
 /* Import external CSS files */
 @import url("../../node_modules/@vscode/codicons/dist/codicon.css");
 @import url("../node_modules/@fontsource/azeret-mono/index.css");
+@import url("../node_modules/@fontsource/lexend/index.css");
 
 /* Tailwind CSS */
 @import "tailwindcss";
@@ -69,3 +70,63 @@
 		margin: calc(var(--design-unit) * 1px) 0;
 	}
 }
+
+@keyframes glow-pulse {
+	0%, 100% { opacity: 0.4; }
+	50% { opacity: 1; }
+}
+
+@keyframes shimmer {
+	0% { background-position: -200% 0; }
+	100% { background-position: 200% 0; }
+}
+
+@keyframes float {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-6px); }
+}
+
+@keyframes gradient-shift {
+	0% { background-position: 0% 50%; }
+	50% { background-position: 100% 50%; }
+	100% { background-position: 0% 50%; }
+}
+
+@keyframes fade-in-up {
+	from { opacity: 0; transform: translateY(12px); }
+	to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+.animate-shimmer { animation: shimmer 3s ease-in-out infinite; }
+.animate-float { animation: float 3s ease-in-out infinite; }
+.animate-gradient { animation: gradient-shift 4s ease infinite; background-size: 200% 200%; }
+.animate-fade-in-up { animation: fade-in-up 0.5s ease-out forwards; }
+
+.glass {
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.glow-border {
+	position: relative;
+}
+.glow-border::after {
+	content: '';
+	position: absolute;
+	inset: -1px;
+	border-radius: inherit;
+	padding: 1px;
+	background: linear-gradient(135deg, #06b6d4, #8b5cf6, #06b6d4);
+	background-size: 200% 200%;
+	animation: gradient-shift 3s ease infinite;
+	-webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+	-webkit-mask-composite: xor;
+	mask-composite: exclude;
+	pointer-events: none;
+	opacity: 0.5;
+	transition: opacity 0.3s;
+}
+.glow-border:hover::after { opacity: 1; }

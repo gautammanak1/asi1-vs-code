@@ -1,7 +1,14 @@
-# No Black Box: Full Visibility & Control
+# You're Always in Control
 
-**Fetch Coder operates with complete transparency, showing you every file read and every proposed diff.**
+**Review plans and diffs. Approve changes before they happen.**
 
-Understand exactly what Fetch Coder is doing and why—no obfuscation. Review all actions and approve changes before they're made. Fetch Coder uses checkpoints, allowing you to easily revert if needed, maintaining full control over your codebase. With BYO-key, you also have clear cost transparency.
+Fetch Coder operates with complete transparency — every file read, every proposed diff is shown to you. Use **checkpoints** to snapshot your code before changes and revert if needed. Switch between **Plan** and **Act** modes to control how the agent works:
 
-![Fetch Coder Transparency Demo](https://storage.googleapis.com/Asi_public_images/docs/assets/Asis-transparency-hifi-5_compress.webp)
+- **Plan mode**: Gathers information and architects an approach
+- **Act mode**: Executes changes immediately
+
+**Helpful links:**
+- [Fetch.ai Documentation](https://innovationlab.fetch.ai/resources/docs/intro)
+- [uAgent Creation Guide](https://innovationlab.fetch.ai/resources/docs/agent-creation/uagent-creation)
+- [ASI:One API Reference](https://innovationlab.fetch.ai/resources/docs/asione/asi1-getting-started)
+- [Agentverse Platform](https://agentverse.ai)

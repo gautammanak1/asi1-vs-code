@@ -9,7 +9,7 @@ import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/Asi/state";
 import { type SlashCommand } from "@shared/slashCommands";
 import { Mode } from "@shared/storage/types";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
-import { AtSignIcon, PlusIcon } from "lucide-react";
+import { AtSignIcon, GlobeIcon, PlusIcon, SparklesIcon } from "lucide-react";
 import type React from "react";
 import {
 	forwardRef,
@@ -286,6 +286,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			useState(false);
 		const unsupportedFileTimerRef = useRef<NodeJS.Timeout | null>(null);
 		const [showDimensionError, setShowDimensionError] = useState(false);
+		const [isEnhancing, setIsEnhancing] = useState(false);
+		const [webSearchActive, setWebSearchActive] = useState(false);
 		const dimensionErrorTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 		const [fileSearchResults, setFileSearchResults] = useState<SearchResult[]>(
@@ -1182,6 +1184,25 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			disableTextInputs: false,
 		}); // important that we don't disable the text input here
 
+		const handleEnhancePrompt = useCallback(async () => {
+			const text = inputValue.trim();
+			if (!text || isEnhancing) return;
+			setIsEnhancing(true);
+			try {
+				const result = await StateServiceClient.getStringValue(
+					StringRequest.create({ value: text }),
+				);
+				if (result?.value) {
+					setInputValue(result.value);
+				}
+			} catch {
+				const enhanced = `${text}\n\nPlease provide a detailed, well-structured solution with code examples, clear explanations, and best practices.`;
+				setInputValue(enhanced);
+			} finally {
+				setIsEnhancing(false);
+			}
+		}, [inputValue, isEnhancing, setInputValue]);
+
 		const handleContextButtonClick = useCallback(() => {
 			// Focus the textarea first
 			textAreaRef.current?.focus();
@@ -1682,22 +1703,38 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						className="absolute flex items-end bottom-4.5 right-5 z-10 h-8 text-xs"
 						style={{ height: textAreaBaseHeight }}
 					>
-						<div className="flex flex-row items-center">
-							<div
-								className={cn(
-									"input-icon-button",
-									{ disabled: sendingDisabled },
-									"codicon codicon-send text-sm",
-								)}
-								data-testid="send-button"
-								onClick={() => {
-									if (!sendingDisabled) {
-										setIsTextAreaFocused(false);
-										onSend();
-									}
-								}}
-							/>
-						</div>
+					<div className="flex flex-row items-center gap-1">
+						<Tooltip>
+							<TooltipContent>Enhance prompt</TooltipContent>
+							<TooltipTrigger>
+								<div
+									className={cn(
+										"input-icon-button flex items-center justify-center",
+										{ disabled: !inputValue.trim() || isEnhancing },
+									)}
+									data-testid="enhance-button"
+									onClick={handleEnhancePrompt}
+									style={{ cursor: inputValue.trim() && !isEnhancing ? "pointer" : "default", opacity: inputValue.trim() && !isEnhancing ? 1 : 0.4 }}
+								>
+									<SparklesIcon size={14} className={isEnhancing ? "animate-pulse" : ""} />
+								</div>
+							</TooltipTrigger>
+						</Tooltip>
+						<div
+							className={cn(
+								"input-icon-button",
+								{ disabled: sendingDisabled },
+								"codicon codicon-send text-sm",
+							)}
+							data-testid="send-button"
+							onClick={() => {
+								if (!sendingDisabled) {
+									setIsTextAreaFocused(false);
+									onSend();
+								}
+							}}
+						/>
+					</div>
 					</div>
 				</div>
 				<div className="flex justify-between items-center -mt-[2px] px-3 pb-2">
@@ -1739,6 +1776,23 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									>
 										<ButtonContainer>
 											<PlusIcon size={13} />
+										</ButtonContainer>
+									</VSCodeButton>
+								</TooltipTrigger>
+							</Tooltip>
+
+							<Tooltip>
+								<TooltipContent>{webSearchActive ? "Web Search: ON" : "Web Search: OFF"}</TooltipContent>
+								<TooltipTrigger>
+									<VSCodeButton
+										appearance="icon"
+										aria-label="Toggle Web Search"
+										className="p-0 m-0 flex items-center"
+										data-testid="web-search-button"
+										onClick={() => setWebSearchActive(!webSearchActive)}
+									>
+										<ButtonContainer>
+											<GlobeIcon size={12} style={{ color: webSearchActive ? "var(--vscode-textLink-foreground)" : undefined }} />
 										</ButtonContainer>
 									</VSCodeButton>
 								</TooltipTrigger>

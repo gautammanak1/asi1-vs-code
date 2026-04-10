@@ -1,7 +1,7 @@
-# Deep Codebase Intelligence
+# Let Fetch Coder Learn Your Codebase
 
-**Fetch Coder starts with broad context and explores deeply where needed.**
+**Point it at your project — it builds deep understanding to make smart, context-aware changes.**
 
-Fetch Coder is designed with inherent codebase intelligence. It doesn't operate in a vacuum, but starts with a structural understanding of your project. Before making changes, it performs targeted agentic exploration to gain any additional specific context required, ensuring its actions are always well-informed and aligned with your architecture.
+Fetch Coder starts with a structural understanding of your project. Before making changes, it performs targeted exploration to gain the specific context needed. It reads files, searches code, and understands your architecture — so every edit fits naturally into your existing patterns.
 
-![Fetch Coder Deep Codebase Intelligence Demo](https://storage.googleapis.com/Asi_public_images/docs/assets/Asi-reading-codebase-hifi-2_compress.webp)
+Works with any language, any framework — from Python [uAgents](https://innovationlab.fetch.ai/resources/docs/agent-creation/uagent-creation) to TypeScript web apps.

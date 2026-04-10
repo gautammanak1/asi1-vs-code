@@ -45,6 +45,7 @@ function createHandlerForProvider(
 		openAiModelId: "asi1",
 		openAiModelInfo: mode === "plan" ? options.planModeOpenAiModelInfo : options.actModeOpenAiModelInfo,
 		reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
+		webSearchEnabled: options.webSearchEnabled,
 	})
 }
 

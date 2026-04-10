@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-vite"
-import AsiLogoWhite from "@/assets/ClineLogoWhite"
+import AsiLogoWhite from "@/assets/FetchCoderLogoWhite"
 import { Button } from "./button"
 import {
     Dialog,

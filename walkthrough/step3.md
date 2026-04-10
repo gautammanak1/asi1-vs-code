@@ -1,7 +1,7 @@
-# Always Use the Best Models
+# Powered by ASI:One
 
-**Connect your keys for Anthropic (Claude), Google (Gemini), OpenAI (GPT), and other leading LLMs.**
+**The world's first Web3-native LLM, designed for agentic AI.**
 
-Fetch Coder puts you at the forefront of AI. Bring your own API keys for leading models like Anthropic (Claude), Google (Gemini), and OpenAI (GPT). Always leverage the most powerful State-of-the-Art (SOTA) capabilities, ensuring you control both cost and cutting-edge performance.
+Fetch Coder is powered exclusively by [ASI:One](https://innovationlab.fetch.ai/resources/docs/asione/asi1-introduction) — optimized for autonomous reasoning, multi-step task execution, and contextual memory. It has built-in knowledge of the [Fetch.ai ecosystem](https://innovationlab.fetch.ai/resources/docs/intro) including uAgents, Agentverse, Chat Protocol, Payment Protocol, and MCP integration.
 
-![Fetch Coder Models Demo](https://storage.googleapis.com/Asi_public_images/docs/assets/Asis-models-hifi-3_compress.webp)
+Get your API key at [asi1.ai/dashboard/api-keys](https://asi1.ai/dashboard/api-keys) and start building.

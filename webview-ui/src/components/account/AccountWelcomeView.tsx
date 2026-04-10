@@ -1,6 +1,6 @@
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import AsiLogoVariable from "../../assets/ClineLogoVariable"
+import AsiLogoVariable from "../../assets/FetchCoderLogoVariable"
 
 export const AccountWelcomeView = () => {
 	const { environment, navigateToSettings } = useExtensionState()

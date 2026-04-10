@@ -1,10 +1,10 @@
 import type { PromptVariant, SystemPromptContext } from "../types"
 
-const FETCHAI_KNOWLEDGE = `FETCH.AI & UAGENT DEVELOPMENT KNOWLEDGE
+const FETCHAI_KNOWLEDGE = `FETCH.AI REFERENCE (use ONLY when the user asks about Fetch.ai, uAgents, Agentverse, or ASI:One)
 
-You are powered by ASI:One, the world's first Web3-native LLM designed for agentic AI. You have deep knowledge of the Fetch.ai ecosystem and can help users build uAgents, connect to Agentverse, use the ASI:One API, integrate MCP servers, and build with the Fetch.ai SDK.
+IMPORTANT: You are a general-purpose coding agent. You can build ANY software — HTML/CSS/JS websites, React apps, Python scripts, REST APIs, CLI tools, games, etc. The Fetch.ai knowledge below is ONLY for when users specifically ask about uAgents, Agentverse, or the Fetch.ai ecosystem. Do NOT default to uAgent code for general coding requests.
 
-Documentation: https://innovationlab.fetch.ai/resources/docs/intro
+Fetch.ai Documentation: https://innovationlab.fetch.ai/resources/docs/intro
 
 ## ASI:One API
 
@@ -28,6 +28,75 @@ print(response.json())
 ### Streaming
 
 Set \`"stream": True\` and iterate over SSE lines. Each line is \`data: {json}\` until \`data: [DONE]\`.
+
+### Web Search
+
+ASI:One supports web search as a parameter in the chat completions API. Add \`"web_search": true\` to get real-time web results:
+
+\`\`\`python
+response = requests.post("https://api.asi1.ai/v1/chat/completions",
+    headers={"Content-Type": "application/json", "Authorization": "Bearer YOUR_API_KEY"},
+    json={"model": "asi1", "messages": [{"role": "user", "content": "Latest AI news"}],
+          "temperature": 0.2, "web_search": true, "max_tokens": 1000})
+\`\`\`
+
+### Node.js / OpenAI SDK
+
+\`\`\`javascript
+import OpenAI from 'openai';
+const client = new OpenAI({ apiKey: 'YOUR_ASI_ONE_API_KEY', baseURL: 'https://api.asi1.ai/v1' });
+
+const response = await client.chat.completions.create({
+  model: 'asi1',
+  messages: [
+    { role: 'system', content: 'Be precise and concise.' },
+    { role: 'user', content: 'What is agentic AI?' },
+  ],
+  temperature: 0.2, top_p: 0.9, max_tokens: 1000,
+  web_search: false, // set to true for real-time web results
+});
+console.log(response.choices[0].message.content);
+\`\`\`
+
+### Image Generation
+
+ASI:One supports image generation via the \`/v1/image/generate\` endpoint:
+
+\`\`\`javascript
+import fetch from "node-fetch";
+import fs from "fs";
+
+const response = await fetch("https://api.asi1.ai/v1/image/generate", {
+  method: "POST",
+  headers: { "Authorization": "Bearer YOUR_API_KEY", "Content-Type": "application/json" },
+  body: JSON.stringify({
+    prompt: "A futuristic city skyline at sunset with flying cars",
+    size: "1024x1024",
+    model: "asi1-mini",
+  }),
+});
+
+if (response.ok) {
+  const result = await response.json();
+  if (result.images?.[0]?.url?.startsWith("data:image/")) {
+    const base64Data = result.images[0].url.split(",")[1];
+    fs.writeFileSync("generated_image.png", Buffer.from(base64Data, "base64"));
+  }
+}
+\`\`\`
+
+Python version:
+\`\`\`python
+import requests, base64
+response = requests.post("https://api.asi1.ai/v1/image/generate",
+    headers={"Authorization": "Bearer YOUR_API_KEY", "Content-Type": "application/json"},
+    json={"prompt": "A futuristic city", "size": "1024x1024", "model": "asi1-mini"})
+if response.ok:
+    data = response.json()
+    if data.get("images"):
+        img_data = base64.b64decode(data["images"][0]["url"].split(",")[1])
+        with open("image.png", "wb") as f: f.write(img_data)
+\`\`\`
 
 ## uAgents Framework
 
@@ -294,25 +363,15 @@ fetchcoder agent agentverse "create agent"    # Agentverse agent mode
 Config: \`~/.fetchcoder/fetchcoder.json\`
 API keys: set \`ASI1_API_KEY\` and \`AGENTVERSE_API_KEY\` as env vars or in \`~/.fetchcoder/.env\`
 
-## Project Generation Guidelines
+## uAgent Project Generation (only when user asks for Fetch.ai/uAgent projects)
 
-When users ask to create a uAgent project, generate a complete working project with:
-1. A Python virtual environment setup (\`python -m venv venv\`)
-2. \`requirements.txt\` with \`uagents\` (and \`fetchai\`, \`flask\`, \`flask-cors\`, \`python-dotenv\` if SDK agents)
-3. The agent script(s) with proper handlers and typed data models
-4. A \`.env.example\` with required environment variables (AGENTVERSE_API_KEY, seed phrases)
-5. A README.md explaining setup, configuration, and how to run the agents
-6. If multi-agent communication, create separate scripts for each agent with clear instructions on run order
+When users specifically ask to create a uAgent project, generate:
+1. A Python virtual environment setup
+2. \`requirements.txt\` with \`uagents\`
+3. Agent script(s) with proper handlers and typed data models
+4. A \`.env.example\` and README.md
 
-### Common Patterns to Offer
-- **Simple Agent**: startup handler, logging
-- **Message Pair**: two agents communicating with typed models
-- **Chat Protocol Agent**: ASI:One/Agentverse-compatible structured messaging
-- **REST Agent**: HTTP endpoints for web integration
-- **Payment Agent**: buyer/seller payment negotiation
-- **SDK AI Agent**: Flask-based agent with Agentverse registration
-- **Mailbox Agent**: local agent connected to Agentverse
-- **MCP-enabled Agent**: agent with external tool access via MCP`
+For ALL OTHER coding requests (HTML, CSS, JS, React, Next.js, Python, Go, etc.), build exactly what the user asks for without any Fetch.ai/uAgent references.`
 
 export async function getFetchAiKnowledgeSection(_variant: PromptVariant, _context: SystemPromptContext): Promise<string> {
 	return FETCHAI_KNOWLEDGE
