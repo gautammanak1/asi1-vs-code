@@ -42,6 +42,10 @@ export const baseTemplate = `{{${SystemPromptSection.AGENT_ROLE}}}
 
 ====
 
+{{${SystemPromptSection.FETCHAI_KNOWLEDGE}}}
+
+====
+
 {{${SystemPromptSection.OBJECTIVE}}}
 
 ====

@@ -41,10 +41,8 @@ function createHandlerForProvider(
 		onRetryAttempt: options.onRetryAttempt,
 		openAiApiKey: options.openAiApiKey,
 		openAiBaseUrl: options.openAiBaseUrl || "https://api.asi1.ai/v1",
-		azureApiVersion: options.azureApiVersion,
-		azureIdentity: options.azureIdentity,
 		openAiHeaders: options.openAiHeaders,
-		openAiModelId: (mode === "plan" ? options.planModeOpenAiModelId : options.actModeOpenAiModelId) || "asi1",
+		openAiModelId: "asi1",
 		openAiModelInfo: mode === "plan" ? options.planModeOpenAiModelInfo : options.actModeOpenAiModelInfo,
 		reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
 	})

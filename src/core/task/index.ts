@@ -3627,15 +3627,18 @@ export class Task {
 			}
 
 			// Stored the assistant API response immediately after the stream finishes in the same turn
-			// Check if the stream produced any content — either text or native tool calls.
+			// Check if the stream produced any content — text, reasoning, or native tool calls.
 			// toolUseHandler may have accumulated tool_use blocks even when useNativeToolCalls is false
 			// (e.g., from Claude Code provider when the model returns native tool_use blocks).
 			const hasAccumulatedToolCalls =
 				toolUseHandler.getAllFinalizedToolUses().length > 0;
+			const hasReasoningContent =
+				!!reasonsHandler.getCurrentReasoning()?.thinking;
 			const assistantHasContent =
 				assistantMessage.length > 0 ||
 				this.useNativeToolCalls ||
-				hasAccumulatedToolCalls;
+				hasAccumulatedToolCalls ||
+				hasReasoningContent;
 			if (assistantHasContent) {
 				telemetryService.captureConversationTurnEvent(
 					this.ulid,
@@ -3767,11 +3770,22 @@ export class Task {
 				);
 				didEndLoop = recDidEndLoop;
 			} else {
-				// if there's no assistant_responses, that means we got no text or tool_use content blocks from API which we should assume is an error
+				// No text, reasoning, or tool_use content blocks from API — treat as an error.
 				const { model, providerId } = this.getCurrentProviderInfo();
 				const reqId = this.getApiRequestIdSafe();
 
-				// Minimal diagnostics: structured log and telemetry
+				const diagnostics = {
+					hadUsageChunk: didReceiveUsageChunk,
+					inputTokens: taskMetrics.inputTokens,
+					outputTokens: taskMetrics.outputTokens,
+					nativeToolCalls: this.useNativeToolCalls,
+				};
+
+				Logger.warn(
+					`[Task] Empty assistant response from ${providerId}/${model.id}`,
+					JSON.stringify(diagnostics),
+				);
+
 				telemetryService.captureProviderApiError({
 					ulid: this.ulid,
 					model: model.id,
@@ -3781,8 +3795,9 @@ export class Task {
 					isNativeToolCall: this.useNativeToolCalls,
 				});
 
-				const baseErrorMessage =
-					"Invalid API Response: The provider returned an empty or unparsable response. This is a provider-side issue where the model failed to generate valid output or returned tool calls that Asi cannot process. Retrying the request may help resolve this issue.";
+				const baseErrorMessage = didReceiveUsageChunk
+					? "The API responded but returned no usable content. The model may have produced an empty or malformed response. This can happen intermittently — retrying usually resolves it."
+					: "No response received from the API. This could indicate a network issue, an invalid API key, or the model endpoint being unavailable. Please verify your API key and base URL in Settings.";
 				const errorText = reqId
 					? `${baseErrorMessage} (Request ID: ${reqId})`
 					: baseErrorMessage;

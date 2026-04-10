@@ -23,30 +23,14 @@ export function registerAsiAssistantApiIntegration(
 			return;
 		}
 
-		const baseUrl =
-			(await vscode.window.showInputBox({
-				title: "API Base URL",
-				value: DEFAULT_BASE,
-				placeHolder: DEFAULT_BASE,
-				ignoreFocusOut: true,
-			})) ?? DEFAULT_BASE;
-
-		const model =
-			(await vscode.window.showInputBox({
-				title: "Model ID",
-				value: DEFAULT_MODEL,
-				placeHolder: DEFAULT_MODEL,
-				ignoreFocusOut: true,
-			})) ?? DEFAULT_MODEL;
-
 		const conf = vscode.workspace.getConfiguration("asiAssistant");
 		await conf.update("apiKey", key, vscode.ConfigurationTarget.Global);
-		await conf.update("baseUrl", baseUrl, vscode.ConfigurationTarget.Global);
-		await conf.update("model", model, vscode.ConfigurationTarget.Global);
+		await conf.update("baseUrl", DEFAULT_BASE, vscode.ConfigurationTarget.Global);
+		await conf.update("model", DEFAULT_MODEL, vscode.ConfigurationTarget.Global);
 
-		await applyToFetchCoderState(webview, { apiKey: key, baseUrl, model });
+		await applyToFetchCoderState(webview, { apiKey: key, baseUrl: DEFAULT_BASE, model: DEFAULT_MODEL });
 		void vscode.window.showInformationMessage(
-			"ASI:One API key and endpoints saved for Fetch Coder.",
+			"ASI:One API key saved for Fetch Coder.",
 		);
 	};
 
@@ -72,15 +56,12 @@ async function applyToFetchCoderState(
 	webview: VscodeWebviewProvider,
 	opts: { apiKey?: string; baseUrl?: string; model?: string },
 ): Promise<void> {
-	const { apiKey, baseUrl, model } = opts;
+	const { apiKey, baseUrl } = opts;
 	webview.controller.stateManager.setApiConfiguration({
 		...(apiKey !== undefined && apiKey !== "" ? { openAiApiKey: apiKey } : {}),
-		...(baseUrl !== undefined && baseUrl !== ""
-			? { openAiBaseUrl: baseUrl }
-			: {}),
-		...(model !== undefined && model !== ""
-			? { planModeOpenAiModelId: model, actModeOpenAiModelId: model }
-			: {}),
+		openAiBaseUrl: baseUrl || DEFAULT_BASE,
+		planModeOpenAiModelId: DEFAULT_MODEL,
+		actModeOpenAiModelId: DEFAULT_MODEL,
 		planModeApiProvider: "openai",
 		actModeApiProvider: "openai",
 	});

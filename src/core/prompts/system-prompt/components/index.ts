@@ -4,6 +4,7 @@ import { getAgentRoleSection } from "./agent_role"
 import { getCapabilitiesSection } from "./capabilities"
 import { getEditingFilesSection } from "./editing_files"
 import { getFeedbackSection } from "./feedback"
+import { getFetchAiKnowledgeSection } from "./fetchai_knowledge"
 import { getMcp } from "./mcp"
 import { getObjectiveSection } from "./objective"
 import { getRulesSection } from "./rules"
@@ -48,5 +49,9 @@ export function getSystemPromptComponents() {
 			fn: getFeedbackSection,
 		},
 		{ id: SystemPromptSection.TASK_PROGRESS, fn: getUpdatingTaskProgress },
+		{
+			id: SystemPromptSection.FETCHAI_KNOWLEDGE,
+			fn: getFetchAiKnowledgeSection,
+		},
 	]
 }
