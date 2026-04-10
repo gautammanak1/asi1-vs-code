@@ -1184,23 +1184,15 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			disableTextInputs: false,
 		}); // important that we don't disable the text input here
 
-		const handleEnhancePrompt = useCallback(async () => {
+		const handleEnhancePrompt = useCallback(() => {
 			const text = inputValue.trim();
 			if (!text || isEnhancing) return;
 			setIsEnhancing(true);
-			try {
-				const result = await StateServiceClient.getStringValue(
-					StringRequest.create({ value: text }),
-				);
-				if (result?.value) {
-					setInputValue(result.value);
-				}
-			} catch {
-				const enhanced = `${text}\n\nPlease provide a detailed, well-structured solution with code examples, clear explanations, and best practices.`;
-				setInputValue(enhanced);
-			} finally {
-				setIsEnhancing(false);
-			}
+
+			const enhanced = `${text}\n\nPlease provide a detailed, well-structured solution with code examples, clear explanations, and best practices. Think step by step.`;
+			setInputValue(enhanced);
+
+			setTimeout(() => setIsEnhancing(false), 400);
 		}, [inputValue, isEnhancing, setInputValue]);
 
 		const handleContextButtonClick = useCallback(() => {
