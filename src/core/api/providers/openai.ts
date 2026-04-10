@@ -76,20 +76,18 @@ export class OpenAiHandler implements ApiHandler {
 			maxTokens = undefined
 		}
 
-		const baseParams = {
+		const createParams: any = {
 			model: modelId,
 			messages: openAiMessages,
 			temperature,
 			max_tokens: maxTokens,
+			stream: true,
+			stream_options: { include_usage: true },
 			...getOpenAIToolParams(tools),
 			...(this.options.webSearchEnabled ? { web_search: true } : {}),
 		}
 
-		const stream = await client.chat.completions.create({
-			...baseParams,
-			stream: true as const,
-			stream_options: { include_usage: true },
-		} as any)
+		const stream: any = await client.chat.completions.create(createParams)
 
 		const toolCallProcessor = new ToolCallProcessor()
 		let chunkCount = 0
@@ -147,10 +145,9 @@ export class OpenAiHandler implements ApiHandler {
 
 		if (yieldedContentChunks === 0) {
 			Logger.warn(`[OpenAiHandler] Stream produced no content (${chunkCount} chunks). Falling back to non-streaming request.`)
-			const fallback = await client.chat.completions.create({
-				...baseParams,
-				stream: false as const,
-			} as any)
+			const fallbackParams: any = { ...createParams, stream: false }
+			delete fallbackParams.stream_options
+			const fallback: any = await client.chat.completions.create(fallbackParams)
 			const fallbackContent = fallback.choices?.[0]?.message?.content
 			if (fallbackContent) {
 				yield { type: "text", text: fallbackContent }
