@@ -26,29 +26,34 @@ const ConfigureServersView = () => {
 					marginTop: "5px",
 				}}
 			>
-				The{" "}
+				Connect to{" "}
 				<VSCodeLink
 					href="https://github.com/modelcontextprotocol"
 					style={{ display: "inline" }}
 				>
-					Model Context Protocol
+					MCP servers
 				</VSCodeLink>{" "}
-				enables communication with locally running MCP servers that provide
-				additional tools and resources to extend Asi's capabilities. You can use{" "}
+				to extend Fetch Coder with external tools, APIs, and data sources.{" "}
 				<VSCodeLink
-					href="https://github.com/modelcontextprotocol/servers"
+					href="https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp"
 					style={{ display: "inline" }}
 				>
-					community-made servers
-				</VSCodeLink>{" "}
-				or ask Fetch Coder to create new tools specific to your workflow (e.g., "add a
-				tool that gets the latest npm docs").{" "}
-				<VSCodeLink
-					href="https://innovationlab.fetch.ai/resources/docs/mcp-integration"
-					style={{ display: "inline" }}
-				>
-					Learn more about MCP integration.
+					Learn more.
 				</VSCodeLink>
+			</div>
+			<div
+				style={{
+					color: "var(--vscode-descriptionForeground)",
+					fontSize: "12px",
+					marginBottom: "16px",
+					padding: "8px 12px",
+					background: "var(--vscode-textBlockQuote-background)",
+					borderRadius: "6px",
+				}}
+			>
+				<strong>Tip:</strong> If a server needs an API key, add{" "}
+				<code style={{ fontSize: "11px" }}>"headers": {'{'}  "Authorization": "Bearer YOUR_KEY" {'}'}</code>{" "}
+				to its config in the settings file.
 			</div>
 
 			{/* Remote config banner */}

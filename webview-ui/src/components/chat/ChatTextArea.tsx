@@ -5,7 +5,7 @@ import {
 	FileSearchType,
 	RelativePathsRequest,
 } from "@shared/proto/Asi/file";
-import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/Asi/state";
+import { PlanActMode, TogglePlanActModeRequest, UpdateSettingsRequest } from "@shared/proto/Asi/state";
 import { type SlashCommand } from "@shared/slashCommands";
 import { Mode } from "@shared/storage/types";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
@@ -245,6 +245,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			remoteConfigSettings,
 			navigateToSettingsModelPicker,
 			mcpServers,
+			AsiWebToolsEnabled,
 		} = useExtensionState();
 		const [isTextAreaFocused, setIsTextAreaFocused] = useState(false);
 		const [isDraggingOver, setIsDraggingOver] = useState(false);
@@ -287,7 +288,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const unsupportedFileTimerRef = useRef<NodeJS.Timeout | null>(null);
 		const [showDimensionError, setShowDimensionError] = useState(false);
 		const [isEnhancing, setIsEnhancing] = useState(false);
-		const [webSearchActive, setWebSearchActive] = useState(false);
 		const dimensionErrorTimerRef = useRef<NodeJS.Timeout | null>(null);
 
 		const [fileSearchResults, setFileSearchResults] = useState<SearchResult[]>(
@@ -1802,17 +1802,21 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							</Tooltip>
 
 							<Tooltip>
-								<TooltipContent>{webSearchActive ? "Web Search: ON" : "Web Search: OFF"}</TooltipContent>
+								<TooltipContent>{AsiWebToolsEnabled?.user ? "Web Search: ON" : "Web Search: OFF"}</TooltipContent>
 								<TooltipTrigger>
 									<VSCodeButton
 										appearance="icon"
 										aria-label="Toggle Web Search"
 										className="p-0 m-0 flex items-center"
 										data-testid="web-search-button"
-										onClick={() => setWebSearchActive(!webSearchActive)}
+										onClick={() => {
+											StateServiceClient.updateSettings(
+												UpdateSettingsRequest.create({ clineWebToolsEnabled: !AsiWebToolsEnabled?.user }),
+											).catch(() => {});
+										}}
 									>
 										<ButtonContainer>
-											<GlobeIcon size={12} style={{ color: webSearchActive ? "var(--vscode-textLink-foreground)" : undefined }} />
+											<GlobeIcon size={12} style={{ color: AsiWebToolsEnabled?.user ? "#7CE074" : undefined }} />
 										</ButtonContainer>
 									</VSCodeButton>
 								</TooltipTrigger>

@@ -1,5 +1,5 @@
 import type { Meta } from "@storybook/react-vite"
-import AsiLogoWhite from "@/assets/FetchCoderLogoWhite"
+import FetchCoderMark from "@/assets/FetchCoderMark"
 import { Alert, AlertDescription } from "./alert"
 
 const meta: Meta<typeof Alert> = {
@@ -32,7 +32,7 @@ export const Default = () => (
 			<Alert isDismissible={false} title="Non Dismissible" variant="default">
 				<AlertDescription>This alert cannot be dismissed.</AlertDescription>
 			</Alert>
-			<Alert icon={<AsiLogoWhite className="size-2" />} title="Brand" variant="Asi">
+			<Alert icon={<FetchCoderMark className="size-2" variant="white" />} title="Brand" variant="Asi">
 				<AlertDescription>
 					<p className="my-1">How can I help you?</p>
 					<ul className="list-inside list-disc text-sm">

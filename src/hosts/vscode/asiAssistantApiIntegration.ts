@@ -25,10 +25,22 @@ export function registerAsiAssistantApiIntegration(
 
 		const conf = vscode.workspace.getConfiguration("asiAssistant");
 		await conf.update("apiKey", key, vscode.ConfigurationTarget.Global);
-		await conf.update("baseUrl", DEFAULT_BASE, vscode.ConfigurationTarget.Global);
-		await conf.update("model", DEFAULT_MODEL, vscode.ConfigurationTarget.Global);
+		await conf.update(
+			"baseUrl",
+			DEFAULT_BASE,
+			vscode.ConfigurationTarget.Global,
+		);
+		await conf.update(
+			"model",
+			DEFAULT_MODEL,
+			vscode.ConfigurationTarget.Global,
+		);
 
-		await applyToFetchCoderState(webview, { apiKey: key, baseUrl: DEFAULT_BASE, model: DEFAULT_MODEL });
+		await applyToFetchCoderState(webview, {
+			apiKey: key,
+			baseUrl: DEFAULT_BASE,
+			model: DEFAULT_MODEL,
+		});
 		void vscode.window.showInformationMessage(
 			"ASI:One API key saved for Fetch Coder.",
 		);

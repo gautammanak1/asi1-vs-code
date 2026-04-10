@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/fetch-coder-banner.png" alt="Fetch Coder Banner" width="100%" />
+<img src="assets/fetch-coder-banner.png" alt="Fetch Coder" width="100%" />
 
 <br/><br/>
 
@@ -11,23 +11,14 @@
   <a href="./LICENSE">
     <img src="https://img.shields.io/badge/License-Apache--2.0-green.svg" alt="License" />
   </a>
-  <a href="https://code.visualstudio.com/">
-    <img src="https://img.shields.io/badge/VS%20Code-1.84+-007ACC?logo=visualstudiocode&logoColor=white" alt="VS Code" />
-  </a>
-  <a href="https://github.com/gautammanak1/asi1-vs-code/actions/workflows/ci.yml">
-    <img src="https://github.com/gautammanak1/asi1-vs-code/actions/workflows/ci.yml/badge.svg" alt="CI" />
-  </a>
   <a href="https://api.asi1.ai/">
-    <img src="https://img.shields.io/badge/ASI:One-API-6366f1?style=flat" alt="ASI:One API" />
-  </a>
-  <a href="https://www.fetch.ai/">
-    <img src="https://img.shields.io/badge/Fetch.ai-Ecosystem-0891b2?style=flat" alt="Fetch.ai" />
+    <img src="https://img.shields.io/badge/ASI:One-API-7CE074?style=flat" alt="ASI:One" />
   </a>
 </p>
 
 <p align="center">
-  An autonomous AI coding agent that lives inside your editor.<br/>
-  Chat, generate code, build uAgents, edit files, run terminal commands — all powered by <strong>ASI:One</strong>.
+  Your AI coding partner — right inside VS Code.<br/>
+  It writes code, debugs, edits files, runs commands, and ships. You stay in control.
 </p>
 
 </div>
@@ -36,29 +27,9 @@
 
 ## What is Fetch Coder?
 
-Fetch Coder is an AI-powered coding **agent** for **VS Code** and **Cursor**, powered exclusively by the **ASI:One** LLM — the world's first Web3-native language model designed for agentic AI.
+Fetch Coder is an AI coding agent for **VS Code** and **Cursor**, powered by **ASI:One**. It works like a senior engineer sitting next to you — it reads your code, understands context, writes files, runs terminal commands, and iterates until the job is done.
 
-It gives you a full agent loop right inside the editor — plus built-in knowledge of the **Fetch.ai ecosystem** to help you build uAgents, connect to Agentverse, and integrate with MCP servers.
-
-**Extension ID:** `gautammanak2.fetch-coder`
-
----
-
-## Features
-
-| Area | What you get |
-|------|--------------|
-| **ASI:One Powered** | Hardcoded to use `asi1` model via `https://api.asi1.ai/v1` — no setup needed beyond API key |
-| **Fetch.ai Knowledge** | Built-in knowledge of uAgents, Agentverse, Chat Protocol, Payment Protocol, MCP integration |
-| **Chat** | Sidebar panel with streaming, Markdown, syntax-highlighted code blocks |
-| **Agent Tools** | Read/write files, search, list files, run terminal commands |
-| **MCP** | Connect to Model Context Protocol servers for extended capabilities |
-| **Plan & Act** | Separate planning and execution modes for thoughtful multi-step work |
-| **Checkpoints** | Snapshot before changes, revert when needed |
-| **Subagents** | Parallel task execution for complex work |
-| **Browser** | Automated browser testing and web interaction |
-| **Focus Chain** | Track task progress with structured to-do lists |
-| **History** | Full task history with search and filtering |
+**It can build anything:** landing pages, React apps, Python scripts, REST APIs, CLI tools, games, uAgents, and more.
 
 ---
 
@@ -66,99 +37,111 @@ It gives you a full agent loop right inside the editor — plus built-in knowled
 
 ### 1. Install
 
-**From VS Code Marketplace:**
+Search **"Fetch Coder"** in the VS Code Extensions panel, or install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder).
 
-```
-https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder
-```
+### 2. Get your API Key
 
-Or search for **"Fetch Coder"** in the Extensions panel (VS Code or Cursor).
+Go to [asi1.ai/dashboard/api-keys](https://asi1.ai/dashboard/api-keys), create a key, and paste it in the Fetch Coder welcome screen.
 
-### 2. Get your ASI:One API Key
+### 3. Start building
 
-1. Visit [asi1.ai/chat](https://asi1.ai/chat) and log in
-2. Go to [asi1.ai/dashboard/api-keys](https://asi1.ai/dashboard/api-keys)
-3. Click **"Create API Key"** and copy it
+Open the Fetch Coder sidebar and tell it what to build:
 
-### 3. Set your API Key
-
-Open Fetch Coder in the sidebar and paste your API key in the settings. Or set it via environment variable:
-
-```bash
-export ASI_ONE_API_KEY=your_api_key
-```
-
-The base URL (`https://api.asi1.ai/v1`) and model (`asi1`) are hardcoded — no configuration needed.
-
-### 4. Start coding!
-
-Open the Fetch Coder sidebar panel and start chatting. Try:
-
+- *"Create a landing page with HTML, CSS, and JS"*
+- *"Build a Next.js app with dark mode"*
+- *"Write a Python script that scrapes job listings"*
 - *"Create a Fetch.ai uAgent with message handling"*
-- *"Build a REST API with Express.js"*
-- *"Explain this codebase and suggest improvements"*
+- *"Debug why my API returns 500 errors"*
 
 ---
 
-## What Can You Build?
+## Features
 
-Fetch Coder has built-in knowledge of the entire Fetch.ai ecosystem:
+### Chat & Code Generation
+Chat with ASI:One in the sidebar. It streams responses with syntax highlighting, Markdown, and code blocks. Ask it to build, explain, or improve anything.
 
-### uAgents
-Create autonomous microservice agents using the `uagents` Python framework:
-```
-"Create a uAgent that responds to messages and registers on Agentverse"
-```
+### File Operations
+Fetch Coder reads, writes, creates, and deletes files directly in your workspace. It shows diffs before applying changes — you approve or reject each edit.
 
-### Agent Chat Protocol
-Build agents that communicate using the standardized Chat Protocol:
-```
-"Set up two agents communicating via ChatMessage and ChatAcknowledgement"
-```
+### Terminal Commands
+It runs terminal commands (npm, git, docker, python, etc.) and reads the output. Long-running commands are handled gracefully.
 
-### Agent Payment Protocol
-Implement payment flows between buyer and seller agents:
-```
-"Create a buyer and seller agent using the Payment Protocol with USDC"
-```
+### Web Search
+Toggle the **globe icon** in the chat toolbar to enable real-time web search. Fetch Coder can search the web for up-to-date information while coding.
 
-### MCP Integration
-Connect agents to external tools via Model Context Protocol:
-```
-"Build a uAgent that connects to remote MCP servers for web search"
-```
+### Enhance Prompt
+Click the **sparkles icon** next to the send button to enhance your prompt. It uses ASI:One to rewrite your prompt for better, more detailed results.
 
-### ASI:One API Apps
-Build applications powered by the ASI:One LLM:
-```
-"Create a Python chatbot using the ASI:One streaming API"
-```
+### Plan & Act Modes
+- **Plan mode**: Gathers information and designs an approach before coding
+- **Act mode**: Executes changes immediately
 
-### Any Code Project
-Fetch Coder is a general-purpose coding agent — build anything:
-```
-"Build a Next.js dashboard with authentication and dark mode"
-```
+Toggle with the Plan/Act switch at the bottom of the chat input.
+
+### MCP Servers
+Connect to [Model Context Protocol](https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp) servers for extended capabilities — databases, APIs, specialized tools. Configure in the MCP settings (server icon in toolbar).
+
+### Checkpoints
+Fetch Coder snapshots your code before making changes. If something goes wrong, revert to any previous checkpoint.
+
+### Subagents
+For complex tasks, Fetch Coder can spawn parallel subagents to work on different parts simultaneously.
+
+### Browser Testing
+Automated browser testing with Puppeteer — Fetch Coder can launch a browser, navigate pages, click elements, and verify UI changes.
+
+### History
+Full task history with search. Resume any previous conversation or review what was done.
 
 ---
 
-## Documentation
+## Settings
 
-| Resource | URL |
-|----------|-----|
-| **Fetch.ai Innovation Lab** | [innovationlab.fetch.ai/resources/docs/intro](https://innovationlab.fetch.ai/resources/docs/intro) |
-| **uAgent Creation** | [innovationlab.fetch.ai/resources/docs/agent-creation/uagent-creation](https://innovationlab.fetch.ai/resources/docs/agent-creation/uagent-creation) |
-| **Agent Communication** | [innovationlab.fetch.ai/resources/docs/agent-communication/uagent-uagent-communication](https://innovationlab.fetch.ai/resources/docs/agent-communication/uagent-uagent-communication) |
-| **Agent Chat Protocol** | [innovationlab.fetch.ai/resources/docs/agent-communication/agent-chat-protocol](https://innovationlab.fetch.ai/resources/docs/agent-communication/agent-chat-protocol) |
-| **Payment Protocol** | [innovationlab.fetch.ai/resources/docs/agent-transaction/agent-payment-protocol](https://innovationlab.fetch.ai/resources/docs/agent-transaction/agent-payment-protocol) |
-| **ASI:One Introduction** | [innovationlab.fetch.ai/resources/docs/asione/asi1-introduction](https://innovationlab.fetch.ai/resources/docs/asione/asi1-introduction) |
-| **ASI:One Getting Started** | [innovationlab.fetch.ai/resources/docs/asione/asi1-getting-started](https://innovationlab.fetch.ai/resources/docs/asione/asi1-getting-started) |
-| **MCP Integration** | [innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp](https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp) |
-| **Agentverse** | [innovationlab.fetch.ai/resources/docs/agentverse](https://innovationlab.fetch.ai/resources/docs/agentverse/) |
-| **FetchCoder CLI** | [innovationlab.fetch.ai/resources/docs/fetchcoder/overview](https://innovationlab.fetch.ai/resources/docs/fetchcoder/overview) |
-| **ASI:One API** | [api.asi1.ai](https://api.asi1.ai/) |
-| **Agentverse Platform** | [agentverse.ai](https://agentverse.ai/) |
-| **VS Marketplace** | [Fetch Coder](https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder) |
+### API Key
+Set your ASI:One API key in one of these ways:
+- **Welcome screen**: Paste it when you first open Fetch Coder
+- **Command Palette**: `Cmd+Shift+P` → "Fetch Coder: Set ASI:One API Key"
+- **VS Code Settings**: `asiAssistant.apiKey`
+- **Environment variable**: `ASI_ONE_API_KEY`
+
+### Model
+Fixed to `asi1` — no configuration needed. Endpoint: `https://api.asi1.ai/v1`
+
+### Web Search
+Toggle the globe icon in the chat toolbar. When enabled, ASI:One can search the web for current information.
+
+### Auto-approval
+Configure which actions Fetch Coder can perform without asking:
+- Read files
+- Write/edit files
+- Run terminal commands
+- Use MCP tools
+
+Find these in **Settings → Fetch Coder**.
+
+---
+
+## Toolbar Guide
+
+| Icon | What it does |
+|------|-------------|
+| **@** | Add context — mention files, folders, URLs |
+| **+** | Attach files or images |
+| **Globe** | Toggle web search on/off |
+| **Server** | Configure MCP servers |
+| **Sparkles** | Enhance your prompt with AI |
+| **Send** | Send your message |
+| **Plan / Act** | Switch between planning and execution modes |
+
+---
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+'` (with selection) | Add selected code to Fetch Coder |
+| `Cmd+'` (no selection) | Focus chat input |
+| `Cmd+Shift+A` | Toggle Plan/Act mode |
 
 ---
 
@@ -173,49 +156,36 @@ npm run protos
 npm run build:webview
 ```
 
-Press **F5** in VS Code to launch the Extension Development Host.
-
-### Package as VSIX
-
-```bash
-npx @vscode/vsce package --no-dependencies
-```
-
----
-
-## Repository Layout
-
-| Path | Purpose |
-|------|---------|
-| `src/core/` | Task loop, API handler (ASI:One), tools, prompts, storage |
-| `src/core/prompts/` | System prompt with Fetch.ai knowledge base |
-| `src/shared/` | Shared types, API types, proto definitions |
-| `src/integrations/` | Terminal, editor/diff, diagnostics, notifications |
-| `src/services/` | MCP hub, search, browser session, tree-sitter parsing |
-| `src/hosts/` | VS Code host, terminal manager, webview helpers |
-| `webview-ui/` | React + Vite + Tailwind chat UI |
-| `proto/` | Protocol Buffer definitions for gRPC communication |
-| `.github/workflows/` | CI, publish to VS Marketplace, publish to Open VSX |
+Press **F5** to launch in the Extension Development Host.
 
 ---
 
 ## Publishing
 
-### GitHub Secrets (CI/CD)
+Bump `version` in `package.json`, commit, then:
 
-Add these in **Settings → Secrets and variables → Actions**:
+```bash
+git tag v0.2.6 && git push origin v0.2.6
+```
 
-| Secret | Purpose | Where to get it |
-|--------|---------|-----------------|
-| `VSCE_PAT` | Publish to VS Code Marketplace | [Azure DevOps](https://dev.azure.com/) → Personal Access Tokens → scope: **Marketplace → Manage** |
-| `OVSX_PAT` | Publish to Open VSX (for Cursor) | [Open VSX](https://open-vsx.org/) → User Settings → Access Tokens |
+The CI workflows automatically publish to VS Code Marketplace and Open VSX.
 
-### Release a New Version
+**Required GitHub Secrets:**
+- `VSCE_PAT` — Azure DevOps PAT for VS Code Marketplace
+- `OVSX_PAT` — Open VSX access token
 
-1. Bump `"version"` in `package.json`
-2. Commit and push to `main`
-3. Create a git tag: `git tag v0.2.3 && git push origin v0.2.3`
-4. The publish workflows will automatically build and publish
+---
+
+## Links
+
+| Resource | URL |
+|----------|-----|
+| VS Marketplace | [Fetch Coder](https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder) |
+| ASI:One | [asi1.ai](https://asi1.ai) |
+| API Keys | [asi1.ai/dashboard/api-keys](https://asi1.ai/dashboard/api-keys) |
+| Agentverse | [agentverse.ai](https://agentverse.ai) |
+| Fetch.ai Docs | [innovationlab.fetch.ai](https://innovationlab.fetch.ai/resources/docs/intro) |
+| GitHub | [gautammanak1/asi1-vs-code](https://github.com/gautammanak1/asi1-vs-code) |
 
 ---
 
@@ -223,12 +193,8 @@ Add these in **Settings → Secrets and variables → Actions**:
 
 Apache-2.0 — see [LICENSE](LICENSE).
 
----
-
 <div align="center">
 
-**Built with ASI:One by [Gautam Manak](https://github.com/gautammanak1)**
-
-If you like this project, give it a star on [GitHub](https://github.com/gautammanak1/asi1-vs-code).
+**Built by [Gautam Manak](https://github.com/gautammanak1) · Powered by [ASI:One](https://asi1.ai)**
 
 </div>

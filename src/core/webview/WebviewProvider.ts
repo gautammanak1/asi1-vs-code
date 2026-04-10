@@ -111,13 +111,13 @@ export abstract class WebviewProvider {
 				<link rel="stylesheet" type="text/css" href="${stylesUrl}">
 				<link href="${codiconsUrl}" rel="stylesheet" />
 				<meta http-equiv="Content-Security-Policy" content="default-src 'none';
-					connect-src https://*.posthog.com https://*.Asi.bot; 
+					connect-src https://*.posthog.com https://*.asi1.ai https://api.asi1.ai; 
 					font-src ${this.getCspSource()} data:; 
 					style-src ${this.getCspSource()} 'unsafe-inline'; 
 					img-src ${this.getCspSource()} https: data:; 
 					media-src ${this.getCspSource()} https: data: blob:;
 					script-src 'nonce-${nonce}' 'unsafe-eval';">
-				<title>Asi</title>
+				<title>Fetch Coder</title>
 			</head>
 			<body>
 				<noscript>You need to enable JavaScript to run this app.</noscript>
@@ -218,7 +218,7 @@ export abstract class WebviewProvider {
 					<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
 					<link rel="stylesheet" type="text/css" href="${stylesUrl}">
 					<link href="${codiconsUrl}" rel="stylesheet" />
-					<title>Asi</title>
+					<title>Fetch Coder</title>
 				</head>
 				<body>
 					<div id="root"></div>

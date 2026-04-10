@@ -1,18 +1,17 @@
 import { StringRequest } from "@shared/proto/Asi/common";
 import { VSCodeButton, VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react";
 import React, { useEffect, useMemo, useState } from "react";
-import kanbanDemoVideoMp4 from "@/assets/cline_kanban_demo.mp4";
-import kanbanDemoVideoWebm from "@/assets/cline_kanban_demo.webm";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config";
 import { FileServiceClient, StateServiceClient } from "@/services/grpc-client";
 
 const INSTALL_COMMAND = "npm install -g Asi";
 const COPIED_TIMEOUT = 1500;
-const resolveAssetSrc = (src: string) =>
-	src.startsWith("/src/") ? new URL(src, import.meta.url).toString() : src;
-const kanbanDemoMp4Src = resolveAssetSrc(kanbanDemoVideoMp4);
-const kanbanDemoWebmSrc = resolveAssetSrc(kanbanDemoVideoWebm);
+const assetBase = import.meta.env.BASE_URL.endsWith("/")
+	? import.meta.env.BASE_URL
+	: `${import.meta.env.BASE_URL}/`;
+const kanbanDemoMp4Src = `${assetBase}cline_kanban_demo.mp4`;
+const kanbanDemoWebmSrc = `${assetBase}cline_kanban_demo.webm`;
 
 export const Asi_KANBAN_MODAL_DISMISS_ID = "Asi-kanban-launch-modal-v1";
 
