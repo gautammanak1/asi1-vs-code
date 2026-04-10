@@ -37,21 +37,44 @@ const WelcomeView = memo(() => {
 			<div className="h-full px-5 overflow-auto flex flex-col gap-2.5">
 				<h2 className="text-lg font-semibold">Welcome to Fetch Coder</h2>
 				<p className="text-xs text-(--vscode-descriptionForeground) m-0">
-					Local POC — not affiliated with upstream Asi.
+					AI Coding Agent · Powered by ASI:One
 				</p>
 				<div className="flex justify-center my-5">
 					<AsiLogoWhite className="size-16" />
 				</div>
 				<p>
-					Fetch Coder uses the{" "}
+					Fetch Coder is powered by{" "}
 					<VSCodeLink
 						className="inline"
-						href="https://docs.asi1.ai/documentation/getting-started/overview"
+						href="https://innovationlab.fetch.ai/resources/docs/asione/asi1-introduction"
 					>
 						ASI:One
-					</VSCodeLink>{" "}
-					API. Add your API key below — endpoint and model are fixed for
-					ASI:One.
+					</VSCodeLink>
+					, the world&apos;s first Web3-native LLM. It can help you build{" "}
+					<VSCodeLink
+						className="inline"
+						href="https://innovationlab.fetch.ai/resources/docs/agent-creation/uagent-creation"
+					>
+						uAgents
+					</VSCodeLink>
+					, connect to{" "}
+					<VSCodeLink
+						className="inline"
+						href="https://agentverse.ai"
+					>
+						Agentverse
+					</VSCodeLink>
+					, and code any project. Add your API key below to get started.
+				</p>
+				<p className="text-xs text-(--vscode-descriptionForeground) m-0">
+					Get your API key at{" "}
+					<VSCodeLink className="inline" href="https://asi1.ai/dashboard/api-keys">
+						asi1.ai/dashboard/api-keys
+					</VSCodeLink>
+					{" "}·{" "}
+					<VSCodeLink className="inline" href="https://innovationlab.fetch.ai/resources/docs/intro">
+						View Docs
+					</VSCodeLink>
 				</p>
 
 				<div className="mt-4.5">

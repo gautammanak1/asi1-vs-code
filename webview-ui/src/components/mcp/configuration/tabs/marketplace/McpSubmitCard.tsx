@@ -35,7 +35,7 @@ const McpSubmitCard = () => {
 				</h3>
 				<p style={{ fontSize: "13px", margin: 0, color: "var(--vscode-descriptionForeground)" }}>
 					Help others discover great MCP servers by submitting an issue to{" "}
-					<a href="https://github.com/gautammanak1/asi1-vs-code">github.com/asi/mcp-marketplace</a>
+					<a href="https://github.com/gautammanak1/asi1-vs-code/issues">github.com/gautammanak1/asi1-vs-code</a>
 				</p>
 			</div>
 		</div>

@@ -41,13 +41,13 @@ const ConfigureServersView = () => {
 				>
 					community-made servers
 				</VSCodeLink>{" "}
-				or ask Asi to create new tools specific to your workflow (e.g., "add a
+				or ask Fetch Coder to create new tools specific to your workflow (e.g., "add a
 				tool that gets the latest npm docs").{" "}
 				<VSCodeLink
-					href="https://x.com/sdrzn/status/1867271665086074969"
+					href="https://innovationlab.fetch.ai/resources/docs/mcp-integration"
 					style={{ display: "inline" }}
 				>
-					See a demo here.
+					Learn more about MCP integration.
 				</VSCodeLink>
 			</div>
 

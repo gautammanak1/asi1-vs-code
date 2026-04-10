@@ -20,16 +20,12 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 		}
 	};
 
-	// Lazy Teammate Mode takes priority, then December festive logo, then default
-	const isDecember = new Date().getMonth() === 11; // 11 = December (0-indexed)
 	const LogoComponent = lazyTeammateModeEnabled
 		? AsiLogoTired
-		: isDecember
-			? AsiLogoSanta
-			: AsiLogoVariable;
+		: AsiLogoVariable;
 	const headingText = lazyTeammateModeEnabled
 		? "I guess I'm here to help"
-		: "What can I do for you?";
+		: "What can I build for you?";
 
 	return (
 		<div className="flex flex-col items-center mb-5">
