@@ -4,6 +4,24 @@ import { AsiError, AsiErrorType } from "../../../../src/services/error/ClineErro
 
 const _errorColor = "var(--vscode-errorForeground)"
 
+/** True when the string looks like JSON from our extension/API (show structured header). Plain text stays a simple message. */
+function isStructuredSerializedError(raw: string): boolean {
+	const t = raw.trim()
+	if (!t.startsWith("{")) {
+		return false
+	}
+	try {
+		const o = JSON.parse(t) as unknown
+		return (
+			typeof o === "object" &&
+			o !== null &&
+			("message" in (o as object) || "_error" in (o as object) || "providerId" in (o as object))
+		)
+	} catch {
+		return false
+	}
+}
+
 interface ErrorRowProps {
 	message: AsiMessage
 	errorType: "error" | "mistake_limit_reached" | "diff_error" | "Asiignore_error"
@@ -20,12 +38,12 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 			case "mistake_limit_reached":
 				// Handle API request errors with special error parsing
 				if (rawApiError) {
-					// FIXME: AsiError parsing should not be applied to non-Asi providers, but it seems we're using AsiErrorMessage below in the default error display
 					const parsedAsiError = AsiError.parse(rawApiError)
 					const errorMessage = parsedAsiError?._error?.message || parsedAsiError?.message || rawApiError
 					const requestId = parsedAsiError?._error?.request_id
 					const providerId = parsedAsiError?.providerId || parsedAsiError?._error?.providerId
 					const errorCode = parsedAsiError?._error?.code
+					const showStructuredHeader = isStructuredSerializedError(rawApiError)
 
 					if (parsedAsiError?.isErrorType(AsiErrorType.Balance)) {
 						const errorMessage =
@@ -64,10 +82,28 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 						)
 					}
 
+					if (!showStructuredHeader) {
+						return (
+							<p className="m-0 whitespace-pre-wrap text-error wrap-anywhere">
+								{errorMessage}
+								{errorMessage?.toLowerCase()?.includes("powershell") && (
+									<span className="block mt-2 text-description text-sm">
+										See the{" "}
+										<a
+											className="underline text-inherit"
+											href="https://github.com/gautammanak1/asi1-vs-code/wiki/TroubleShooting-%E2%80%90-%22PowerShell-is-not-recognized-as-an-internal-or-external-command%22">
+											PowerShell troubleshooting guide
+										</a>
+										.
+									</span>
+								)}
+								<span className="block mt-3 text-description text-sm">(Click &quot;Retry&quot; below)</span>
+							</p>
+						)
+					}
+
 					return (
 						<p className="m-0 whitespace-pre-wrap text-error wrap-anywhere flex flex-col gap-3">
-							{/* Display the well-formatted error extracted from the AsiError instance */}
-
 							<header>
 								{providerId && <span className="uppercase">[{providerId}] </span>}
 								{errorCode && <span>{errorCode}</span>}
@@ -75,10 +111,9 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 								{requestId && <div>Request ID: {requestId}</div>}
 							</header>
 
-							{/* Windows Powershell Issue */}
 							{errorMessage?.toLowerCase()?.includes("powershell") && (
 								<div>
-									It seems like you're having Windows PowerShell issues, please see this{" "}
+									It seems like you&apos;re having Windows PowerShell issues; see this{" "}
 									<a
 										className="underline text-inherit"
 										href="https://github.com/gautammanak1/asi1-vs-code/wiki/TroubleShooting-%E2%80%90-%22PowerShell-is-not-recognized-as-an-internal-or-external-command%22">
@@ -88,11 +123,10 @@ const ErrorRow = memo(({ message, errorType, apiRequestFailedMessage, apiReqStre
 								</div>
 							)}
 
-							{/* Display raw API error if different from parsed error message */}
 							{errorMessage !== rawApiError && <div>{rawApiError}</div>}
 
 							<div className="mt-4">
-								<span className="text-description">(Click "Retry" below)</span>
+								<span className="text-description">(Click &quot;Retry&quot; below)</span>
 							</div>
 						</p>
 					)

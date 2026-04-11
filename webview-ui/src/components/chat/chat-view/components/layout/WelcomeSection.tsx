@@ -282,7 +282,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 						worktreesEnabled?.featureFlag &&
 						worktreesEnabled?.user && (
 							<div className="flex flex-col items-center gap-3 mt-2 mb-4 px-5">
-								{/* TODO: Re-enable once worktree creation is stable
+								{/* New worktree window: disabled until creation flow is stable — keep branch indicator only.
 								<Tooltip>
 									<TooltipTrigger asChild>
 										<button

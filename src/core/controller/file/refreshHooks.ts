@@ -75,9 +75,7 @@ export async function refreshHooks(
 
 async function isExecutable(filePath: string): Promise<boolean> {
 	if (process.platform === "win32") {
-		// On Windows, files are "enabled" if they exist
-		// TODO(PR-9552 follow-up): Replace this temporary file-exists behavior
-		// with JSON-backed cross-platform hook enablement state.
+		// Windows: treat existing hook file as enabled until JSON-backed state exists.
 		return true;
 	}
 

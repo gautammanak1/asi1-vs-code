@@ -26,8 +26,8 @@ export class TerminalRegistry {
 	): TerminalInfo {
 		const terminalOptions: vscode.TerminalOptions = {
 			cwd,
-			name: "Asi",
-			iconPath: new vscode.ThemeIcon("Asi-icon"),
+			name: "Fetch Coder",
+			iconPath: new vscode.ThemeIcon("sparkle"),
 			env: {
 				Asi_ACTIVE: "true",
 			},

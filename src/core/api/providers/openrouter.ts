@@ -213,7 +213,8 @@ export class OpenRouterHandler implements ApiHandler {
 
 	async getApiStreamUsage(): Promise<ApiStreamUsageChunk | undefined> {
 		if (this.lastGenerationId) {
-			await setTimeoutPromise(500); // FIXME: necessary delay to ensure generation endpoint is ready
+			// OpenRouter generation metadata is not always queryable immediately after the stream ends.
+			await setTimeoutPromise(500);
 			try {
 				const generationIterator = this.fetchGenerationDetails(
 					this.lastGenerationId,

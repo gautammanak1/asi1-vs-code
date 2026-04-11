@@ -20,26 +20,33 @@ const QuickWinCard: React.FC<QuickWinCardProps> = ({ task, onExecute }) => {
 
 	return (
 		<div
-			className="flex items-center mb-1.5 py-2.5 px-4 space-x-3 rounded-xl cursor-pointer group transition-all duration-200 ease-out hover:scale-[1.02]"
+			className="flex items-center mb-2 py-3 px-4 space-x-3 rounded-lg cursor-pointer group transition-all duration-200 ease-out hover:scale-[1.01] hover:shadow-md"
 			onClick={() => onExecute()}
-			style={{ background: "#333", border: "1px solid #444" }}
+			style={{ 
+				background: "linear-gradient(135deg, #1a1a1a 0%, #242424 100%)",
+				border: "1px solid #333",
+				boxShadow: "0 2px 8px rgba(0, 0, 0, 0.3)"
+			}}
 		>
-			<div className="shrink-0 flex items-center justify-center w-8 h-8 rounded-lg" style={{ background: "#3a3a3a" }}>
-				<span className={`codicon ${iconClass} text-[18px]! leading-none!`} style={{ color: "#7CE074" }} />
+			<div className="shrink-0 flex items-center justify-center w-9 h-9 rounded-md" style={{ 
+				background: "linear-gradient(135deg, #0052FF15 0%, #0041CC15 100%)",
+				border: "1px solid #0052FF40"
+			}}>
+				<span className={`codicon ${iconClass} text-[18px]! leading-none!`} style={{ color: "#0052FF" }} />
 			</div>
 
 			<div className="grow min-w-0">
 				<h3
-					className="text-sm font-medium truncate leading-tight mb-0 mt-0"
+					className="text-sm font-semibold truncate leading-tight mb-0 mt-0"
 					style={{ fontFamily: "'Lexend', sans-serif", color: "#fff" }}
 				>
 					{task.title}
 				</h3>
-				<p className="text-xs truncate leading-tight mt-0.5 mb-0" style={{ color: "#888" }}>{task.description}</p>
+				<p className="text-xs truncate leading-tight mt-1 mb-0" style={{ color: "#999" }}>{task.description}</p>
 			</div>
 
 			<div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-				<span className="codicon codicon-arrow-right text-sm" style={{ color: "#7CE074" }} />
+				<span className="codicon codicon-arrow-right text-sm" style={{ color: "#0052FF" }} />
 			</div>
 		</div>
 	)

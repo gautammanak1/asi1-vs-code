@@ -100,7 +100,9 @@ const AppContent = () => {
 	}
 
 	return (
-		<div className="flex h-screen w-full flex-col">
+		<div className="flex h-screen w-full flex-col bg-[#1e1e1e]">
+			{/* Fetch Coder Chat Panel - Right Side of VSCode */}
+			{/* VSCode Terminal/Editor runs natively on the left */}
 			{showSettings && (
 				<SettingsView
 					onDone={hideSettings}

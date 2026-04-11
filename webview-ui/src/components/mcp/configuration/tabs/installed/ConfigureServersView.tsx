@@ -51,9 +51,16 @@ const ConfigureServersView = () => {
 					borderRadius: "6px",
 				}}
 			>
-				<strong>Tip:</strong> If a server needs an API key, add{" "}
-				<code style={{ fontSize: "11px" }}>"headers": {'{'}  "Authorization": "Bearer YOUR_KEY" {'}'}</code>{" "}
-				to its config in the settings file.
+				<strong>Tip (API keys):</strong> Prefer static headers so the client does not start OAuth. Examples in{" "}
+				<code style={{ fontSize: "11px" }}>mcpSettings.json</code>:{" "}
+				<code style={{ fontSize: "11px" }}>
+					"headers": {'{'} "Authorization": "Bearer …" {'}'}
+				</code>{" "}
+				or{" "}
+				<code style={{ fontSize: "11px" }}>
+					"headers": {'{'} "X-API-Key": "…" {'}'}
+				</code>
+				. Use the header name your provider documents.
 			</div>
 
 			{/* Remote config banner */}

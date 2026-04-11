@@ -121,7 +121,7 @@ export async function resetWorkspaceState() {
 }
 
 export async function resetGlobalState() {
-	// TODO: Reset all workspace states?
+	// Workspace keys are intentionally not cleared here; call resetWorkspaceState() when you need per-workspace reset.
 	const stateManager = StateManager.get()
 	GlobalStateAndSettingKeys.map((key) => stateManager.setGlobalState(key, undefined))
 	SecretKeys.map((key) => stateManager.setSecret(key, undefined))

@@ -82,8 +82,8 @@ export interface BannerAction {
 }
 
 /**
- * The list of predefined banner config rendered by the Welcome Section UI.
- * TODO: Backend would return a similar JSON structure in the future which we will replace this with.
+ * Predefined welcome banners for the webview (empty in this fork).
+ * A remote-config or API-driven list could replace this shape later without UI changes.
  */
 
 /** Fetch Coder / ASI:One fork: no third-party model promo banners. */

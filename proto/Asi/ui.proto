@@ -284,4 +284,7 @@ service UiService {
 
   // Opens the Cline walkthrough
   rpc openWalkthrough(EmptyRequest) returns (Empty);
+
+  // Executes a command in the terminal
+  rpc executeTerminalCommand(StringRequest) returns (KeyValuePair);
 }

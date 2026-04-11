@@ -16,8 +16,8 @@ export async function executeCommandInTerminal(
 	try {
 		// Create terminal with fixed options
 		const terminalOptions: vscode.TerminalOptions = {
-			name: "Asi",
-			iconPath: new vscode.ThemeIcon("Asi-icon"),
+			name: "Fetch Coder",
+			iconPath: new vscode.ThemeIcon("sparkle"),
 			env: {
 				Asi_ACTIVE: "true",
 			},

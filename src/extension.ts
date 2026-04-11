@@ -13,7 +13,7 @@ import { sendWorktreesButtonClickedEvent } from "./core/controller/ui/subscribeT
 import { WebviewProvider } from "./core/webview"
 import { createAsiAPI } from "./exports"
 import { initializeTestMode } from "./services/test/TestMode"
-import "./utils/path" // necessary to have access to String.prototype.toPosix
+import "./utils/path"; // necessary to have access to String.prototype.toPosix
 import path from "node:path"
 import type { ExtensionContext } from "vscode"
 import { HostProvider } from "@/hosts/host-provider"
@@ -29,20 +29,20 @@ import { sendAddToInputEvent } from "./core/controller/ui/subscribeToAddToInput"
 import { sendShowWebviewEvent } from "./core/controller/ui/subscribeToShowWebview"
 import { HookDiscoveryCache } from "./core/hooks/HookDiscoveryCache"
 import {
-	cleanupMcpMarketplaceCatalogFromGlobalState,
-	cleanupOldApiKey,
-	migrateCustomInstructionsToGlobalRules,
-	migrateTaskHistoryToFile,
-	migrateWelcomeViewCompleted,
-	migrateWorkspaceToGlobalStorage,
+    cleanupMcpMarketplaceCatalogFromGlobalState,
+    cleanupOldApiKey,
+    migrateCustomInstructionsToGlobalRules,
+    migrateTaskHistoryToFile,
+    migrateWelcomeViewCompleted,
+    migrateWorkspaceToGlobalStorage,
 } from "./core/storage/state-migrations"
 import { workspaceResolver } from "./core/workspace"
 import { findMatchingNotebookCell, getContextForCommand, showWebview } from "./hosts/vscode/commandUtils"
 import { abortCommitGeneration, generateCommitMsg } from "./hosts/vscode/commit-message-generator"
 import { registerAsiOutputChannel } from "./hosts/vscode/hostbridge/env/debugLog"
 import {
-	disposeVscodeCommentReviewController,
-	getVscodeCommentReviewController,
+    disposeVscodeCommentReviewController,
+    getVscodeCommentReviewController,
 } from "./hosts/vscode/review/VscodeCommentReviewController"
 import { VscodeTerminalManager } from "./hosts/vscode/terminal/VscodeTerminalManager"
 import { VscodeDiffViewProvider } from "./hosts/vscode/VscodeDiffViewProvider"
@@ -115,11 +115,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	)
 
-	context.subscriptions.push(
-		vscode.window.registerWebviewViewProvider(VscodeWebviewProvider.SIDEBAR_ID, webview, {
-			webviewOptions: { retainContextWhenHidden: true },
-		}),
-	)
+	// Create the webview panel on the RIGHT side (ViewColumn.Two) like GitHub Copilot
+	await webview.createOrShowWebviewPanel()
 
 	registerAsiAssistantApiIntegration(context, webview)
 
@@ -129,6 +126,8 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.PlusButton, async () => {
 			const sidebarInstance = WebviewProvider.getInstance()
+			// Ensure the webview panel is shown
+			await (sidebarInstance as any).createOrShowWebviewPanel?.()
 			await sidebarInstance.controller.clearTask()
 			await sidebarInstance.controller.postStateToWebview()
 			await sendChatButtonClickedEvent()
@@ -379,15 +378,10 @@ export async function activate(context: vscode.ExtensionContext) {
 			const webview = WebviewProvider.getInstance() as VscodeWebviewProvider
 
 			// Show the webview
-			const webviewView = webview.getWebview()
-			if (webviewView) {
-				if (preserveEditorFocus) {
-					// Only make webview visible without forcing focus
-					webviewView.show(false)
-				} else {
-					// Show and force focus (default behavior for explicit focus actions)
-					webviewView.show(true)
-				}
+			const webviewPanel = webview.getWebview()
+			if (webviewPanel) {
+				// WebviewPanel uses reveal(); second arg is preserveFocus (matches preserveEditorFocus).
+				webviewPanel.reveal(vscode.ViewColumn.Two, preserveEditorFocus)
 			}
 
 			// Send show webview event with preserveEditorFocus flag

@@ -131,7 +131,12 @@ export class FeatureFlagsService {
 	}
 
 	public getWebtoolsEnabled(): boolean {
-		return this.getBooleanFlagEnabled(FeatureFlag.WEBTOOLS);
+		// Until PostHog/cache is populated, don't block web_search / web_fetch — otherwise the
+		// chat toggle appears "on" while tools stay disabled (cache miss => false).
+		if (!this.cache.has(FeatureFlag.WEBTOOLS)) {
+			return FeatureFlagDefaultValue[FeatureFlag.WEBTOOLS] === true;
+		}
+		return this.cache.get(FeatureFlag.WEBTOOLS) === true;
 	}
 
 	public getWorktreesEnabled(): boolean {

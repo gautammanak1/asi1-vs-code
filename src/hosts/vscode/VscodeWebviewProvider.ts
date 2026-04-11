@@ -11,84 +11,80 @@ import type { ExtensionMessage } from "@/shared/ExtensionMessage";
 import { Logger } from "@/shared/services/Logger";
 import { WebviewMessage } from "@/shared/WebviewMessage";
 
-/*
-https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
-https://github.com/KumarVariable/vscode-extension-sidebar-html/blob/master/src/customSidebarViewProvider.ts
-*/
-
-export class VscodeWebviewProvider
-	extends WebviewProvider
-	implements vscode.WebviewViewProvider
-{
+export class VscodeWebviewProvider extends WebviewProvider {
 	// Used in package.json as the view's id. This value cannot be changed due to how vscode caches
 	// views based on their id, and updating the id would break existing instances of the extension.
 	public static readonly SIDEBAR_ID = ExtensionRegistryInfo.views.Sidebar;
+	public static readonly PANEL_ID = "fetch-coder.ChatPanel";
+	public static readonly PANEL_TITLE = "Fetch Coder";
 
-	private webview?: vscode.WebviewView;
+	private webviewPanel?: vscode.WebviewPanel;
 	private disposables: vscode.Disposable[] = [];
 
 	override getWebviewUrl(path: string) {
-		if (!this.webview) {
-			throw new Error("Webview not initialized");
+		if (!this.webviewPanel) {
+			throw new Error("Webview panel not initialized");
 		}
-		const uri = this.webview.webview.asWebviewUri(vscode.Uri.file(path));
+		const uri = this.webviewPanel.webview.asWebviewUri(vscode.Uri.file(path));
 		return uri.toString();
 	}
 
 	override getCspSource() {
-		if (!this.webview) {
-			throw new Error("Webview not initialized");
+		if (!this.webviewPanel) {
+			throw new Error("Webview panel not initialized");
 		}
-		return this.webview.webview.cspSource;
+		return this.webviewPanel.webview.cspSource;
 	}
 
 	override isVisible() {
-		return this.webview?.visible || false;
+		return this.webviewPanel?.visible || false;
 	}
 
-	public getWebview(): vscode.WebviewView | undefined {
-		return this.webview;
+	public getWebview(): vscode.WebviewPanel | undefined {
+		return this.webviewPanel;
 	}
 
 	/**
-	 * Initializes and sets up the webview when it's first created.
+	 * Creates or shows the webview panel on the RIGHT side (ViewColumn.Two)
+	 * This positions it like GitHub Copilot Chat
 	 *
-	 * @param webviewView - The sidebar webview view instance to be resolved
 	 * @returns A promise that resolves when the webview has been fully initialized
 	 */
-	public async resolveWebviewView(
-		webviewView: vscode.WebviewView,
-	): Promise<void> {
-		this.webview = webviewView;
+	public async createOrShowWebviewPanel(): Promise<void> {
+		// If panel already exists, show it
+		if (this.webviewPanel) {
+			this.webviewPanel.reveal(vscode.ViewColumn.Two);
+			return;
+		}
 
-		webviewView.webview.options = {
-			// Allow scripts in the webview
-			enableScripts: true,
-			localResourceRoots: [vscode.Uri.file(HostProvider.get().extensionFsPath)],
-		};
+		// Create new webview panel on the RIGHT side (ViewColumn.Two)
+		this.webviewPanel = vscode.window.createWebviewPanel(
+			VscodeWebviewProvider.PANEL_ID,
+			VscodeWebviewProvider.PANEL_TITLE,
+			vscode.ViewColumn.Two,
+			{
+				enableScripts: true,
+				localResourceRoots: [
+					vscode.Uri.file(HostProvider.get().extensionFsPath),
+				],
+				retainContextWhenHidden: true,
+			},
+		);
 
-		webviewView.webview.html =
+		this.webviewPanel.webview.html =
 			this.context.extensionMode === vscode.ExtensionMode.Development
 				? await this.getHMRHtmlContent()
 				: this.getHtmlContent();
 
-		// Sets up an event listener to listen for messages passed from the webview view context
+		// Sets up an event listener to listen for messages passed from the webview context
 		// and executes code based on the message that is received
-		this.setWebviewMessageListener(webviewView.webview);
+		this.setWebviewMessageListener(this.webviewPanel.webview);
 
-		// Logs show up in bottom panel > Debug Console
-		//Logger.log("registering listener")
-
-		// Listen for when the sidebar becomes visible
-		// https://github.com/microsoft/vscode-discussions/discussions/840
-
-		// onDidChangeVisibility is only available on the sidebar webview
-		// Otherwise WebviewView and WebviewPanel have all the same properties except for this visibility listener
-		// WebviewPanel is not currently used in the extension
-		webviewView.onDidChangeVisibility(
-			async () => {
-				if (this.webview?.visible) {
-					// View becoming visible should not steal editor focus.
+		// Listen for panel visibility changes
+		this.webviewPanel.onDidChangeViewState(
+			async (e) => {
+				if (e.webviewPanel.visible) {
+					// Panel becoming visible should not steal editor focus
 					await sendShowWebviewEvent(true);
 				}
 			},
@@ -96,10 +92,10 @@ export class VscodeWebviewProvider
 			this.disposables,
 		);
 
-		// Listen for when the view is disposed
-		// This happens when the user closes the view or when the view is closed programmatically
-		webviewView.onDidDispose(
+		// Listen for when the panel is disposed
+		this.webviewPanel.onDidDispose(
 			async () => {
+				this.webviewPanel = undefined;
 				await this.dispose();
 			},
 			null,
@@ -121,9 +117,9 @@ export class VscodeWebviewProvider
 		// if the extension is starting a new session, clear previous task state
 		this.controller.clearTask();
 
-		Logger.log("[VscodeWebviewProvider] Webview view resolved");
-
-		// Title setting logic removed to allow VSCode to use the container title primarily.
+		Logger.log(
+			"[VscodeWebviewProvider] Webview panel created on RIGHT side (ViewColumn.Two)",
+		);
 	}
 
 	/**
@@ -208,7 +204,7 @@ export class VscodeWebviewProvider
 	private async postMessageToWebview(
 		message: ExtensionMessage,
 	): Promise<boolean | undefined> {
-		return this.webview?.webview.postMessage(message);
+		return this.webviewPanel?.webview.postMessage(message);
 	}
 
 	override async dispose() {

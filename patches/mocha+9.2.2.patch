@@ -1,0 +1,18 @@
+diff --git a/node_modules/mocha/lib/nodejs/esm-utils.js b/node_modules/mocha/lib/nodejs/esm-utils.js
+index 9a854be..f62515e 100644
+--- a/node_modules/mocha/lib/nodejs/esm-utils.js
++++ b/node_modules/mocha/lib/nodejs/esm-utils.js
+@@ -44,6 +44,13 @@ exports.requireOrImport = hasStableEsmImplementation
+       if (path.extname(file) === '.mjs') {
+         return formattedImport(file);
+       }
++      // Fetch Coder: load .ts/.tsx via require() first so ts-node/register applies. Node's native
++      // `import()` cannot load .ts (ERR_UNKNOWN_FILE_EXTENSION), and Mocha's catch path masks
++      // follow-up ERR_REQUIRE_ESM from dependencies.
++      const ext = path.extname(file);
++      if (ext === '.ts' || ext === '.tsx') {
++        return dealWithExports(require(file));
++      }
+       try {
+         return dealWithExports(await formattedImport(file));
+       } catch (err) {

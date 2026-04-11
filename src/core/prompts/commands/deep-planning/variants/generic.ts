@@ -21,15 +21,13 @@ export function createGenericVariant(): DeepPlanningVariant {
  */
 function generateTemplate(): string {
 	const detectedShell = getShell()
-
-	// FIXME: detectedShell returns a non-string value on some Windows machines
-	let isPowerShell = false
-	try {
-		isPowerShell =
-			detectedShell != null &&
-			typeof detectedShell === "string" &&
-			(detectedShell.toLowerCase().includes("powershell") || detectedShell.toLowerCase().includes("pwsh"))
-	} catch {}
+	const shellStr =
+		typeof detectedShell === "string"
+			? detectedShell
+			: detectedShell != null
+				? String(detectedShell)
+				: ""
+	const isPowerShell = /powershell|pwsh/i.test(shellStr)
 
 	return `<explicit_instructions type="deep-planning">
 Your task is to create a comprehensive implementation plan before writing any code. This process has four distinct steps that must be completed in order.

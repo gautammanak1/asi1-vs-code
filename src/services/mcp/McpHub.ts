@@ -8,25 +8,25 @@ import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js"
 import { getDefaultEnvironment, StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js"
 import {
-    CallToolResultSchema,
-    GetPromptResultSchema,
-    ListPromptsResultSchema,
-    ListResourcesResultSchema,
-    ListResourceTemplatesResultSchema,
-    ListToolsResultSchema,
-    ReadResourceResultSchema,
+	CallToolResultSchema,
+	GetPromptResultSchema,
+	ListPromptsResultSchema,
+	ListResourcesResultSchema,
+	ListResourceTemplatesResultSchema,
+	ListToolsResultSchema,
+	ReadResourceResultSchema,
 } from "@modelcontextprotocol/sdk/types.js"
 import {
-    DEFAULT_MCP_TIMEOUT_SECONDS,
-    McpPrompt,
-    McpPromptResponse,
-    McpResource,
-    McpResourceResponse,
-    McpResourceTemplate,
-    McpServer,
-    McpTool,
-    McpToolCallResponse,
-    MIN_MCP_TIMEOUT_SECONDS,
+	DEFAULT_MCP_TIMEOUT_SECONDS,
+	McpPrompt,
+	McpPromptResponse,
+	McpResource,
+	McpResourceResponse,
+	McpResourceTemplate,
+	McpServer,
+	McpTool,
+	McpToolCallResponse,
+	MIN_MCP_TIMEOUT_SECONDS,
 } from "@shared/mcp"
 import { convertMcpServersToProtoMcpServers } from "@shared/proto-conversions/mcp/mcp-server-conversion"
 import { secondsToMs } from "@utils/time"
@@ -41,7 +41,7 @@ import { fetch } from "@/shared/net"
 import { ShowMessageType } from "@/shared/proto/host/window"
 import { Logger } from "@/shared/services/Logger"
 import { expandEnvironmentVariables } from "@/utils/envExpansion"
-import { getServerAuthHash } from "@/utils/mcpAuth"
+import { getServerAuthHash, mcpConfigHasUserSuppliedCredentials } from "@/utils/mcpAuth"
 import { TelemetryService } from "../telemetry/TelemetryService"
 import { DEFAULT_REQUEST_TIMEOUT_MS } from "./constants"
 import { McpOAuthManager } from "./McpOAuthManager"
@@ -373,12 +373,11 @@ export class McpHub {
 
 			let transport: StdioClientTransport | SSEClientTransport | StreamableHTTPClientTransport
 
-			// Create OAuth provider for remote transports (SSE and HTTP)
-			// Skip OAuth if user already configured Authorization headers (API key auth)
-			const hasAuthHeader = expandedConfig.headers &&
-				Object.keys(expandedConfig.headers).some((h) => h.toLowerCase() === "authorization")
+			// Create OAuth provider for remote transports (SSE and HTTP).
+			// Skip OAuth when the user already set static credentials (Bearer, X-API-Key, etc.)
+			const hasUserCredentials = mcpConfigHasUserSuppliedCredentials(expandedConfig.headers)
 			const authProvider =
-				(expandedConfig.type === "sse" || expandedConfig.type === "streamableHttp") && !hasAuthHeader
+				(expandedConfig.type === "sse" || expandedConfig.type === "streamableHttp") && !hasUserCredentials
 					? await this.mcpOAuthManager.getOrCreateProvider(name, expandedConfig.url)
 					: undefined
 
@@ -450,7 +449,7 @@ export class McpHub {
 					}
 					const reconnectingEventSourceOptions = {
 						max_retry_time: 5000,
-						withCredentials: !!expandedConfig.headers?.["Authorization"],
+						withCredentials: hasUserCredentials,
 						// IMPORTANT: Custom fetch function is required for SSE with OAuth
 						// When we provide eventSourceInit, we override the SDK's default fetch
 						// The SDK's default would call _commonHeaders() for auth, but since we're
@@ -817,145 +816,163 @@ export class McpHub {
 	}
 
 	async updateServerConnectionsRPC(newServers: Record<string, McpServerConfig>): Promise<void> {
-		this.isConnecting = true
-		this.removeAllFileWatchers()
-		const currentNames = new Set(this.connections.map((conn) => conn.server.name))
-		const newNames = new Set(Object.keys(newServers))
+		try {
+			this.isConnecting = true
+			this.removeAllFileWatchers()
+			const currentNames = new Set(this.connections.map((conn) => conn.server.name))
+			const newNames = new Set(Object.keys(newServers))
 
-		// Delete removed servers
-		for (const name of currentNames) {
-			if (!newNames.has(name)) {
-				await this.deleteConnection(name)
-				Logger.log(`Deleted MCP server: ${name}`)
+			// Delete removed servers
+			for (const name of currentNames) {
+				if (!newNames.has(name)) {
+					await this.deleteConnection(name)
+					Logger.log(`Deleted MCP server: ${name}`)
+				}
 			}
-		}
 
-		// Update or add servers
-		for (const [name, config] of Object.entries(newServers)) {
-			const currentConnection = this.connections.find((conn) => conn.server.name === name)
+			// Update or add servers
+			for (const [name, config] of Object.entries(newServers)) {
+				const currentConnection = this.connections.find((conn) => conn.server.name === name)
 
-			if (!currentConnection) {
-				// New server
-				try {
-					if (config.type === "stdio") {
-						this.setupFileWatcher(name, config)
+				if (!currentConnection) {
+					// New server
+					try {
+						if (config.type === "stdio") {
+							this.setupFileWatcher(name, config)
+						}
+						await this.connectToServer(name, config, "rpc")
+					} catch (error) {
+						Logger.error(`Failed to connect to new MCP server ${name}:`, error)
+						// Remove failed connection from array
+						this.connections = this.connections.filter((conn) => conn.server.name !== name)
 					}
-					await this.connectToServer(name, config, "rpc")
-				} catch (error) {
-					Logger.error(`Failed to connect to new MCP server ${name}:`, error)
-				}
-			} else if (this.configsRequireRestart(JSON.parse(currentConnection.server.config), config)) {
-				// Existing server with changed connection config (excludes Asi-specific settings)
-				try {
-					if (config.type === "stdio") {
-						this.setupFileWatcher(name, config)
+				} else if (this.configsRequireRestart(JSON.parse(currentConnection.server.config), config)) {
+					// Existing server with changed connection config (excludes Asi-specific settings)
+					try {
+						if (config.type === "stdio") {
+							this.setupFileWatcher(name, config)
+						}
+						await this.deleteConnection(name) // Don't clear OAuth - just reconnecting with new config
+						await this.connectToServer(name, config, "rpc")
+						Logger.log(`Reconnected MCP server with updated config: ${name}`)
+					} catch (error) {
+						Logger.error(`Failed to reconnect MCP server ${name}:`, error)
+						// Remove failed connection from array to prevent zombie state
+						this.connections = this.connections.filter((conn) => conn.server.name !== name)
 					}
-					await this.deleteConnection(name) // Don't clear OAuth - just reconnecting with new config
-					await this.connectToServer(name, config, "rpc")
-					Logger.log(`Reconnected MCP server with updated config: ${name}`)
-				} catch (error) {
-					Logger.error(`Failed to reconnect MCP server ${name}:`, error)
+				} else {
+					// Only Asi-specific settings changed - update in-memory state without restart
+					const autoApprove = config.autoApprove || []
+					if (currentConnection.server.tools) {
+						currentConnection.server.tools = currentConnection.server.tools.map((tool) => ({
+							...tool,
+							autoApprove: autoApprove.includes(tool.name),
+						}))
+					}
+					// Also update Asi-specific settings in the stored config.
+					// This handles the case where someone manually edits the MCP settings file -
+					// the file watcher triggers this code path, and we need to sync the in-memory
+					// config with the file without restarting the server.
+					const currentConfig = JSON.parse(currentConnection.server.config)
+					currentConfig.autoApprove = config.autoApprove
+					currentConfig.timeout = config.timeout
+					currentConnection.server.config = JSON.stringify(currentConfig)
 				}
-			} else {
-				// Only Asi-specific settings changed - update in-memory state without restart
-				const autoApprove = config.autoApprove || []
-				if (currentConnection.server.tools) {
-					currentConnection.server.tools = currentConnection.server.tools.map((tool) => ({
-						...tool,
-						autoApprove: autoApprove.includes(tool.name),
-					}))
-				}
-				// Also update Asi-specific settings in the stored config.
-				// This handles the case where someone manually edits the MCP settings file -
-				// the file watcher triggers this code path, and we need to sync the in-memory
-				// config with the file without restarting the server.
-				const currentConfig = JSON.parse(currentConnection.server.config)
-				currentConfig.autoApprove = config.autoApprove
-				currentConfig.timeout = config.timeout
-				currentConnection.server.config = JSON.stringify(currentConfig)
 			}
-		}
 
-		this.isConnecting = false
+			// Notify webview of final state after all updates complete
+			await this.notifyWebviewOfServerChanges()
+		} finally {
+			// Always reset the connecting flag, even if errors occur
+			this.isConnecting = false
+		}
 	}
 
 	async updateServerConnections(newServers: Record<string, McpServerConfig>): Promise<void> {
-		this.isConnecting = true
-		this.removeAllFileWatchers()
-		const currentNames = new Set(this.connections.map((conn) => conn.server.name))
-		const newNames = new Set(Object.keys(newServers))
+		try {
+			this.isConnecting = true
+			this.removeAllFileWatchers()
+			const currentNames = new Set(this.connections.map((conn) => conn.server.name))
+			const newNames = new Set(Object.keys(newServers))
 
-		// Track if any connection-level changes occurred (excludes Asi-specific settings)
-		let connectionChangesOccurred = false
+			// Track if any connection-level changes occurred (excludes Asi-specific settings)
+			let connectionChangesOccurred = false
 
-		// Delete removed servers
-		for (const name of currentNames) {
-			if (!newNames.has(name)) {
-				await this.clearOAuthForConnection(name) // Clear OAuth data first
-				await this.deleteConnection(name) // Then delete connection
-				Logger.log(`Deleted MCP server: ${name}`)
-				connectionChangesOccurred = true
-			}
-		}
-
-		// Update or add servers
-		for (const [name, config] of Object.entries(newServers)) {
-			const currentConnection = this.connections.find((conn) => conn.server.name === name)
-
-			if (!currentConnection) {
-				// New server
-				try {
-					if (config.type === "stdio") {
-						this.setupFileWatcher(name, config)
-					}
-					await this.connectToServer(name, config, "internal")
+			// Delete removed servers
+			for (const name of currentNames) {
+				if (!newNames.has(name)) {
+					await this.clearOAuthForConnection(name) // Clear OAuth data first
+					await this.deleteConnection(name) // Then delete connection
+					Logger.log(`Deleted MCP server: ${name}`)
 					connectionChangesOccurred = true
-				} catch (error) {
-					Logger.error(`Failed to connect to new MCP server ${name}:`, error)
 				}
-			} else if (this.configsRequireRestart(JSON.parse(currentConnection.server.config), config)) {
-				// Existing server with changed connection config (excludes Asi-specific settings)
-				try {
-					// Set status to "connecting" and notify webview before restart (same pattern as restartConnection)
-					currentConnection.server.status = "connecting"
-					currentConnection.server.error = ""
-					await this.notifyWebviewOfServerChanges()
-
-					if (config.type === "stdio") {
-						this.setupFileWatcher(name, config)
-					}
-					await this.deleteConnection(name)
-					await this.connectToServer(name, config, "internal")
-					Logger.log(`Reconnected MCP server with updated config: ${name}`)
-					connectionChangesOccurred = true
-				} catch (error) {
-					Logger.error(`Failed to reconnect MCP server ${name}:`, error)
-				}
-			} else {
-				// Only Asi-specific settings changed - update in-memory state without restart
-				// Don't set connectionChangesOccurred since the RPC already returned the updated state
-				const autoApprove = config.autoApprove || []
-				if (currentConnection.server.tools) {
-					currentConnection.server.tools = currentConnection.server.tools.map((tool) => ({
-						...tool,
-						autoApprove: autoApprove.includes(tool.name),
-					}))
-				}
-				// Also update Asi-specific settings in the stored config
-				const currentConfig = JSON.parse(currentConnection.server.config)
-				currentConfig.autoApprove = config.autoApprove
-				currentConfig.timeout = config.timeout
-				currentConnection.server.config = JSON.stringify(currentConfig)
 			}
-		}
 
-		// Only notify webview if actual connection changes occurred.
-		// For Asi-specific settings changes, the RPC response already updated the webview,
-		// so we skip notification to avoid race conditions.
-		if (connectionChangesOccurred) {
-			await this.notifyWebviewOfServerChanges()
+			// Update or add servers
+			for (const [name, config] of Object.entries(newServers)) {
+				const currentConnection = this.connections.find((conn) => conn.server.name === name)
+
+				if (!currentConnection) {
+					// New server
+					try {
+						if (config.type === "stdio") {
+							this.setupFileWatcher(name, config)
+						}
+						await this.connectToServer(name, config, "internal")
+						connectionChangesOccurred = true
+					} catch (error) {
+						Logger.error(`Failed to connect to new MCP server ${name}:`, error)
+						// Remove failed connection from array
+						this.connections = this.connections.filter((conn) => conn.server.name !== name)
+					}
+				} else if (this.configsRequireRestart(JSON.parse(currentConnection.server.config), config)) {
+					// Existing server with changed connection config (excludes Asi-specific settings)
+					try {
+						// Set status to "connecting" and notify webview before restart (same pattern as restartConnection)
+						currentConnection.server.status = "connecting"
+						currentConnection.server.error = ""
+						await this.notifyWebviewOfServerChanges()
+
+						if (config.type === "stdio") {
+							this.setupFileWatcher(name, config)
+						}
+						await this.deleteConnection(name)
+						await this.connectToServer(name, config, "internal")
+						Logger.log(`Reconnected MCP server with updated config: ${name}`)
+						connectionChangesOccurred = true
+					} catch (error) {
+						Logger.error(`Failed to reconnect MCP server ${name}:`, error)
+						// Remove failed connection from array to prevent zombie state
+						this.connections = this.connections.filter((conn) => conn.server.name !== name)
+					}
+				} else {
+					// Only Asi-specific settings changed - update in-memory state without restart
+					// Don't set connectionChangesOccurred since the RPC already returned the updated state
+					const autoApprove = config.autoApprove || []
+					if (currentConnection.server.tools) {
+						currentConnection.server.tools = currentConnection.server.tools.map((tool) => ({
+							...tool,
+							autoApprove: autoApprove.includes(tool.name),
+						}))
+					}
+					// Also update Asi-specific settings in the stored config
+					const currentConfig = JSON.parse(currentConnection.server.config)
+					currentConfig.autoApprove = config.autoApprove
+					currentConfig.timeout = config.timeout
+					currentConnection.server.config = JSON.stringify(currentConfig)
+				}
+			}
+
+			// Only notify webview if actual connection changes occurred.
+			// For Asi-specific settings changes, the RPC response already updated the webview,
+			// so we skip notification to avoid race conditions.
+			if (connectionChangesOccurred) {
+				await this.notifyWebviewOfServerChanges()
+			}
+		} finally {
+			// Always reset the connecting flag, even if errors occur
+			this.isConnecting = false
 		}
-		this.isConnecting = false
 	}
 
 	/**

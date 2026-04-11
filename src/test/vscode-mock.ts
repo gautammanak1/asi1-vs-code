@@ -8,11 +8,11 @@ export const env = {
 		// Return a disposable mock
 		return {
 			dispose: () => {},
-		}
+		};
 	},
-}
+};
 
-export const version = "1.103.0"
+export const version = "1.103.0";
 
 export const workspace = {
 	getConfiguration: (section?: string) => {
@@ -20,16 +20,16 @@ export const workspace = {
 			get: (key: string, defaultValue?: any) => {
 				// Return default values for common configuration keys
 				if (section === "Asi" && key === "telemetrySetting") {
-					return "enabled"
+					return "enabled";
 				}
 				if (section === "telemetry" && key === "telemetryLevel") {
-					return "all"
+					return "all";
 				}
-				return defaultValue
+				return defaultValue;
 			},
-		}
+		};
 	},
-}
+};
 
 // Export other commonly used VSCode API mocks as needed
 export const window = {
@@ -48,17 +48,22 @@ export const window = {
 		hide: () => {},
 		dispose: () => {},
 	}),
-}
+};
 
 export const commands = {
 	executeCommand: (_command: string, ..._args: any[]) => Promise.resolve(),
-}
+};
+
+/** VS Code Language Model API (1.95+) — minimal stub for unit tests */
+export const lm = {
+	selectChatModels: async (_filter?: object) => [],
+};
 
 export const Uri = {
 	file: (path: string) => ({ fsPath: path, toString: () => path }),
 	parse: (uri: string) => ({ fsPath: uri, toString: () => uri }),
-}
+};
 
-export const ExtensionContextMock = {}
-export const StatusBarAlignmentMock = { Left: 1, Right: 2 }
-export const ViewColumnMock = { One: 1, Two: 2, Three: 3 }
+export const ExtensionContextMock = {};
+export const StatusBarAlignmentMock = { Left: 1, Right: 2 };
+export const ViewColumnMock = { One: 1, Two: 2, Three: 3 };

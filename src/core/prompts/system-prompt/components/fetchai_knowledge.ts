@@ -1,20 +1,40 @@
 import type { PromptVariant, SystemPromptContext } from "../types"
+import {
+	FETCHAI_CURSOR_RULES_BODY,
+	FETCHAI_KNOWLEDGE_BODY,
+} from "./fetchai_knowledge.generated"
 
-const FETCHAI_KNOWLEDGE = `FETCH.AI REFERENCE — use ONLY when the user explicitly mentions Fetch.ai, uAgents, Agentverse, ASI:One API, or blockchain agents. For ALL other requests (HTML, CSS, JS, React, Next.js, Python, Go, games, landing pages, CLI tools, etc.) ignore this section entirely and write the code the user asks for.
+/**
+ * Full Fetch.ai prompt bundle (Cursor development rules + Innovation Lab excerpt), built by
+ * scripts/build-fetchai-knowledge.mjs. Use ONLY for uAgents / Agentverse / ASI:One / Fetch agent work.
+ */
+const FETCHAI_KNOWLEDGE_HEADER = `=== FETCH.AI / UAGENTS — FULL BUNDLE (use only for uAgent / Agentverse / Fetch agent tasks) ===
 
-If the user asks about Fetch.ai topics, refer to these docs and patterns:
+## When to apply
+If the user wants Python uAgents, Agentverse, agent-to-agent messaging, Chat Protocol, adapters, Fetch SDK, LangGraph/CrewAI/MCP with uAgents, or ASI:One: follow **Section A (Cursor rules)** first for versions, pitfalls, and patterns, then **Section B (Innovation Lab excerpts)** for doc-aligned examples. For unrelated coding, omit this entire block.
 
-- uAgents (Python microservices): pip install uagents — https://innovationlab.fetch.ai/resources/docs/agent-creation/uagent-creation
-- Agent communication: on_message, ctx.send, ctx.send_and_receive — https://innovationlab.fetch.ai/resources/docs/agent-communication/uagent-uagent-communication
-- Agent Chat Protocol: ChatMessage, ChatAcknowledgement, TextContent from uagents_core.contrib.protocols.chat — https://innovationlab.fetch.ai/resources/docs/agent-communication/agent-chat-protocol
-- Payment Protocol: RequestPayment, CommitPayment from uagents_core.contrib.protocols.payment — https://innovationlab.fetch.ai/resources/docs/agent-transaction/agent-payment-protocol
-- Agentverse deployment: https://agentverse.ai — hosted agents, mailbox agents (mailbox=True), local agents
-- ASI:One API: POST https://api.asi1.ai/v1/chat/completions, model: asi1, supports web_search: true — https://innovationlab.fetch.ai/resources/docs/asione/asi1-getting-started
-- ASI:One image generation: POST https://api.asi1.ai/v1/image/generate, model: asi1-mini
-- MCP integration with uAgents: https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp
-- FetchCoder CLI: npm install -g @fetchai/fetchcoder — https://innovationlab.fetch.ai/resources/docs/fetchcoder/overview
-- Full docs: https://innovationlab.fetch.ai/resources/docs/intro`
+## Doc index
+https://innovationlab.fetch.ai/resources/docs/intro
+
+---
+
+## Section A — Fetch.ai development rules (Cursor rules bundle)
+
+`
+
+const FETCHAI_SECTION_B = `
+
+---
+
+## Section B — Innovation Lab documentation bundle (truncated)
+
+`
 
 export async function getFetchAiKnowledgeSection(_variant: PromptVariant, _context: SystemPromptContext): Promise<string> {
-	return FETCHAI_KNOWLEDGE
+	return (
+		FETCHAI_KNOWLEDGE_HEADER +
+		FETCHAI_CURSOR_RULES_BODY +
+		FETCHAI_SECTION_B +
+		FETCHAI_KNOWLEDGE_BODY
+	)
 }

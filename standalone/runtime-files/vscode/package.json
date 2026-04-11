@@ -1,0 +1,7 @@
+{
+	"name": "vscode",
+	"version": "1.84.0",
+	"description": "VSCode stub module for standalone CLI",
+	"main": "index.js",
+	"license": "Apache-2.0"
+}
