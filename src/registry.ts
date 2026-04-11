@@ -30,6 +30,10 @@ const AsiCommands = {
 	JupyterGenerateCell: prefix + ".jupyterGenerateCell",
 	JupyterExplainCell: prefix + ".jupyterExplainCell",
 	JupyterImproveCell: prefix + ".jupyterImproveCell",
+	OpenCheckpoints: prefix + ".openCheckpoints",
+	SaveCheckpoint: prefix + ".saveCheckpoint",
+	RevertLast: prefix + ".revertLast",
+	ClearCheckpoints: prefix + ".clearCheckpoints",
 };
 
 /**

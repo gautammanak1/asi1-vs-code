@@ -17,6 +17,7 @@ import { LoadMcpDocumentationHandler } from "./handlers/LoadMcpDocumentationHand
 import { NewTaskHandler } from "./handlers/NewTaskHandler"
 import { PlanModeRespondHandler } from "./handlers/PlanModeRespondHandler"
 import { ReadFileToolHandler } from "./handlers/ReadFileToolHandler"
+import { ReadUrlToolHandler } from "./handlers/ReadUrlToolHandler"
 import { ReportBugHandler } from "./handlers/ReportBugHandler"
 import { SearchFilesToolHandler } from "./handlers/SearchFilesToolHandler"
 import { UseSubagentsToolHandler } from "./handlers/SubagentToolHandler"
@@ -96,6 +97,7 @@ export class ToolExecutorCoordinator {
 		[AsiDefaultTool.ACT_MODE]: (_v: ToolValidator) => new ActModeRespondHandler(),
 		[AsiDefaultTool.TODO]: (_v: ToolValidator) => undefined,
 		[AsiDefaultTool.WEB_FETCH]: (_v: ToolValidator) => new WebFetchToolHandler(),
+		[AsiDefaultTool.READ_URL]: (_v: ToolValidator) => new ReadUrlToolHandler(),
 		[AsiDefaultTool.WEB_SEARCH]: (_v: ToolValidator) => new WebSearchToolHandler(),
 		[AsiDefaultTool.CONDENSE]: (_v: ToolValidator) => new CondenseHandler(),
 		[AsiDefaultTool.SUMMARIZE_TASK]: (_v: ToolValidator) => new SummarizeTaskHandler(_v),

@@ -1,6 +1,8 @@
+import type { AsiMessage } from "@shared/ExtensionMessage"
 import React from "react"
 import ChatTextArea from "@/components/chat/ChatTextArea"
 import QuotedMessagePreview from "@/components/chat/QuotedMessagePreview"
+import { TokenUsageBar } from "@/components/chat/TokenUsageBar"
 import { ChatState, MessageHandlers, ScrollBehavior } from "../../types/chatTypes"
 
 interface InputSectionProps {
@@ -10,6 +12,7 @@ interface InputSectionProps {
 	placeholderText: string
 	shouldDisableFilesAndImages: boolean
 	selectFilesAndImages: () => Promise<void>
+	modifiedMessages: AsiMessage[]
 }
 
 /**
@@ -22,6 +25,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 	placeholderText,
 	shouldDisableFilesAndImages,
 	selectFilesAndImages,
+	modifiedMessages,
 }) => {
 	const {
 		activeQuote,
@@ -73,6 +77,7 @@ export const InputSection: React.FC<InputSectionProps> = ({
 				setSelectedImages={setSelectedImages}
 				shouldDisableFilesAndImages={shouldDisableFilesAndImages}
 			/>
+			<TokenUsageBar messages={modifiedMessages} />
 		</>
 	)
 }

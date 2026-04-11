@@ -38,17 +38,17 @@ export const CompletionOutputRow = memo(
 	}: CompletionOutputRowProps) => {
 		return (
 			<div>
-				<div className="rounded-sm border border-success/20 overflow-visible bg-success/10 p-2 pt-3">
+				<div className="rounded-sm border border-border overflow-visible bg-card/80 p-2 pt-3">
 					{/* Title */}
 					<div className={cn(headClassNames, "justify-between px-1")}>
 						<div className="flex gap-2 items-center">
-							<CheckIcon className="size-3 text-success" />
-							<span className="text-success font-bold">Task Completed</span>
+							<CheckIcon className="size-3 text-muted-foreground" />
+							<span className="text-foreground font-semibold">Result</span>
 						</div>
-						<CopyButton className="text-success" textToCopy={text} />
+						<CopyButton className="text-foreground" textToCopy={text} />
 					</div>
 					{/* Content */}
-					<div className="w-full relative border-t-1 border-description/20 rounded-b-sm">
+					<div className="w-full relative border-t border-border/80 rounded-b-sm">
 						<div className="completion-output-content p-2 pt-3 w-full [&_hr]:opacity-20 [&_p:last-child]:mb-0 rounded-sm">
 							<MarkdownRow markdown={text} />
 							{quoteButtonState.visible && (

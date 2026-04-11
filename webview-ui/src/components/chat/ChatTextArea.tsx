@@ -9,7 +9,7 @@ import { PlanActMode, TogglePlanActModeRequest, UpdateSettingsRequest } from "@s
 import { type SlashCommand } from "@shared/slashCommands";
 import { Mode } from "@shared/storage/types";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
-import { AtSignIcon, GlobeIcon, PlusIcon, SparklesIcon } from "lucide-react";
+import { AtSignIcon, GlobeIcon, LayoutTemplateIcon, PlusIcon, SparklesIcon } from "lucide-react";
 import type React from "react";
 import {
 	forwardRef,
@@ -46,6 +46,7 @@ import {
 	type SearchResult,
 	shouldShowContextMenu,
 } from "@/utils/context-mentions";
+import { FETCH_CHAT_TEMPLATES } from "@/utils/fetch-templates";
 import { useMetaKeyDetection, useShortcut } from "@/utils/hooks";
 import { isSafari } from "@/utils/platformUtils";
 import {
@@ -251,6 +252,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const [isDraggingOver, setIsDraggingOver] = useState(false);
 		const [gitCommits, setGitCommits] = useState<GitCommit[]>([]);
 		const [showSlashCommandsMenu, setShowSlashCommandsMenu] = useState(false);
+		const [showFetchTemplatesMenu, setShowFetchTemplatesMenu] = useState(false);
 		const [selectedSlashCommandsIndex, setSelectedSlashCommandsIndex] =
 			useState(0);
 		const [slashCommandsQuery, setSlashCommandsQuery] = useState("");
@@ -439,11 +441,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					let insertValue = value || "";
 					if (type === ContextMenuOptionType.URL) {
 						insertValue = value || "";
-					} else if (
-						type === ContextMenuOptionType.File ||
-						type === ContextMenuOptionType.Folder
-					) {
-						insertValue = value || "";
+					} else if (type === ContextMenuOptionType.File && value) {
+						const rel = value.replace(/^\/+/, "");
+						insertValue = `file:${rel}`;
+					} else if (type === ContextMenuOptionType.Folder && value) {
+						const rel = value.replace(/^\/+|\/+$/g, "");
+						insertValue = `folder:${rel}/`;
 					} else if (type === ContextMenuOptionType.Problems) {
 						insertValue = "problems";
 					} else if (type === ContextMenuOptionType.Terminal) {
@@ -491,10 +494,21 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						queryLength,
 						cursorPosition,
 					);
-					const newCursorPosition =
-						newValue.indexOf(" ", commandIndex + 1 + command.name.length) + 1;
+					const endOfSlashCommand = commandIndex + 1 + command.name.length + 1;
+					let finalValue = newValue;
+					let newCursorPosition: number;
+					if (command.prefillAfterSlash) {
+						finalValue =
+							newValue.slice(0, endOfSlashCommand) +
+							command.prefillAfterSlash +
+							newValue.slice(endOfSlashCommand);
+						newCursorPosition = endOfSlashCommand + command.prefillAfterSlash.length;
+					} else {
+						newCursorPosition =
+							newValue.indexOf(" ", commandIndex + 1 + command.name.length) + 1;
+					}
 
-					setInputValue(newValue);
+					setInputValue(finalValue);
 					setCursorPosition(newCursorPosition);
 					setIntendedCursorPosition(newCursorPosition);
 
@@ -1223,6 +1237,25 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			}
 		}, [inputValue, isEnhancing, setInputValue, apiConfiguration]);
 
+		const handleFetchTemplatePick = useCallback(
+			(body: string) => {
+				setShowFetchTemplatesMenu(false);
+				const trimmed = body.trim();
+				if (!trimmed) {
+					return;
+				}
+				setInputValue(
+					!inputValue.trim()
+						? trimmed
+						: `${inputValue.trim()}\n\n${trimmed}`,
+				);
+				setTimeout(() => {
+					textAreaRef.current?.focus();
+				}, 0);
+			},
+			[setInputValue, inputValue],
+		);
+
 		const handleContextButtonClick = useCallback(() => {
 			// Focus the textarea first
 			textAreaRef.current?.focus();
@@ -1821,6 +1854,52 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									</VSCodeButton>
 								</TooltipTrigger>
 							</Tooltip>
+
+							<div className="relative">
+								<Tooltip>
+									<TooltipContent>Fetch.ai templates</TooltipContent>
+									<TooltipTrigger>
+										<VSCodeButton
+											appearance="icon"
+											aria-expanded={showFetchTemplatesMenu}
+											aria-haspopup="listbox"
+											aria-label="Templates"
+											className="p-0 m-0 flex items-center"
+											data-testid="fetch-templates-button"
+											onClick={() => setShowFetchTemplatesMenu((v) => !v)}
+										>
+											<ButtonContainer>
+												<LayoutTemplateIcon size={12} />
+											</ButtonContainer>
+										</VSCodeButton>
+									</TooltipTrigger>
+								</Tooltip>
+								{showFetchTemplatesMenu && (
+									<div
+										className="absolute bottom-full left-0 mb-1 z-1000 w-[min(100vw-24px,320px)] bg-(--vscode-dropdown-background) border border-(--vscode-editorGroup-border) rounded-[3px] shadow-[0_4px_10px_rgba(0,0,0,0.25)] max-h-[min(240px,40vh)] overflow-y-auto"
+										onMouseDown={handleMenuMouseDown}
+										role="listbox"
+									>
+										<div className="text-xs text-(--vscode-descriptionForeground) px-3 py-1 font-bold border-b border-(--vscode-editorGroup-border)">
+											Templates
+										</div>
+										{FETCH_CHAT_TEMPLATES.map((t) => (
+											<button
+												className="w-full text-left py-2 px-3 cursor-pointer border-b border-(--vscode-editorGroup-border) last:border-b-0 hover:bg-(--vscode-list-hoverBackground) bg-transparent border-0 text-foreground"
+												key={t.id}
+												onClick={() => handleFetchTemplatePick(t.body)}
+												role="option"
+												type="button"
+											>
+												<div className="font-bold text-xs ph-no-capture">{t.title}</div>
+												<div className="text-[0.85em] text-(--vscode-descriptionForeground) ph-no-capture">
+													{t.description}
+												</div>
+											</button>
+										))}
+									</div>
+								)}
+							</div>
 
 							<ServersToggleModal />
 

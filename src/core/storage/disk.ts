@@ -224,6 +224,14 @@ export async function ensureSettingsDirectoryExists(): Promise<string> {
  * @param settingsDirectoryPath Path to the settings directory
  * @returns Path to the MCP settings file
  */
+/** Workspace-local MCP config (merged over global `Asi_mcp_settings.json`). */
+export function getFetchCoderWorkspaceMcpJsonPath(workspaceRoot: string | undefined): string | undefined {
+	if (!workspaceRoot) {
+		return undefined
+	}
+	return path.join(workspaceRoot, ".fetch-coder", "mcp.json")
+}
+
 export async function getMcpSettingsFilePath(settingsDirectoryPath: string): Promise<string> {
 	const mcpSettingsFilePath = path.join(settingsDirectoryPath, GlobalFileNames.mcpSettings)
 	const fileExists = await fileExistsAtPath(mcpSettingsFilePath)

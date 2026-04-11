@@ -9,7 +9,7 @@ The following additional instructions are provided by the user, and should be fo
 {{CUSTOM_INSTRUCTIONS}}`
 
 export async function getUserInstructions(variant: PromptVariant, context: SystemPromptContext): Promise<string | undefined> {
-	const customInstructions = buildUserInstructions(
+	let customInstructions = buildUserInstructions(
 		context.globalAsiRulesFileInstructions,
 		context.localAsiRulesFileInstructions,
 		context.localCursorRulesFileInstructions,
@@ -19,6 +19,12 @@ export async function getUserInstructions(variant: PromptVariant, context: Syste
 		context.AsiIgnoreInstructions,
 		context.preferredLanguageInstructions,
 	)
+
+	const memory = context.workspaceMemorySummary?.trim()
+	if (memory) {
+		const memoryBlock = `## Workspace memory (.fetch-coder/memory.md)\n\n${memory}`
+		customInstructions = customInstructions ? `${customInstructions}\n\n${memoryBlock}` : memoryBlock
+	}
 
 	if (!customInstructions) {
 		return undefined

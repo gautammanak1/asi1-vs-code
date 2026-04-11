@@ -1,6 +1,9 @@
 import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import { sendMcpServersUpdate } from "@core/controller/mcp/subscribeToMcpServers"
-import { getMcpSettingsFilePath as getMcpSettingsFilePathHelper } from "@core/storage/disk"
+import {
+	getFetchCoderWorkspaceMcpJsonPath,
+	getMcpSettingsFilePath as getMcpSettingsFilePathHelper,
+} from "@core/storage/disk"
 import { StateManager } from "@core/storage/StateManager"
 import { UnauthorizedError } from "@modelcontextprotocol/sdk/client/auth.js"
 import { Client } from "@modelcontextprotocol/sdk/client/index.js"
@@ -41,6 +44,7 @@ import { fetch } from "@/shared/net"
 import { ShowMessageType } from "@/shared/proto/host/window"
 import { Logger } from "@/shared/services/Logger"
 import { expandEnvironmentVariables } from "@/utils/envExpansion"
+import { fileExistsAtPath } from "@/utils/fs"
 import { getServerAuthHash, mcpConfigHasUserSuppliedCredentials } from "@/utils/mcpAuth"
 import { TelemetryService } from "../telemetry/TelemetryService"
 import { DEFAULT_REQUEST_TIMEOUT_MS } from "./constants"
@@ -56,7 +60,9 @@ export class McpHub {
 	private mcpOAuthManager: McpOAuthManager
 
 	private settingsWatcher?: FSWatcher
+	private workspaceMcpWatcher?: FSWatcher
 	private fileWatchers: Map<string, FSWatcher> = new Map()
+	private getWorkspaceRoot?: () => Promise<string | undefined>
 	connections: McpConnection[] = []
 	isConnecting = false
 	/**
@@ -99,13 +105,16 @@ export class McpHub {
 		getSettingsDirectoryPath: () => Promise<string>,
 		clientVersion: string,
 		telemetryService: TelemetryService,
+		getWorkspaceRoot?: () => Promise<string | undefined>,
 	) {
 		this.getMcpServersPath = getMcpServersPath
 		this.getSettingsDirectoryPath = getSettingsDirectoryPath
 		this.clientVersion = clientVersion
 		this.telemetryService = telemetryService
+		this.getWorkspaceRoot = getWorkspaceRoot
 		this.mcpOAuthManager = new McpOAuthManager()
 		this.watchMcpSettingsFile()
+		void this.watchWorkspaceMcpFile()
 		this.initializeMcpServers()
 	}
 
@@ -165,36 +174,66 @@ export class McpHub {
 		return this.isUpdatingFromRemoteConfig
 	}
 
+	private async mergeWorkspaceFetchCoderMcp(config: { mcpServers?: Record<string, unknown> }): Promise<void> {
+		if (!config.mcpServers || typeof config.mcpServers !== "object") {
+			config.mcpServers = {}
+		}
+		const root = await this.getWorkspaceRoot?.()
+		const wsPath = getFetchCoderWorkspaceMcpJsonPath(root)
+		if (!wsPath || !(await fileExistsAtPath(wsPath))) {
+			return
+		}
+		try {
+			const raw = await fs.readFile(wsPath, "utf-8")
+			const trimmed = raw.trim()
+			if (!trimmed || trimmed === "{}" || trimmed === '{"mcpServers":{}}') {
+				return
+			}
+			const parsed = JSON.parse(raw) as { mcpServers?: Record<string, unknown> }
+			const expanded = expandEnvironmentVariables(parsed)
+			if (expanded?.mcpServers && typeof expanded.mcpServers === "object") {
+				config.mcpServers = {
+					...config.mcpServers,
+					...expanded.mcpServers,
+				}
+			}
+		} catch (e) {
+			Logger.warn("[McpHub] Failed to merge .fetch-coder/mcp.json:", e)
+		}
+	}
+
 	private async readAndValidateMcpSettingsFile(): Promise<z.infer<typeof McpSettingsSchema> | undefined> {
 		try {
 			const settingsPath = await getMcpSettingsFilePathHelper(await this.getSettingsDirectoryPath())
 			const content = await fs.readFile(settingsPath, "utf-8")
 
-			let config: any
+			let config: { mcpServers: Record<string, unknown> }
 
-			// Handle empty or minimal files silently - this is a valid state meaning "no MCP servers"
 			const trimmedContent = content.trim()
 			if (!trimmedContent || trimmedContent === "{}" || trimmedContent === '{"mcpServers":{}}') {
-				return { mcpServers: {} }
+				config = { mcpServers: {} }
+			} else {
+				try {
+					const parsed = JSON.parse(content) as { mcpServers?: Record<string, unknown> }
+					config = {
+						...parsed,
+						mcpServers:
+							typeof parsed.mcpServers === "object" && parsed.mcpServers ? parsed.mcpServers : {},
+					}
+				} catch (_error) {
+					HostProvider.window.showMessage({
+						type: ShowMessageType.ERROR,
+						message: "Invalid MCP settings format. Please ensure your settings follow the correct JSON format.",
+					})
+					return undefined
+				}
 			}
 
-			// Parse JSON file content
-			try {
-				config = JSON.parse(content)
-			} catch (_error) {
-				HostProvider.window.showMessage({
-					type: ShowMessageType.ERROR,
-					message: "Invalid MCP settings format. Please ensure your settings follow the correct JSON format.",
-				})
-				return undefined
-			}
+			await this.mergeWorkspaceFetchCoderMcp(config)
 
-			// Expand environment variables before validation
-			// This allows ${env:VAR_NAME} syntax in URLs, headers, env vars, etc.
-			config = expandEnvironmentVariables(config)
+			const expanded = expandEnvironmentVariables(config)
 
-			// Validate against schema
-			const result = McpSettingsSchema.safeParse(config)
+			const result = McpSettingsSchema.safeParse(expanded)
 			if (!result.success) {
 				HostProvider.window.showMessage({
 					type: ShowMessageType.ERROR,
@@ -208,6 +247,42 @@ export class McpHub {
 			Logger.error("Failed to read MCP settings:", error)
 			return undefined
 		}
+	}
+
+	private async watchWorkspaceMcpFile(): Promise<void> {
+		const root = await this.getWorkspaceRoot?.()
+		const wsPath = getFetchCoderWorkspaceMcpJsonPath(root)
+		if (!wsPath || !(await fileExistsAtPath(wsPath))) {
+			return
+		}
+
+		this.workspaceMcpWatcher = chokidar.watch(wsPath, {
+			persistent: true,
+			ignoreInitial: true,
+			awaitWriteFinish: {
+				stabilityThreshold: 100,
+				pollInterval: 100,
+			},
+			atomic: true,
+		})
+
+		this.workspaceMcpWatcher.on("change", async () => {
+			if (this.isUpdatingFromRemoteConfig || this.isUpdatingAsiSettings) {
+				return
+			}
+			const settings = await this.readAndValidateMcpSettingsFile()
+			if (settings) {
+				try {
+					await this.updateServerConnections(settings.mcpServers)
+				} catch (error) {
+					Logger.error("Failed to process workspace MCP settings change:", error)
+				}
+			}
+		})
+
+		this.workspaceMcpWatcher.on("error", (error) => {
+			Logger.error("Error watching workspace MCP file:", error)
+		})
 	}
 
 	private async watchMcpSettingsFile(): Promise<void> {
@@ -1688,6 +1763,9 @@ export class McpHub {
 		this.connections = []
 		if (this.settingsWatcher) {
 			await this.settingsWatcher.close()
+		}
+		if (this.workspaceMcpWatcher) {
+			await this.workspaceMcpWatcher.close()
 		}
 	}
 }

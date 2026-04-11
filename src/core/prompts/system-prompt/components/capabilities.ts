@@ -21,8 +21,8 @@ export async function getCapabilitiesSection(variant: PromptVariant, context: Sy
 		: ""
 
 	const webToolsCapabilities =
-		context.AsiWebToolsEnabled === true
-			? `\n- When the task requires or could benefit from getting up to date information on a topic (e.g. weather, latest best practices, latest documentation, latest news, current events), you MUST use the web_search tool to obtain current results (do not claim you lack web access if this tool is available), then use web_fetch on relevant URLs when you need full page text.`
+		context.AsiWebToolsEnabled !== false
+			? `\n- You have web_search: use it automatically whenever fresh or external information would improve the answer. Do not ask the user for permission to search. When the user includes an http(s) URL, call read_url (or web_fetch when you need a custom analysis prompt) without asking first for public pages.`
 			: ""
 
 	const templateEngine = new TemplateEngine()

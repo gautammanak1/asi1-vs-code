@@ -10,6 +10,7 @@ import SettingsView from "./components/settings/SettingsView";
 import AccountView from "./components/account/AccountView";
 import WelcomeView from "./components/welcome/WelcomeView";
 import WorktreesView from "./components/worktrees/WorktreesView";
+import CheckpointPanel from "./components/checkpoint/CheckpointPanel";
 import { useExtensionState } from "./context/ExtensionStateContext";
 import { Providers } from "./Providers";
 import { UiServiceClient } from "./services/grpc-client";
@@ -25,6 +26,7 @@ const AppContent = () => {
 		settingsTargetSection,
 		showHistory,
 		showWorktrees,
+		showCheckpoints,
 		showAccount,
 		showAnnouncement,
 		onboardingModels,
@@ -35,6 +37,7 @@ const AppContent = () => {
 		hideSettings,
 		hideHistory,
 		hideWorktrees,
+		hideCheckpoints,
 		hideAccount,
 		hideAnnouncement,
 	} = useExtensionState();
@@ -113,11 +116,17 @@ const AppContent = () => {
 			{showMcp && <McpView initialTab={mcpTab} onDone={closeMcpView} />}
 			{showWorktrees && <WorktreesView onDone={hideWorktrees} />}
 			{showAccount && <AccountView onDone={hideAccount} />}
+			{showCheckpoints && <CheckpointPanel onDone={hideCheckpoints} />}
 			{/* Do not conditionally load ChatView, it's expensive and there's state we don't want to lose (user input, disableInput, askResponse promise, etc.) */}
 			<ChatView
 				hideAnnouncement={hideAnnouncement}
 				isHidden={
-					showSettings || showHistory || showMcp || showWorktrees || showAccount
+					showSettings ||
+					showHistory ||
+					showMcp ||
+					showWorktrees ||
+					showAccount ||
+					showCheckpoints
 				}
 				showAnnouncement={showAnnouncement}
 				showHistoryView={navigateToHistory}

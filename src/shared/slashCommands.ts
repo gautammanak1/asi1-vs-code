@@ -1,9 +1,63 @@
 export interface SlashCommand {
 	name: string
 	description?: string
-	section?: "default" | "custom" | "mcp"
+	section?: "default" | "custom" | "mcp" | "fetch-coder"
 	cliCompatible?: boolean
+	/** Inserted after `/{name} ` when the user picks the command from the menu */
+	prefillAfterSlash?: string
 }
+
+/** Fetch Coder quick prompts (expanded on the server via explicit_instructions) */
+export const FETCH_CODER_SLASH_COMMANDS: SlashCommand[] = [
+	{
+		name: "fix",
+		description: "Fix selected code or described issue",
+		section: "fetch-coder",
+		prefillAfterSlash: "Describe the issue or paste error output. Use @file:path to attach files.\n",
+	},
+	{
+		name: "test",
+		description: "Generate unit tests for selected code",
+		section: "fetch-coder",
+		prefillAfterSlash: "What should be covered? Mention the module or @file: paths.\n",
+	},
+	{
+		name: "docs",
+		description: "Generate JSDoc/docstring documentation",
+		section: "fetch-coder",
+		prefillAfterSlash: "Which symbols or files should be documented? @file:…\n",
+	},
+	{
+		name: "explain",
+		description: "Explain selected code in simple terms",
+		section: "fetch-coder",
+		prefillAfterSlash: "What part should we focus on? @file:… or describe the selection.\n",
+	},
+	{
+		name: "review",
+		description: "Do a code review with suggestions",
+		section: "fetch-coder",
+		prefillAfterSlash: "Scope: PR, folder, or @file:… — note any concerns.\n",
+	},
+	{
+		name: "agent",
+		description: "Create a Fetch.ai uAgent boilerplate",
+		section: "fetch-coder",
+		prefillAfterSlash: "Language/runtime (e.g. Python 3.11) and integration targets (Agentverse, ASI:One).\n",
+	},
+	{
+		name: "deploy",
+		description: "Generate deployment instructions",
+		section: "fetch-coder",
+		prefillAfterSlash: "Target environment (Docker, K8s, cloud) and constraints.\n",
+	},
+	{
+		name: "refactor",
+		description: "Refactor selected code",
+		section: "fetch-coder",
+		prefillAfterSlash: "Goal of the refactor and any files: @file:… @folder:…\n",
+	},
+]
 
 export const BASE_SLASH_COMMANDS: SlashCommand[] = [
 	{

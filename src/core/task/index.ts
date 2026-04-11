@@ -33,6 +33,7 @@ import {
 	HookExecution,
 } from "@core/hooks/precompact-executor";
 import { ClineIgnoreController } from "@core/ignore/ClineIgnoreController";
+import { readFetchCoderWorkspaceMemorySummary } from "@core/memory/fetchCoderWorkspaceMemory";
 import { parseMentions } from "@core/mentions";
 import { CommandPermissionController } from "@core/permissions";
 import { summarizeTask } from "@core/prompts/contextManagement";
@@ -2282,6 +2283,10 @@ export class Task {
 			visible: visibleTabPaths.slice(0, cap),
 		};
 
+		const workspaceMemorySummary = await readFetchCoderWorkspaceMemorySummary(
+			this.cwd,
+		);
+
 		const promptContext: SystemPromptContext = {
 			cwd: this.cwd,
 			ide,
@@ -2307,7 +2312,7 @@ export class Task {
 			subagentsEnabled:
 				this.stateManager.getGlobalSettingsKey("subagentsEnabled"),
 			AsiWebToolsEnabled:
-				this.stateManager.getGlobalSettingsKey("AsiWebToolsEnabled") &&
+				this.stateManager.getGlobalSettingsKey("AsiWebToolsEnabled") !== false &&
 				featureFlagsService.getWebtoolsEnabled(),
 			isMultiRootEnabled: multiRootEnabled,
 			workspaceRoots,
@@ -2318,6 +2323,7 @@ export class Task {
 				this.stateManager.getGlobalStateKey("nativeToolCallEnabled"),
 			enableParallelToolCalling: this.isParallelToolCallingEnabled(),
 			terminalExecutionMode: this.terminalExecutionMode,
+			workspaceMemorySummary,
 		};
 
 		// Notify user if any conditional rules were applied for this request

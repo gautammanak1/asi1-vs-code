@@ -9,6 +9,14 @@ import {
     condenseToolResponse,
     deepPlanningToolResponse,
     explainChangesToolResponse,
+    fetchAgentSlashResponse,
+    fetchDeploySlashResponse,
+    fetchDocsSlashResponse,
+    fetchExplainSlashResponse,
+    fetchFixSlashResponse,
+    fetchRefactorSlashResponse,
+    fetchReviewSlashResponse,
+    fetchTestSlashResponse,
     newRuleToolResponse,
     newTaskToolResponse,
     reportBugToolResponse,
@@ -49,7 +57,23 @@ export async function parseSlashCommands(
 	providerInfo?: ApiProviderInfo,
 	mcpPromptFetcher?: McpPromptFetcher,
 ): Promise<{ processedText: string; needsAsirulesFileCheck: boolean }> {
-	const SUPPORTED_DEFAULT_COMMANDS = ["newtask", "smol", "compact", "newrule", "reportbug", "deep-planning", "explain-changes"]
+	const SUPPORTED_DEFAULT_COMMANDS = [
+		"newtask",
+		"smol",
+		"compact",
+		"newrule",
+		"reportbug",
+		"deep-planning",
+		"explain-changes",
+		"fix",
+		"test",
+		"docs",
+		"explain",
+		"review",
+		"agent",
+		"deploy",
+		"refactor",
+	]
 
 	// Determine if the current provider/model/setting actually uses native tool calling
 	const willUseNativeTools = isNativeToolCallingConfig(providerInfo!, enableNativeToolCalls || false)
@@ -62,6 +86,14 @@ export async function parseSlashCommands(
 		reportbug: reportBugToolResponse(),
 		"deep-planning": deepPlanningToolResponse(focusChainSettings, providerInfo, willUseNativeTools),
 		"explain-changes": explainChangesToolResponse(),
+		fix: fetchFixSlashResponse(),
+		test: fetchTestSlashResponse(),
+		docs: fetchDocsSlashResponse(),
+		explain: fetchExplainSlashResponse(),
+		review: fetchReviewSlashResponse(),
+		agent: fetchAgentSlashResponse(),
+		deploy: fetchDeploySlashResponse(),
+		refactor: fetchRefactorSlashResponse(),
 	}
 
 	// Regex patterns to extract content from different XML tags

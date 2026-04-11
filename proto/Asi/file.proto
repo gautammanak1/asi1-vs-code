@@ -93,6 +93,24 @@ service FileService {
 
   // Deletes an existing skill directory
   rpc deleteSkillFile(DeleteSkillRequest) returns (SkillsToggles);
+
+  // Appends a bullet to `.fetch-coder/memory.md` (workspace root)
+  rpc appendFetchCoderWorkspaceMemory(StringRequest) returns (Empty);
+
+  // Fetch Coder workspace file checkpoints (.fetch-coder/checkpoints/*.json)
+  rpc listFetchCoderCheckpoints(EmptyRequest) returns (String);
+  rpc revertFetchCoderCheckpoint(StringRequest) returns (String);
+  rpc revertFetchCoderCheckpointFiles(FetchCoderRevertFilesRequest) returns (String);
+  rpc saveFetchCoderManualCheckpoint(StringRequest) returns (String);
+  rpc deleteFetchCoderCheckpoint(StringRequest) returns (Empty);
+  rpc clearFetchCoderCheckpoints(EmptyRequest) returns (String);
+  rpc openFetchCoderCheckpointDiff(StringRequest) returns (Empty);
+}
+
+message FetchCoderRevertFilesRequest {
+  Metadata metadata = 1;
+  string checkpoint_id = 2;
+  repeated string paths = 3;
 }
 
 // Response for refreshRules operation

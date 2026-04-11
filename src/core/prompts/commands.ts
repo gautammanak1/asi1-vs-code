@@ -304,6 +304,84 @@ Below is the user's input describing what changes they want explained. If no inp
 </explicit_instructions>\n
 `
 
+const fetchSlashBase = (title: string, body: string) =>
+	`<explicit_instructions type="fetch_coder_slash">
+The user invoked a Fetch Coder slash command (**/${title}**). Follow the instructions below. Use workspace tools to read or edit code when needed. If the user referenced @ mentions or attached context, prioritize that material.
+
+${body}
+
+Below is the user's message (after the slash command was removed server-side).
+</explicit_instructions>\n`
+
+export const fetchFixSlashResponse = () =>
+	fetchSlashBase(
+		"fix",
+		`## Goal: Fix code or an issue
+- Identify the bug, failing test, or undesired behavior using the user's description and any @file / @folder / selection context.
+- Propose a minimal fix; implement changes with the normal file-edit workflow.
+- Summarize what was wrong and what you changed.`,
+	)
+
+export const fetchTestSlashResponse = () =>
+	fetchSlashBase(
+		"test",
+		`## Goal: Generate unit tests
+- Determine the target module or function from context and existing test layout in the repo.
+- Add focused tests that cover happy path and important edge cases; match the project's test framework and conventions.
+- Do not weaken production types solely to satisfy tests unless the user asked.`,
+	)
+
+export const fetchDocsSlashResponse = () =>
+	fetchSlashBase(
+		"docs",
+		`## Goal: Add documentation
+- Add JSDoc/TSDoc (or language-appropriate docstrings) for the selected or referenced symbols.
+- Document parameters, return values, errors, and side effects where relevant.
+- Keep comments concise and aligned with existing project style.`,
+	)
+
+export const fetchExplainSlashResponse = () =>
+	fetchSlashBase(
+		"explain",
+		`## Goal: Explain code simply
+- Explain what the referenced code does in plain language for a developer unfamiliar with this area.
+- Call out important data flow, side effects, and invariants.
+- Use short examples only when they clarify behavior.`,
+	)
+
+export const fetchReviewSlashResponse = () =>
+	fetchSlashBase(
+		"review",
+		`## Goal: Code review
+- Review for correctness, security, performance, readability, and test gaps.
+- List concrete suggestions ordered by severity; prefer specific file/line references when possible.`,
+	)
+
+export const fetchAgentSlashResponse = () =>
+	fetchSlashBase(
+		"agent",
+		`## Goal: Fetch.ai uAgent boilerplate
+- Scaffold a minimal Python uAgent using the Fetch.ai / ASI ecosystem conventions appropriate for this workspace.
+- Include agent identity, a few example handlers, and brief run instructions (venv/poetry as fits the repo).
+- Mention Agentverse / ASI:One integration points only when relevant to the user's stack.`,
+	)
+
+export const fetchDeploySlashResponse = () =>
+	fetchSlashBase(
+		"deploy",
+		`## Goal: Deployment instructions
+- Produce clear steps to deploy or run the current project (build, env vars, secrets, health checks).
+- Separate local vs staging vs production where applicable; note CI/CD hooks if present in the repo.`,
+	)
+
+export const fetchRefactorSlashResponse = () =>
+	fetchSlashBase(
+		"refactor",
+		`## Goal: Refactor safely
+- Improve structure, naming, or modularity without changing observable behavior unless the user asked.
+- Prefer incremental steps; run or outline tests the user should run after each phase.`,
+	)
+
 /**
  * Generates the deep-planning slash command response with model-family-aware variant selection
  * @param focusChainSettings Optional focus chain settings to include in the prompt

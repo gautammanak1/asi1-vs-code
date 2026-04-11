@@ -213,6 +213,7 @@ export interface AsiSayTool {
 		| "listCodeDefinitionNames"
 		| "searchFiles"
 		| "webFetch"
+		| "readUrl"
 		| "webSearch"
 		| "summarizeTask"
 		| "useSkill";
@@ -227,6 +228,10 @@ export interface AsiSayTool {
 	/** Inclusive line range actually returned by read_file (for UI summaries). */
 	readLineStart?: number;
 	readLineEnd?: number;
+	/** Fetch Coder file snapshot checkpoint (before AI save) for quick revert */
+	fetchCoderCheckpointId?: string;
+	/** Workspace-relative paths included in this checkpoint */
+	editedPaths?: string[];
 }
 
 export interface AsiSayHook {

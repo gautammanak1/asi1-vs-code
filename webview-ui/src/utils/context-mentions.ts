@@ -123,9 +123,9 @@ export function getContextMenuOptions(
 ): ContextMenuQueryItem[] {
 	const workingChanges: ContextMenuQueryItem = {
 		type: ContextMenuOptionType.Git,
-		value: "git-changes",
+		value: "git",
 		label: "Working changes",
-		description: "Current uncommitted changes",
+		description: "Current uncommitted changes (@git)",
 	}
 
 	const searchResultItems: ContextMenuQueryItem[] = dynamicSearchResults.map((result) => {
@@ -185,7 +185,7 @@ export function getContextMenuOptions(
 			label: "Git Commits",
 			description: "Search repository history",
 		})
-	} else if ("git-changes".startsWith(lowerQuery)) {
+	} else if ("git-changes".startsWith(lowerQuery) || "git".startsWith(lowerQuery)) {
 		suggestions.push(workingChanges)
 	}
 	if ("problems".startsWith(lowerQuery)) {

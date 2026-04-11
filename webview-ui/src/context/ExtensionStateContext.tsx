@@ -81,6 +81,7 @@ export interface ExtensionStateContextType extends ExtensionState {
 	showHistory: boolean;
 	showAccount: boolean;
 	showWorktrees: boolean;
+	showCheckpoints: boolean;
 	showAnnouncement: boolean;
 	expandTaskHeader: boolean;
 
@@ -132,12 +133,14 @@ export interface ExtensionStateContextType extends ExtensionState {
 	navigateToAccount: () => void;
 	navigateToWorktrees: () => void;
 	navigateToChat: () => void;
+	navigateToCheckpoints: () => void;
 
 	// Hide functions
 	hideSettings: () => void;
 	hideHistory: () => void;
 	hideAccount: () => void;
 	hideWorktrees: () => void;
+	hideCheckpoints: () => void;
 	hideAnnouncement: () => void;
 	closeMcpView: () => void;
 
@@ -165,6 +168,7 @@ export const ExtensionStateContextProvider: React.FC<{
 	const [showHistory, setShowHistory] = useState(false);
 	const [showAccount, setShowAccount] = useState(false);
 	const [showWorktrees, setShowWorktrees] = useState(false);
+	const [showCheckpoints, setShowCheckpoints] = useState(false);
 	const [showAnnouncement, setShowAnnouncement] = useState(false);
 
 	// Helper for MCP view
@@ -191,6 +195,10 @@ export const ExtensionStateContextProvider: React.FC<{
 		() => setShowWorktrees(false),
 		[setShowWorktrees],
 	);
+	const hideCheckpoints = useCallback(
+		() => setShowCheckpoints(false),
+		[setShowCheckpoints],
+	);
 	const hideAnnouncement = useCallback(
 		() => setShowAnnouncement(false),
 		[setShowAnnouncement],
@@ -203,6 +211,7 @@ export const ExtensionStateContextProvider: React.FC<{
 			setShowHistory(false);
 			setShowAccount(false);
 			setShowWorktrees(false);
+			setShowCheckpoints(false);
 			if (tab) {
 				setMcpTab(tab);
 			}
@@ -224,6 +233,7 @@ export const ExtensionStateContextProvider: React.FC<{
 			closeMcpView();
 			setShowAccount(false);
 			setShowWorktrees(false);
+			setShowCheckpoints(false);
 			setSettingsTargetSection(targetSection);
 			setSettingsInitialModelTab(undefined);
 			setShowSettings(true);
@@ -240,6 +250,7 @@ export const ExtensionStateContextProvider: React.FC<{
 			closeMcpView();
 			setShowAccount(false);
 			setShowWorktrees(false);
+			setShowCheckpoints(false);
 			setSettingsTargetSection(opts.targetSection);
 			setSettingsInitialModelTab(opts.initialModelTab);
 			setShowSettings(true);
@@ -252,6 +263,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		closeMcpView();
 		setShowAccount(false);
 		setShowWorktrees(false);
+		setShowCheckpoints(false);
 		setShowHistory(true);
 	}, [
 		setShowSettings,
@@ -266,6 +278,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		closeMcpView();
 		setShowHistory(false);
 		setShowWorktrees(false);
+		setShowCheckpoints(false);
 		setShowAccount(true);
 	}, [
 		setShowSettings,
@@ -280,7 +293,23 @@ export const ExtensionStateContextProvider: React.FC<{
 		closeMcpView();
 		setShowHistory(false);
 		setShowAccount(false);
+		setShowCheckpoints(false);
 		setShowWorktrees(true);
+	}, [
+		setShowSettings,
+		closeMcpView,
+		setShowHistory,
+		setShowAccount,
+		setShowWorktrees,
+	]);
+
+	const navigateToCheckpoints = useCallback(() => {
+		setShowSettings(false);
+		closeMcpView();
+		setShowHistory(false);
+		setShowAccount(false);
+		setShowWorktrees(false);
+		setShowCheckpoints(true);
 	}, [
 		setShowSettings,
 		closeMcpView,
@@ -295,6 +324,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		setShowHistory(false);
 		setShowAccount(false);
 		setShowWorktrees(false);
+		setShowCheckpoints(false);
 	}, [
 		setShowSettings,
 		closeMcpView,
@@ -429,6 +459,9 @@ export const ExtensionStateContextProvider: React.FC<{
 		null,
 	);
 	const worktreesButtonClickedSubscriptionRef = useRef<(() => void) | null>(
+		null,
+	);
+	const checkpointsButtonClickedSubscriptionRef = useRef<(() => void) | null>(
 		null,
 	);
 	const partialMessageUnsubscribeRef = useRef<(() => void) | null>(null);
@@ -628,6 +661,22 @@ export const ExtensionStateContextProvider: React.FC<{
 				},
 			);
 
+		checkpointsButtonClickedSubscriptionRef.current =
+			UiServiceClient.subscribeToCheckpointsButtonClicked(EmptyRequest.create({}), {
+				onResponse: () => {
+					navigateToCheckpoints();
+				},
+				onError: (error) => {
+					console.error(
+						"Error in checkpoints button clicked subscription:",
+						error,
+					);
+				},
+				onComplete: () => {
+					console.log("Checkpoints button clicked subscription completed");
+				},
+			});
+
 		// Subscribe to partial message events
 		partialMessageUnsubscribeRef.current =
 			UiServiceClient.subscribeToPartialMessage(EmptyRequest.create({}), {
@@ -795,6 +844,10 @@ export const ExtensionStateContextProvider: React.FC<{
 			if (worktreesButtonClickedSubscriptionRef.current) {
 				worktreesButtonClickedSubscriptionRef.current();
 				worktreesButtonClickedSubscriptionRef.current = null;
+			}
+			if (checkpointsButtonClickedSubscriptionRef.current) {
+				checkpointsButtonClickedSubscriptionRef.current();
+				checkpointsButtonClickedSubscriptionRef.current = null;
 			}
 			if (partialMessageUnsubscribeRef.current) {
 				partialMessageUnsubscribeRef.current();
@@ -969,6 +1022,7 @@ export const ExtensionStateContextProvider: React.FC<{
 		showHistory,
 		showAccount,
 		showWorktrees,
+		showCheckpoints,
 		showAnnouncement,
 		globalAsiRulesToggles: state.globalAsiRulesToggles || {},
 		localAsiRulesToggles: state.localAsiRulesToggles || {},
@@ -990,12 +1044,14 @@ export const ExtensionStateContextProvider: React.FC<{
 		navigateToAccount,
 		navigateToWorktrees,
 		navigateToChat,
+		navigateToCheckpoints,
 
 		// Hide functions
 		hideSettings,
 		hideHistory,
 		hideAccount,
 		hideWorktrees,
+		hideCheckpoints,
 		hideAnnouncement,
 		setShowAnnouncement,
 		setShowWelcome,

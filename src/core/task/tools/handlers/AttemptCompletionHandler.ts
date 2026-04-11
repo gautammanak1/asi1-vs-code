@@ -5,7 +5,6 @@ import { getHooksEnabledSafe } from "@core/hooks/hooks-utils"
 import * as NotificationHook from "@core/hooks/notification-hook"
 import { formatResponse } from "@core/prompts/responses"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
-import { showSystemNotification } from "@integrations/notifications"
 import { telemetryService } from "@services/telemetry"
 import { findLastIndex } from "@shared/array"
 import { COMPLETION_RESULT_CHANGES_FLAG } from "@shared/ExtensionMessage"
@@ -100,14 +99,6 @@ export class AttemptCompletionHandler implements IToolHandler, IPartialBlockHand
 				return formatResponse.toolDenied()
 			}
 			throw error
-		}
-
-		// Show notification if enabled
-		if (config.autoApprovalSettings.enableNotifications) {
-			showSystemNotification({
-				subtitle: "Task Completed",
-				message: result.replace(/\n/g, " "),
-			})
 		}
 
 		const addNewChangesFlagToLastCompletionResultMessage = async () => {

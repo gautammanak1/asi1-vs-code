@@ -1,11 +1,18 @@
 import type { McpServer } from "@shared/mcp"
 import { PLATFORM_CONFIG, PlatformType } from "@/config/platform.config"
-import { BASE_SLASH_COMMANDS, type SlashCommand, VSCODE_ONLY_COMMANDS } from "../../../src/shared/slashCommands.ts"
+import {
+	BASE_SLASH_COMMANDS,
+	FETCH_CODER_SLASH_COMMANDS,
+	type SlashCommand,
+	VSCODE_ONLY_COMMANDS,
+} from "../../../src/shared/slashCommands.ts"
 
 export type { SlashCommand }
 
 export const DEFAULT_SLASH_COMMANDS: SlashCommand[] =
-	PLATFORM_CONFIG.type === PlatformType.VSCODE ? [...BASE_SLASH_COMMANDS, ...VSCODE_ONLY_COMMANDS] : BASE_SLASH_COMMANDS
+	PLATFORM_CONFIG.type === PlatformType.VSCODE
+		? [...FETCH_CODER_SLASH_COMMANDS, ...BASE_SLASH_COMMANDS, ...VSCODE_ONLY_COMMANDS]
+		: [...FETCH_CODER_SLASH_COMMANDS, ...BASE_SLASH_COMMANDS]
 
 export function getWorkflowCommands(
 	localWorkflowToggles: Record<string, boolean>,

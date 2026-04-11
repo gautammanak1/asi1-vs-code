@@ -158,6 +158,13 @@ export class Controller {
 			() => ensureSettingsDirectoryExists(),
 			ExtensionRegistryInfo.version,
 			telemetryService,
+			async () => {
+				try {
+					return await getCwd(await getDesktopDir());
+				} catch {
+					return undefined;
+				}
+			},
 		);
 
 		// Clean up legacy checkpoints

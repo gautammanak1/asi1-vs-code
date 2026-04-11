@@ -30,17 +30,18 @@ export async function openMention(mention?: string): Promise<void> {
 		return
 	}
 
-	if (isFileMention(mention)) {
-		const relPath = getFilePathFromMention(mention)
+	const normalized = normalizeMentionAlias(mention)
+	if (isFileMention(normalized)) {
+		const relPath = getFilePathFromMention(normalized)
 		const absPath = path.resolve(cwd, relPath)
 		if (await isDirectory(absPath)) {
 			await HostProvider.workspace.openInFileExplorerPanel({ path: absPath })
 		} else {
 			openFile(absPath)
 		}
-	} else if (mention === "problems") {
+	} else if (normalized === "problems") {
 		await HostProvider.workspace.openProblemsPanel({})
-	} else if (mention === "terminal") {
+	} else if (normalized === "terminal") {
 		await HostProvider.workspace.openTerminalPanel({})
 	} else if (mention.startsWith("http")) {
 		await openExternal(mention)
@@ -56,6 +57,35 @@ export async function getFileMentionFromPath(filePath: string) {
 	return "@/" + relativePath
 }
 
+/**
+ * Normalizes @ mention aliases (e.g. @git, @file:path) to internal forms used by expansion.
+ */
+export function normalizeMentionAlias(raw: string): string {
+	if (raw === "git") {
+		return "git-changes"
+	}
+	if (raw.startsWith("file:")) {
+		let rest = raw.slice(5).trim()
+		if (rest.startsWith('"') && rest.endsWith('"')) {
+			rest = rest.slice(1, -1)
+		}
+		const posix = rest.replace(/\\/g, "/")
+		const withSlash = posix.startsWith("/") ? posix : `/${posix}`
+		const noTrail = withSlash.replace(/\/+$/, "")
+		return noTrail || raw
+	}
+	if (raw.startsWith("folder:")) {
+		let rest = raw.slice(7).trim()
+		if (rest.startsWith('"') && rest.endsWith('"')) {
+			rest = rest.slice(1, -1)
+		}
+		const posix = rest.replace(/\\/g, "/")
+		const withSlash = posix.startsWith("/") ? posix : `/${posix}`
+		return withSlash.endsWith("/") ? withSlash : `${withSlash}/`
+	}
+	return raw
+}
+
 export async function parseMentions(
 	text: string,
 	cwd: string,
@@ -64,7 +94,8 @@ export async function parseMentions(
 	workspaceManager?: WorkspaceRootManager,
 ): Promise<string> {
 	const mentions: Set<string> = new Set()
-	let parsedText = text.replace(mentionRegexGlobal, (match, mention) => {
+	let parsedText = text.replace(mentionRegexGlobal, (match, rawMention) => {
+		const mention = normalizeMentionAlias(rawMention)
 		mentions.add(mention)
 		if (mention.startsWith("http")) {
 			return `'${mention}' (see below for site content)`
@@ -407,6 +438,11 @@ function parseWorkspaceMention(mention: string): { workspaceHint: string; path: 
 	}
 
 	const [, workspaceHint, pathPart] = workspaceMatch
+
+	// Not workspace syntax — reserved for @file: / @folder: aliases
+	if (workspaceHint === "file" || workspaceHint === "folder") {
+		return null
+	}
 
 	// Check if it's actually a URL (has ://)
 	if (mention.includes("://")) {

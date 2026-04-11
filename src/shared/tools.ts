@@ -24,6 +24,7 @@ export enum AsiDefaultTool {
 	ACT_MODE = "act_mode_respond",
 	TODO = "focus_chain",
 	WEB_FETCH = "web_fetch",
+	READ_URL = "read_url",
 	WEB_SEARCH = "web_search",
 	CONDENSE = "condense",
 	SUMMARIZE_TASK = "summarize_task",
@@ -62,6 +63,7 @@ export const READ_ONLY_TOOLS = [
 	AsiDefaultTool.ASK,
 	AsiDefaultTool.WEB_SEARCH,
 	AsiDefaultTool.WEB_FETCH,
+	AsiDefaultTool.READ_URL,
 	AsiDefaultTool.USE_SKILL,
 	AsiDefaultTool.USE_SUBAGENTS,
 ] as const

@@ -126,6 +126,8 @@ export interface SystemPromptContext {
 	readonly enableNativeToolCalls?: boolean
 	readonly enableParallelToolCalling?: boolean
 	readonly terminalExecutionMode?: "vscodeTerminal" | "backgroundExec"
+	/** Markdown from `.fetch-coder/memory.md`, injected into user-instructions when present */
+	readonly workspaceMemorySummary?: string
 }
 
 /**

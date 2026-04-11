@@ -417,6 +417,7 @@ const ChatView = ({
 				<InputSection
 					chatState={chatState}
 					messageHandlers={messageHandlers}
+					modifiedMessages={modifiedMessages}
 					placeholderText={placeholderText}
 					scrollBehavior={scrollBehavior}
 					selectFilesAndImages={selectFilesAndImages}

@@ -51,10 +51,9 @@ export class WebFetchToolHandler implements IFullyManagedTool {
 			const currentMode = config.services.stateManager.getGlobalSettingsKey("mode")
 			const provider = (currentMode === "plan" ? apiConfig.planModeApiProvider : apiConfig.actModeApiProvider) as string
 
-			// Check if Asi web tools are enabled (both user setting and feature flag)
-			const AsiWebToolsEnabled = config.services.stateManager.getGlobalSettingsKey("AsiWebToolsEnabled")
+			const userOff = config.services.stateManager.getGlobalSettingsKey("AsiWebToolsEnabled") === false
 			const featureFlagEnabled = featureFlagsService.getWebtoolsEnabled()
-			if (!AsiWebToolsEnabled || !featureFlagEnabled) {
+			if (userOff || !featureFlagEnabled) {
 				return formatResponse.toolError("Web fetch tools are currently disabled. Enable them in Settings.")
 			}
 

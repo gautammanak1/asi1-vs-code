@@ -76,8 +76,44 @@ import SearchResultsDisplay from "./SearchResultsDisplay";
 import SubagentStatusRow from "./SubagentStatusRow";
 import { ThinkingRow } from "./ThinkingRow";
 import UserMessage from "./UserMessage";
+import { FetchCoderQuickRevert } from "../checkpoint/FetchCoderQuickRevert";
 
 const HEADER_CLASSNAMES = "flex items-center gap-2.5 mb-3";
+
+function RememberThisButton({ rawText }: { rawText: string }) {
+	const [pending, setPending] = useState(false);
+	const onClick = useCallback(async () => {
+		const v = rawText.trim().slice(0, 8000);
+		if (!v || pending) {
+			return;
+		}
+		setPending(true);
+		try {
+			await FileServiceClient.appendFetchCoderWorkspaceMemory(
+				StringRequest.create({ value: v }),
+			);
+		} catch {
+			// Host shows success/error toast
+		} finally {
+			setPending(false);
+		}
+	}, [rawText, pending]);
+	if (!rawText?.trim()) {
+		return null;
+	}
+	return (
+		<div className="flex justify-end mt-1 pr-1">
+			<button
+				className="text-[10px] text-(--vscode-descriptionForeground) hover:underline disabled:opacity-40 bg-transparent border-0 cursor-pointer ph-no-capture"
+				disabled={pending}
+				onClick={onClick}
+				type="button"
+			>
+				Remember this
+			</button>
+		</div>
+	);
+}
 
 interface ChatRowProps {
 	message: AsiMessage;
@@ -404,24 +440,22 @@ export const ChatRowContent = memo(
 							<span className="codicon codicon-server text-foreground mb-[-1.5px]" />
 						),
 						<span className="ph-no-capture font-bold text-foreground break-words">
-							Fetch Coder wants to{" "}
-							{mcpServerUse.type === "use_mcp_tool"
-								? "use a tool"
-								: "access a resource"}{" "}
-							on the{" "}
+							{mcpServerUse.type === "use_mcp_tool" && mcpServerUse.toolName
+								? `Using tool: ${mcpServerUse.toolName} · `
+								: ""}
+							{mcpServerUse.type === "use_mcp_tool" ? "MCP tool on " : "MCP resource on "}
 							<code className="break-all">
 								{getMcpServerDisplayName(
 									mcpServerUse.serverName,
 									mcpMarketplaceCatalog,
 								)}
-							</code>{" "}
-							MCP server:
+							</code>
 						</span>,
 					];
 				case "completion_result":
 					return [
-						<span className="codicon codicon-check text-success mb-[-1.5px]" />,
-						<span className="text-success font-bold">Task Completed</span>,
+						<span className="codicon codicon-check text-muted-foreground mb-[-1.5px]" />,
+						<span className="text-foreground font-semibold">Result</span>,
 					];
 				case "api_req_started":
 					// API request rows no longer render the request payload/cost accordion.
@@ -562,6 +596,10 @@ export const ChatRowContent = memo(
 									path={tool.path!}
 								/>
 							)}
+							<FetchCoderQuickRevert
+								messagePartial={!!message.partial}
+								tool={tool}
+							/>
 						</div>
 					);
 				case "fileDeleted":
@@ -586,6 +624,10 @@ export const ChatRowContent = memo(
 								isExpanded={isExpanded}
 								onToggleExpand={handleToggle}
 								path={tool.path!}
+							/>
+							<FetchCoderQuickRevert
+								messagePartial={!!message.partial}
+								tool={tool}
 							/>
 						</div>
 					);
@@ -620,6 +662,10 @@ export const ChatRowContent = memo(
 									path={tool.path!}
 								/>
 							)}
+							<FetchCoderQuickRevert
+								messagePartial={!!message.partial}
+								tool={tool}
+							/>
 						</div>
 					);
 				case "readFile":
@@ -887,6 +933,33 @@ export const ChatRowContent = memo(
 							</div>
 						</div>
 					);
+				case "readUrl":
+					return (
+						<div>
+							<div className={HEADER_CLASSNAMES}>
+								<Link2Icon className="size-2" />
+								{tool.operationIsLocatedInWorkspace === false &&
+									toolIcon("sign-out", "yellow", -90, "This URL is external")}
+								<span className="font-bold">read_url</span>
+							</div>
+							<div
+								className="bg-code rounded-xs overflow-hidden border border-editor-group-border py-2 px-2.5 cursor-pointer select-none"
+								onClick={() => {
+									if (tool.path) {
+										UiServiceClient.openUrl(
+											StringRequest.create({ value: tool.path }),
+										).catch((err) => {
+											console.error("Failed to open URL:", err);
+										});
+									}
+								}}
+							>
+								<span className="ph-no-capture whitespace-nowrap overflow-hidden text-ellipsis mr-2 [direction:rtl] text-left text-link underline">
+									{tool.path + "\u200E"}
+								</span>
+							</div>
+						</div>
+					);
 				case "useSkill":
 					return (
 						<div>
@@ -1067,25 +1140,28 @@ export const ChatRowContent = memo(
 						);
 					case "text": {
 						return (
-							<WithCopyButton
-								onMouseUp={handleMouseUp}
-								position="bottom-right"
-								ref={contentRef}
-								textToCopy={message.text}
-							>
-								<div className="flex items-center">
-									<div className={cn("flex-1 min-w-0 pl-1")}>
-										<MarkdownRow markdown={message.text} showCursor={false} />
+							<>
+								<WithCopyButton
+									onMouseUp={handleMouseUp}
+									position="bottom-right"
+									ref={contentRef}
+									textToCopy={message.text}
+								>
+									<div className="flex items-center">
+										<div className={cn("flex-1 min-w-0 pl-1")}>
+											<MarkdownRow markdown={message.text} showCursor={false} />
+										</div>
 									</div>
-								</div>
-								{quoteButtonState.visible && (
-									<QuoteButton
-										left={quoteButtonState.left}
-										onClick={handleQuoteClick}
-										top={quoteButtonState.top}
-									/>
-								)}
-							</WithCopyButton>
+									{quoteButtonState.visible && (
+										<QuoteButton
+											left={quoteButtonState.left}
+											onClick={handleQuoteClick}
+											top={quoteButtonState.top}
+										/>
+									)}
+								</WithCopyButton>
+								<RememberThisButton rawText={message.text || ""} />
+							</>
 						);
 					}
 					case "reasoning": {

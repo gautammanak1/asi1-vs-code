@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises"
 import { resolve as resolvePath } from "node:path"
+import { getCheckpointService } from "@core/checkpoint/CheckpointService"
 import type { ToolUse } from "@core/assistant-message"
 import { resolveWorkspacePath } from "@core/workspace"
 import { processFilesIntoText } from "@integrations/misc/extract-text"
@@ -260,6 +261,22 @@ export class ApplyPatchHandler implements IFullyManagedTool {
 			const changedFiles = Object.keys(commit.changes)
 			const messages = await this.generateChangeSummary(commit.changes)
 
+			const cpSvc = getCheckpointService(config.cwd)
+			const batchPaths = changedFiles.map((p) => p.split(/[/\\]/).join("/"))
+			const canBatch =
+				cpSvc && batchPaths.length > 0 && !batchPaths.some((p) => p.includes(".fetch-coder/"))
+			let batchCheckpointId: string | undefined
+			if (canBatch) {
+				const cp = await cpSvc!.createAutoCheckpoint(
+					config.taskId,
+					`apply_patch_${Date.now()}`,
+					changedFiles,
+				)
+				batchCheckpointId = cp.id
+				const { notifyFetchCoderCheckpointCreated } = await import("@core/checkpoint/checkpointUiBridge")
+				notifyFetchCoderCheckpointCreated()
+			}
+
 			const finalResponses = []
 			const applyResults: Record<string, FileOpsResult> = {}
 
@@ -300,8 +317,19 @@ export class ApplyPatchHandler implements IFullyManagedTool {
 				await this.prepareFileChange(change, operationPath)
 
 				// Get approval
-				const approved = await this.handleApproval(config, block, message, rawInput, change)
+				const approved = await this.handleApproval(
+					config,
+					block,
+					message,
+					rawInput,
+					change,
+					batchCheckpointId,
+					batchPaths,
+				)
 				if (!approved) {
+					if (batchCheckpointId) {
+						await getCheckpointService(config.cwd)?.deleteCheckpoint(batchCheckpointId)
+					}
 					this.config = undefined
 					config.taskState.didRejectTool = true
 					await provider.revertChanges()
@@ -721,8 +749,14 @@ export class ApplyPatchHandler implements IFullyManagedTool {
 		message: AsiSayTool,
 		rawInput: string,
 		change?: FileChange,
+		batchCheckpointId?: string,
+		batchPaths?: string[],
 	): Promise<boolean> {
-		const patch = { ...message, content: rawInput }
+		const patch: AsiSayTool = { ...message, content: rawInput }
+		if (batchCheckpointId && batchPaths?.length) {
+			patch.fetchCoderCheckpointId = batchCheckpointId
+			patch.editedPaths = batchPaths
+		}
 		const completeMessage = JSON.stringify(patch)
 		const shouldAutoApprove = await config.callbacks.shouldAutoApproveToolWithPath(block.name, message.path)
 

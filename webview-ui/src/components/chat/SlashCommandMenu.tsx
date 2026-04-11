@@ -41,6 +41,7 @@ const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({
 		remoteWorkflows,
 		mcpServers,
 	)
+	const fetchCoderCommands = filteredCommands.filter((cmd) => cmd.section === "fetch-coder")
 	const defaultCommands = filteredCommands.filter((cmd) => cmd.section === "default" || !cmd.section)
 	const workflowCommands = filteredCommands.filter((cmd) => cmd.section === "custom")
 	const mcpCommands = filteredCommands.filter((cmd) => cmd.section === "mcp")
@@ -138,12 +139,23 @@ const SlashCommandMenu: React.FC<SlashCommandMenuProps> = ({
 				style={{ maxHeight: "min(200px, calc(50vh))", overscrollBehavior: "contain" }}>
 				{filteredCommands.length > 0 ? (
 					<>
-						{renderCommandSection(defaultCommands, "Default Commands", 0, true)}
-						{renderCommandSection(workflowCommands, "Workflow Commands", defaultCommands.length, false)}
+						{renderCommandSection(fetchCoderCommands, "Fetch Coder", 0, true)}
+						{renderCommandSection(
+							defaultCommands,
+							"Default Commands",
+							fetchCoderCommands.length,
+							true,
+						)}
+						{renderCommandSection(
+							workflowCommands,
+							"Workflow Commands",
+							fetchCoderCommands.length + defaultCommands.length,
+							false,
+						)}
 						{renderCommandSection(
 							mcpCommands,
 							"MCP Prompts",
-							defaultCommands.length + workflowCommands.length,
+							fetchCoderCommands.length + defaultCommands.length + workflowCommands.length,
 							true,
 						)}
 					</>

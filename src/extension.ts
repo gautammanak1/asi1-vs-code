@@ -10,6 +10,7 @@ import { sendHistoryButtonClickedEvent } from "./core/controller/ui/subscribeToH
 import { sendMcpButtonClickedEvent } from "./core/controller/ui/subscribeToMcpButtonClicked"
 import { sendSettingsButtonClickedEvent } from "./core/controller/ui/subscribeToSettingsButtonClicked"
 import { sendWorktreesButtonClickedEvent } from "./core/controller/ui/subscribeToWorktreesButtonClicked"
+import { sendCheckpointsButtonClickedEvent } from "./core/controller/ui/subscribeToCheckpointsButtonClicked"
 import { WebviewProvider } from "./core/webview"
 import { createAsiAPI } from "./exports"
 import { initializeTestMode } from "./services/test/TestMode"
@@ -47,9 +48,21 @@ import {
 import { VscodeTerminalManager } from "./hosts/vscode/terminal/VscodeTerminalManager"
 import { VscodeDiffViewProvider } from "./hosts/vscode/VscodeDiffViewProvider"
 import { registerAsiAssistantApiIntegration } from "./hosts/vscode/asiAssistantApiIntegration"
+import { registerFetchCoderCheckpointDocumentProvider } from "./hosts/vscode/FetchCoderCheckpointDocumentProvider"
+import { registerFetchCoderCheckpointStatusBar } from "./hosts/vscode/fetchCoderCheckpointStatusBar"
+import { FetchCoderActivityBarProvider } from "./hosts/vscode/FetchCoderActivityBarTree"
 import { VscodeWebviewProvider } from "./hosts/vscode/VscodeWebviewProvider"
 import { exportVSCodeStorageToSharedFiles } from "./hosts/vscode/vscode-to-file-migration"
+import { getCheckpointService } from "./core/checkpoint/CheckpointService"
+import {
+	notifyFetchCoderCheckpointCreated,
+	setFetchCoderRevertInProgress,
+} from "./core/checkpoint/checkpointUiBridge"
+import { clearFetchCoderCheckpoints } from "./core/controller/file/clearFetchCoderCheckpoints"
+import { getCheckpointWorkspaceRoot } from "./core/controller/file/fetchCoderCheckpointUtils"
+import { saveFetchCoderManualCheckpoint } from "./core/controller/file/saveFetchCoderManualCheckpoint"
 import { ExtensionRegistryInfo } from "./registry"
+import { EmptyRequest, StringRequest } from "@shared/proto/Asi/common"
 import { AuthService } from "./services/auth/AuthService"
 import { LogoutReason } from "./services/auth/types"
 import { telemetryService } from "./services/telemetry"
@@ -115,13 +128,20 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	)
 
-	// Sidebar webview (activity bar) — same dock as Copilot chat; does not use an editor column
+	// Chat webview in secondary (right) sidebar; activity bar hosts a one-click launcher tree
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(
 			ExtensionRegistryInfo.views.Sidebar,
 			webview,
 			{ webviewOptions: { retainContextWhenHidden: true } },
 		),
+	)
+	const activityBarTree = new FetchCoderActivityBarProvider()
+	context.subscriptions.push(
+		vscode.window.createTreeView("fetch-coder.ActivityLauncher", {
+			treeDataProvider: activityBarTree,
+			showCollapseAll: false,
+		}),
 	)
 
 	await webview.createOrShowWebviewPanel(true)
@@ -164,6 +184,78 @@ export async function activate(context: vscode.ExtensionContext) {
 		}
 	})()
 	context.subscriptions.push(vscode.workspace.registerTextDocumentContentProvider(DIFF_VIEW_URI_SCHEME, diffContentProvider))
+
+	registerFetchCoderCheckpointDocumentProvider(context)
+	registerFetchCoderCheckpointStatusBar(context)
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.OpenCheckpoints, async () => {
+			const sidebarInstance = WebviewProvider.getInstance() as VscodeWebviewProvider
+			await sidebarInstance.createOrShowWebviewPanel(false)
+			await sendCheckpointsButtonClickedEvent()
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.SaveCheckpoint, async () => {
+			const desc = await vscode.window.showInputBox({
+				title: "Fetch Coder: Save checkpoint",
+				prompt: "Optional description",
+				placeHolder: "e.g. Before refactor",
+			})
+			if (desc === undefined) {
+				return
+			}
+			const sidebarInstance = WebviewProvider.getInstance() as VscodeWebviewProvider
+			await saveFetchCoderManualCheckpoint(
+				sidebarInstance.controller,
+				StringRequest.create({ value: (desc || "Manual checkpoint").trim() }),
+			)
+			vscode.window.showInformationMessage("Checkpoint saved.")
+			notifyFetchCoderCheckpointCreated()
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.RevertLast, async () => {
+			const root = await getCheckpointWorkspaceRoot()
+			const svc = getCheckpointService(root)
+			if (!svc) {
+				vscode.window.showWarningMessage("Open a workspace folder to use checkpoints.")
+				return
+			}
+			const list = await svc.listCheckpoints()
+			if (list.length === 0) {
+				vscode.window.showInformationMessage("No checkpoints to revert.")
+				return
+			}
+			setFetchCoderRevertInProgress(true)
+			try {
+				const result = await svc.revertToCheckpoint(list[0]!.id)
+				if (result.success) {
+					vscode.window.showInformationMessage(`Restored ${result.restoredFiles.length} file(s).`)
+				} else {
+					vscode.window.showErrorMessage(result.errors.join("\n") || "Revert failed.")
+				}
+			} finally {
+				setFetchCoderRevertInProgress(false)
+			}
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.ClearCheckpoints, async () => {
+			const confirm = await vscode.window.showWarningMessage(
+				"Delete all Fetch Coder checkpoints for this workspace?",
+				{ modal: true },
+				"Delete all",
+			)
+			if (confirm !== "Delete all") {
+				return
+			}
+			const sidebarInstance = WebviewProvider.getInstance() as VscodeWebviewProvider
+			await clearFetchCoderCheckpoints(sidebarInstance.controller, EmptyRequest.create({}))
+			vscode.window.showInformationMessage("All checkpoints cleared.")
+			notifyFetchCoderCheckpointCreated()
+		}),
+	)
 
 	const handleUri = async (uri: vscode.Uri) => {
 		const url = decodeURIComponent(uri.toString())

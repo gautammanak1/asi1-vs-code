@@ -53,6 +53,8 @@ export const mentionRegex = new RegExp(
 	`@(` +
 		`[\\w-]+:/[^\\s]*?` + // Workspace-prefixed file paths: @workspace:name/path
 		`|[\\w-]+:"\\/[^"]*?"` + // Workspace-prefixed quoted file paths
+		`|file:(?:"[^"]+"|[^\\s]+)` + // @file:path (optional quotes)
+		`|folder:(?:"[^"]+"|[^\\s]+)` + // @folder:path
 		`|/[^\\s]*?` + // Simple file paths (can't contain)
 		`|"\\/[^"]*?"` + // Quoted file paths which can contain spaces
 		`|(?:\\w+:\\/\\/)[^\\s]+?` + // URLs
@@ -60,6 +62,7 @@ export const mentionRegex = new RegExp(
 		`|problems\\b` + // Exact word 'problems'
 		`|terminal\\b` + // Exact word 'terminal'
 		`|git-changes\\b` + // Exact word 'git-changes'
+		`|git\\b` + // @git → same expansion as git-changes
 		`)` +
 		`(?=[.,;:!?()]*(?=[\\s\\r\\n]|$))`, // Lookahead for trailing punctuation (multiple allowed)
 )

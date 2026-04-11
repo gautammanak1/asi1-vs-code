@@ -1,4 +1,5 @@
 import path from "node:path"
+import { getCheckpointService } from "@core/checkpoint/CheckpointService"
 import { setTimeout as setTimeoutPromise } from "node:timers/promises"
 import type { ToolUse } from "@core/assistant-message"
 import { constructNewFileContent, getLineNumberFromCharIndex } from "@core/assistant-message/diff"
@@ -189,16 +190,24 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 			await config.services.diffViewProvider.scrollToFirstDiff()
 			// showOmissionWarning(this.diffViewProvider.originalContent || "", newContent)
 
+			const cpSvc = getCheckpointService(config.cwd)
+			const relPosix = relPath.split(path.sep).join("/")
+			const canSnapshot = cpSvc && !relPosix.includes(".fetch-coder/")
+			let pendingCheckpointId: string | undefined
+			if (canSnapshot) {
+				const cp = await cpSvc!.createAutoCheckpoint(config.taskId, `${config.ulid}_${Date.now()}`, [relPath])
+				pendingCheckpointId = cp.id
+				const { notifyFetchCoderCheckpointCreated } = await import("@core/checkpoint/checkpointUiBridge")
+				notifyFetchCoderCheckpointCreated()
+			}
+
 			const completeMessage = JSON.stringify({
 				...sharedMessageProps,
 				content: diff || content,
 				operationIsLocatedInWorkspace: await isLocatedInWorkspace(relPath),
-				// ? formatResponse.createPrettyPatch(
-				// 		relPath,
-				// 		this.diffViewProvider.originalContent,
-				// 		newContent,
-				// 	)
-				// : undefined,
+				...(pendingCheckpointId
+					? { fetchCoderCheckpointId: pendingCheckpointId, editedPaths: [relPosix] }
+					: {}),
 			} satisfies AsiSayTool)
 
 			if (await config.callbacks.shouldAutoApproveToolWithPath(block.name, relPath)) {
@@ -246,6 +255,9 @@ export class WriteToFileToolHandler implements IFullyManagedTool {
 				const { response, text, images, files } = await config.callbacks.ask("tool", completeMessage, false)
 
 				if (response !== "yesButtonClicked") {
+					if (pendingCheckpointId && cpSvc) {
+						await cpSvc.deleteCheckpoint(pendingCheckpointId)
+					}
 					// Handle rejection with detailed messages
 					const fileDeniedNote = fileExists
 						? "The file was not updated, and maintains its original contents."
