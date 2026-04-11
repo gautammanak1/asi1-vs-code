@@ -1,6 +1,6 @@
 {
 	"name": "asi-cli",
-	"version": "0.2.8",
+	"version": "0.2.9",
 	"description": "Asi CLI - autonomous coding agent",
 	"main": "cline-core.js",
 	"type": "module",
