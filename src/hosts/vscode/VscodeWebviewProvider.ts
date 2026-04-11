@@ -11,114 +11,119 @@ import type { ExtensionMessage } from "@/shared/ExtensionMessage";
 import { Logger } from "@/shared/services/Logger";
 import { WebviewMessage } from "@/shared/WebviewMessage";
 
+/** Must match `package.json` → `viewsContainers.activitybar[].id` */
+const ACTIVITY_BAR_CONTAINER_ID = "fetch-coder-ActivityBar";
+
 /**
- * VS Code host: chat UI in an editor-area webview in the **first column (left)** so the main editor
- * stays usable beside it when the layout splits.
+ * Chat UI lives in the **activity bar sidebar** (Copilot-style): docked, resizable, does not use an editor column.
  */
-export class VscodeWebviewProvider extends WebviewProvider {
+export class VscodeWebviewProvider
+	extends WebviewProvider
+	implements vscode.WebviewViewProvider
+{
 	public static readonly SIDEBAR_ID = ExtensionRegistryInfo.views.Sidebar;
 	public static readonly PANEL_ID = "fetch-coder.ChatPanel";
-	public static readonly PANEL_TITLE = "Fetch Coder";
 
-	private webviewPanel?: vscode.WebviewPanel;
-	private disposables: vscode.Disposable[] = [];
+	private webviewView?: vscode.WebviewView;
+	private extensionDisposables: vscode.Disposable[] = [];
+	private configListenerRegistered = false;
 
 	override getWebviewUrl(path: string) {
-		if (!this.webviewPanel) {
-			throw new Error("Webview panel not initialized");
+		const w = this.webviewView?.webview;
+		if (!w) {
+			throw new Error("Webview not initialized");
 		}
-		const uri = this.webviewPanel.webview.asWebviewUri(vscode.Uri.file(path));
-		return uri.toString();
+		return w.asWebviewUri(vscode.Uri.file(path)).toString();
 	}
 
 	override getCspSource() {
-		if (!this.webviewPanel) {
-			throw new Error("Webview panel not initialized");
+		const w = this.webviewView?.webview;
+		if (!w) {
+			throw new Error("Webview not initialized");
 		}
-		return this.webviewPanel.webview.cspSource;
+		return w.cspSource;
 	}
 
 	override isVisible() {
-		return this.webviewPanel?.visible || false;
+		return this.webviewView?.visible ?? false;
 	}
 
+	/** Editor webview panel is not used; chat is only in the sidebar view. */
 	public getWebview(): vscode.WebviewPanel | undefined {
-		return this.webviewPanel;
+		return undefined;
 	}
 
-	/**
-	 * Creates or shows the webview in the **left** editor column ({@link vscode.ViewColumn.One}).
-	 */
-	public async createOrShowWebviewPanel(preserveFocus = true): Promise<void> {
-		if (this.webviewPanel) {
-			this.webviewPanel.reveal(vscode.ViewColumn.One, preserveFocus);
-			return;
-		}
+	public async resolveWebviewView(
+		webviewView: vscode.WebviewView,
+		_context: vscode.WebviewViewResolveContext,
+		_token: vscode.CancellationToken,
+	): Promise<void> {
+		this.webviewView = webviewView;
+		const viewDisposables: vscode.Disposable[] = [];
 
-		this.webviewPanel = vscode.window.createWebviewPanel(
-			VscodeWebviewProvider.PANEL_ID,
-			VscodeWebviewProvider.PANEL_TITLE,
-			vscode.ViewColumn.One,
-			{
-				enableScripts: true,
-				localResourceRoots: [
-					vscode.Uri.file(HostProvider.get().extensionFsPath),
-				],
-				retainContextWhenHidden: true,
+		webviewView.webview.options = {
+			enableScripts: true,
+			localResourceRoots: [vscode.Uri.file(HostProvider.get().extensionFsPath)],
+		};
+
+		webviewView.webview.onDidReceiveMessage(
+			(message) => {
+				void this.handleWebviewMessage(message as WebviewMessage);
 			},
+			undefined,
+			viewDisposables,
 		);
 
-		this.webviewPanel.webview.html =
+		webviewView.onDidChangeVisibility(
+			() => {
+				if (webviewView.visible) {
+					void sendShowWebviewEvent(true);
+				}
+			},
+			undefined,
+			viewDisposables,
+		);
+
+		webviewView.webview.html =
 			this.context.extensionMode === vscode.ExtensionMode.Development
 				? await this.getHMRHtmlContent()
 				: this.getHtmlContent();
 
-		this.setWebviewMessageListener(this.webviewPanel.webview);
+		webviewView.onDidDispose(() => {
+			vscode.Disposable.from(...viewDisposables).dispose();
+			if (this.webviewView === webviewView) {
+				this.webviewView = undefined;
+			}
+		});
 
-		this.webviewPanel.onDidChangeViewState(
-			async (e) => {
-				if (e.webviewPanel.visible) {
-					await sendShowWebviewEvent(true);
-				}
-			},
-			null,
-			this.disposables,
-		);
-
-		this.webviewPanel.onDidDispose(
-			async () => {
-				this.webviewPanel = undefined;
-				await this.dispose();
-			},
-			null,
-			this.disposables,
-		);
-
-		vscode.workspace.onDidChangeConfiguration(
-			async (e) => {
-				if (e?.affectsConfiguration("Asi.mcpMarketplace.enabled")) {
-					await this.controller.postStateToWebview();
-				}
-			},
-			null,
-			this.disposables,
-		);
+		if (!this.configListenerRegistered) {
+			this.configListenerRegistered = true;
+			vscode.workspace.onDidChangeConfiguration(
+				async (e) => {
+					if (e?.affectsConfiguration("Asi.mcpMarketplace.enabled")) {
+						await this.controller.postStateToWebview();
+					}
+				},
+				undefined,
+				this.extensionDisposables,
+			);
+		}
 
 		this.controller.clearTask();
 
 		Logger.log(
-			"[VscodeWebviewProvider] Webview panel created in ViewColumn.One (left)",
+			"[VscodeWebviewProvider] Sidebar webview resolved (activity bar)",
 		);
 	}
 
-	private setWebviewMessageListener(webview: vscode.Webview) {
-		webview.onDidReceiveMessage(
-			(message) => {
-				this.handleWebviewMessage(message);
-			},
-			null,
-			this.disposables,
+	/**
+	 * Focuses the activity bar container and shows the webview. Does not open an editor column.
+	 */
+	public async createOrShowWebviewPanel(preserveFocus = true): Promise<void> {
+		await vscode.commands.executeCommand(
+			`workbench.view.extension.${ACTIVITY_BAR_CONTAINER_ID}`,
 		);
+		this.webviewView?.show(preserveFocus);
 	}
 
 	async handleWebviewMessage(message: WebviewMessage) {
@@ -157,12 +162,12 @@ export class VscodeWebviewProvider extends WebviewProvider {
 	private async postMessageToWebview(
 		message: ExtensionMessage,
 	): Promise<boolean | undefined> {
-		return this.webviewPanel?.webview.postMessage(message);
+		return this.webviewView?.webview.postMessage(message);
 	}
 
 	override async dispose() {
-		while (this.disposables.length) {
-			const x = this.disposables.pop();
+		while (this.extensionDisposables.length) {
+			const x = this.extensionDisposables.pop();
 			if (x) {
 				x.dispose();
 			}

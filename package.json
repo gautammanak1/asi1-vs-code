@@ -2,7 +2,7 @@
 	"name": "fetch-coder",
 	"displayName": "Fetch Coder",
 	"description": "Fetch Coder POC: autonomous coding agent for VS Code using ASI:One (OpenAI-compatible API). Not for upstream Asi.",
-	"version": "0.2.9",
+	"version": "0.2.10",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
 		"."
@@ -102,6 +102,24 @@
 				]
 			}
 		],
+		"viewsContainers": {
+			"activitybar": [
+				{
+					"id": "fetch-coder-ActivityBar",
+					"title": "fetch code",
+					"icon": "assets/icons/icon.png"
+				}
+			]
+		},
+		"views": {
+			"fetch-coder-ActivityBar": [
+				{
+					"type": "webview",
+					"id": "fetch-coder.SidebarProvider",
+					"name": "fetch code"
+				}
+			]
+		},
 		"commands": [
 			{
 				"command": "Asi.plusButtonClicked",
@@ -149,6 +167,12 @@
 				"command": "Asi.focusChatInput",
 				"title": "Jump to Chat Input",
 				"category": "Fetch Coder"
+			},
+			{
+				"command": "Asi.openAiChat",
+				"title": "Open AI Chat",
+				"category": "Fetch Coder",
+				"icon": "$(comment-discussion)"
 			},
 			{
 				"command": "Asi.insertApiKey",

@@ -10,9 +10,11 @@ const AboutSection = ({ version, renderSectionHeader }: AboutSectionProps) => {
 			{renderSectionHeader("about")}
 			<Section>
 				<div className="flex px-4 flex-col gap-2">
-					<h2 className="text-lg font-semibold">Fetch Coder v{version}</h2>
+					<h2 className="text-lg font-semibold" style={{ color: "#85F47C" }}>
+						fetch code v{version}
+					</h2>
 					<p>
-						An AI coding assistant for VS Code powered by ASI:One. Fetch Coder can handle complex software
+						An AI coding assistant for VS Code powered by ASI:One. fetch code can handle complex software
 						development tasks step-by-step with tools that let it create & edit files, explore large projects,
 						and execute terminal commands (after you grant permission).
 					</p>

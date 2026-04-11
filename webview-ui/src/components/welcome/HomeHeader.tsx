@@ -26,7 +26,12 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 		<div className="flex min-h-screen flex-col items-center justify-center px-4 py-10 bg-background">
 			<div className="flex w-full max-w-lg flex-col items-center gap-6 text-center">
 				<div>
-					<h2 className="m-0 text-base font-semibold text-foreground">Fetch Coder</h2>
+					<h2
+						className="m-0 text-3xl font-bold tracking-tight sm:text-4xl"
+						style={{ color: "#85F47C" }}
+					>
+						fetch code
+					</h2>
 					<p className="m-0 mt-1 text-xs text-muted-foreground">by asi1.ai</p>
 				</div>
 

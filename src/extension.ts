@@ -115,7 +115,15 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	)
 
-	// Editor-area webview in the left column (ViewColumn.One) — chat beside code, not the activity-bar sidebar
+	// Sidebar webview (activity bar) — same dock as Copilot chat; does not use an editor column
+	context.subscriptions.push(
+		vscode.window.registerWebviewViewProvider(
+			ExtensionRegistryInfo.views.Sidebar,
+			webview,
+			{ webviewOptions: { retainContextWhenHidden: true } },
+		),
+	)
+
 	await webview.createOrShowWebviewPanel(true)
 
 	registerAsiAssistantApiIntegration(context, webview)
@@ -374,18 +382,19 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.FocusChatInput, async (preserveEditorFocus = false) => {
-			const webview = WebviewProvider.getInstance() as VscodeWebviewProvider
-
-			const panel = webview.getWebview()
-			if (panel) {
-				panel.reveal(vscode.ViewColumn.One, preserveEditorFocus)
-			} else {
-				await webview.createOrShowWebviewPanel(preserveEditorFocus)
-			}
-
-			// Send show webview event with preserveEditorFocus flag
+			const w = WebviewProvider.getInstance() as VscodeWebviewProvider
+			await w.createOrShowWebviewPanel(preserveEditorFocus)
 			sendShowWebviewEvent(preserveEditorFocus)
-			telemetryService.captureButtonClick("command_focusChatInput", webview.controller?.task?.ulid)
+			telemetryService.captureButtonClick("command_focusChatInput", w.controller?.task?.ulid)
+		}),
+	)
+
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.OpenAiChat, async () => {
+			const w = WebviewProvider.getInstance() as VscodeWebviewProvider
+			await w.createOrShowWebviewPanel(false)
+			sendShowWebviewEvent(false)
+			telemetryService.captureButtonClick("command_openAiChat", w.controller?.task?.ulid)
 		}),
 	)
 

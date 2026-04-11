@@ -35,7 +35,12 @@ const WelcomeView = memo(() => {
 			<div className="h-full overflow-y-auto overflow-x-hidden px-5 py-8">
 				<div className="mx-auto flex w-full max-w-md flex-col gap-6">
 					<div className="text-center">
-						<h2 className="m-0 text-lg font-semibold text-foreground">Fetch Coder</h2>
+						<h2
+							className="m-0 text-3xl font-bold tracking-tight"
+							style={{ color: "#85F47C" }}
+						>
+							fetch code
+						</h2>
 						<p className="m-0 mt-1 text-xs text-muted-foreground">by asi1.ai</p>
 						<p className="m-0 mt-4 text-sm leading-relaxed text-muted-foreground">
 							Connect your API key to get started. Your AI partner for coding in this

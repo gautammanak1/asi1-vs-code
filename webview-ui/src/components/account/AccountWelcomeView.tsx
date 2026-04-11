@@ -1,9 +1,8 @@
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react"
 import { useExtensionState } from "@/context/ExtensionStateContext"
-import FetchCoderMark from "../../assets/FetchCoderMark"
 
 export const AccountWelcomeView = () => {
-	const { environment, navigateToSettings } = useExtensionState()
+	const { navigateToSettings } = useExtensionState()
 
 	const openApiSettings = () => {
 		navigateToSettings()
@@ -11,10 +10,15 @@ export const AccountWelcomeView = () => {
 
 	return (
 		<div className="flex flex-col items-center gap-2.5">
-			<FetchCoderMark className="size-16 mb-4" environment={environment} variant="variable" />
+			<h2
+				className="m-0 mb-2 text-2xl font-bold text-center"
+				style={{ color: "#85F47C" }}
+			>
+				fetch code
+			</h2>
 
 			<p className="text-center m-0 px-1">
-				Fetch Coder uses your ASI:One API key from Settings. You don&apos;t need a separate cloud sign-in to use the
+				fetch code uses your ASI:One API key from Settings. You don&apos;t need a separate cloud sign-in to use the
 				extension.
 			</p>
 

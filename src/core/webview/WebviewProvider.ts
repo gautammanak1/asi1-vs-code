@@ -117,7 +117,7 @@ export abstract class WebviewProvider {
 					img-src ${this.getCspSource()} https: data:; 
 					media-src ${this.getCspSource()} https: data: blob:;
 					script-src 'nonce-${nonce}' 'unsafe-eval';">
-				<title>Fetch Coder</title>
+				<title>fetch code</title>
 			</head>
 			<body>
 				<noscript>You need to enable JavaScript to run this app.</noscript>
@@ -218,7 +218,7 @@ export abstract class WebviewProvider {
 					<meta http-equiv="Content-Security-Policy" content="${csp.join("; ")}">
 					<link rel="stylesheet" type="text/css" href="${stylesUrl}">
 					<link href="${codiconsUrl}" rel="stylesheet" />
-					<title>Fetch Coder</title>
+					<title>fetch code</title>
 				</head>
 				<body>
 					<div id="root"></div>

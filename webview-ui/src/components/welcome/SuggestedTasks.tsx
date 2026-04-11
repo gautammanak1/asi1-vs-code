@@ -20,7 +20,8 @@ export const SuggestedTasks: React.FC<{ shouldShowQuickWins: boolean }> = ({
 					className="text-sm font-medium mb-3 text-center"
 					style={{ fontFamily: "'Lexend', sans-serif", color: "#71717a" }}
 				>
-					Get Started with <span style={{ color: "#ffffff" }}>Fetch Coder</span>
+					Get Started with{" "}
+					<span style={{ color: "#85F47C" }}>fetch code</span>
 				</h2>
 				<div className="flex flex-col space-y-1">
 					{quickWinTasks.map((task: QuickWinTask, i: number) => (
