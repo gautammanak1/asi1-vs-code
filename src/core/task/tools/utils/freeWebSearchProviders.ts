@@ -19,19 +19,104 @@ export async function searchDuckDuckGoHtml(
 		return [];
 	}
 
-	const { data: html } = await axios.get<string>(DDG_HTML, {
-		params: { q },
-		headers: {
-			"User-Agent":
-				"Mozilla/5.0 (compatible; FetchCoder/1.0; +https://github.com/gautammanak1/asi1-vs-code) AppleWebKit/537.36",
-			Accept: "text/html,application/xhtml+xml",
-			"Accept-Language": "en-US,en;q=0.9",
-		},
-		timeout: 20000,
-		...getAxiosSettings(),
-	});
+	let html: string;
+	try {
+		const res = await axios.get<string>(DDG_HTML, {
+			params: { q },
+			headers: {
+				"User-Agent":
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+				Accept: "text/html,application/xhtml+xml",
+				"Accept-Language": "en-US,en;q=0.9",
+			},
+			timeout: 20000,
+			...getAxiosSettings(),
+		});
+		html = res.data;
+	} catch (e) {
+		Logger.warn(
+			`[freeWebSearch] DuckDuckGo HTML request failed: ${(e as Error).message}`,
+		);
+		return searchDuckDuckGoJson(q);
+	}
 
-	return parseDuckDuckGoResultHtml(html);
+	const fromHtml = parseDuckDuckGoResultHtml(html);
+	if (fromHtml.length > 0) {
+		return fromHtml;
+	}
+	Logger.warn(
+		"[freeWebSearch] DuckDuckGo HTML returned 0 parsed links; trying JSON API",
+	);
+	return searchDuckDuckGoJson(q);
+}
+
+/** Fallback: DuckDuckGo Instant Answer JSON (fewer links, but works when HTML layout changes). */
+async function searchDuckDuckGoJson(query: string): Promise<WebSearchHit[]> {
+	try {
+		const { data } = await axios.get<DdgJsonResponse>(
+			"https://api.duckduckgo.com/",
+			{
+				params: {
+					q: query,
+					format: "json",
+					no_html: 1,
+					skip_disambig: 1,
+				},
+				headers: {
+					"User-Agent":
+						"Mozilla/5.0 (compatible; FetchCoder/1.0; +https://github.com/gautammanak1/asi1-vs-code)",
+				},
+				timeout: 15000,
+				...getAxiosSettings(),
+			},
+		);
+		return ddgJsonToHits(data);
+	} catch (e) {
+		Logger.warn(
+			`[freeWebSearch] DuckDuckGo JSON failed: ${(e as Error).message}`,
+		);
+		return [];
+	}
+}
+
+interface DdgJsonTopic {
+	FirstURL?: string;
+	Text?: string;
+	Topics?: DdgJsonTopic[];
+}
+
+interface DdgJsonResponse {
+	AbstractURL?: string;
+	Heading?: string;
+	RelatedTopics?: DdgJsonTopic[];
+}
+
+function ddgJsonToHits(data: DdgJsonResponse): WebSearchHit[] {
+	const out: WebSearchHit[] = [];
+	if (data.AbstractURL && data.Heading) {
+		out.push({ title: data.Heading, url: data.AbstractURL });
+	}
+	const walk = (topics: DdgJsonTopic[] | undefined) => {
+		if (!topics) {
+			return;
+		}
+		for (const t of topics) {
+			if (out.length >= MAX_RESULTS) {
+				return;
+			}
+			if (t.FirstURL && t.Text) {
+				const title = t.Text.replace(/\s+/g, " ").trim().slice(0, 220);
+				if (title) {
+					out.push({ title, url: t.FirstURL });
+				}
+			}
+			if (t.Topics) {
+				walk(t.Topics);
+			}
+		}
+	};
+	walk(data.RelatedTopics);
+	return out;
 }
 
 function unwrapDdgRedirect(href: string): string {

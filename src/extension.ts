@@ -115,8 +115,8 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	)
 
-	// Create the webview panel on the RIGHT side (ViewColumn.Two) like GitHub Copilot
-	await webview.createOrShowWebviewPanel()
+	// Editor-area webview in the left column (ViewColumn.One) — chat beside code, not the activity-bar sidebar
+	await webview.createOrShowWebviewPanel(true)
 
 	registerAsiAssistantApiIntegration(context, webview)
 
@@ -125,9 +125,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.PlusButton, async () => {
-			const sidebarInstance = WebviewProvider.getInstance()
-			// Ensure the webview panel is shown
-			await (sidebarInstance as any).createOrShowWebviewPanel?.()
+			const sidebarInstance = WebviewProvider.getInstance() as VscodeWebviewProvider
+			await sidebarInstance.createOrShowWebviewPanel(false)
 			await sidebarInstance.controller.clearTask()
 			await sidebarInstance.controller.postStateToWebview()
 			await sendChatButtonClickedEvent()
@@ -377,11 +376,11 @@ export async function activate(context: vscode.ExtensionContext) {
 		vscode.commands.registerCommand(commands.FocusChatInput, async (preserveEditorFocus = false) => {
 			const webview = WebviewProvider.getInstance() as VscodeWebviewProvider
 
-			// Show the webview
-			const webviewPanel = webview.getWebview()
-			if (webviewPanel) {
-				// WebviewPanel uses reveal(); second arg is preserveFocus (matches preserveEditorFocus).
-				webviewPanel.reveal(vscode.ViewColumn.Two, preserveEditorFocus)
+			const panel = webview.getWebview()
+			if (panel) {
+				panel.reveal(vscode.ViewColumn.One, preserveEditorFocus)
+			} else {
+				await webview.createOrShowWebviewPanel(preserveEditorFocus)
 			}
 
 			// Send show webview event with preserveEditorFocus flag
@@ -638,7 +637,8 @@ async function openAsiSidebarForTaskUri(): Promise<void> {
 	const sidebarWaitTimeoutMs = 3000
 	const sidebarWaitIntervalMs = 50
 
-	await vscode.commands.executeCommand(`${ExtensionRegistryInfo.views.Sidebar}.focus`)
+	const vscodeWebview = WebviewProvider.getInstance() as VscodeWebviewProvider
+	await vscodeWebview.createOrShowWebviewPanel(false)
 
 	const startedAt = Date.now()
 	while (Date.now() - startedAt < sidebarWaitTimeoutMs) {
@@ -648,7 +648,7 @@ async function openAsiSidebarForTaskUri(): Promise<void> {
 		await new Promise((resolve) => setTimeout(resolve, sidebarWaitIntervalMs))
 	}
 
-	Logger.warn("Task URI handling timed out waiting for Asi sidebar visibility")
+	Logger.warn("Task URI handling timed out waiting for Fetch Coder webview visibility")
 }
 
 async function getBinaryLocation(name: string): Promise<string> {

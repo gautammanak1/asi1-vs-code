@@ -9,7 +9,8 @@ export async function openClineSidebarPanel(
 	_: OpenClineSidebarPanelRequest,
 ): Promise<OpenClineSidebarPanelResponse> {
 	await vscode.commands.executeCommand(
-		`${ExtensionRegistryInfo.views.Sidebar}.focus`,
+		ExtensionRegistryInfo.commands.FocusChatInput,
+		false,
 	);
 	return {};
 }

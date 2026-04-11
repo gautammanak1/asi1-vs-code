@@ -22,7 +22,7 @@ export async function getCapabilitiesSection(variant: PromptVariant, context: Sy
 
 	const webToolsCapabilities =
 		context.AsiWebToolsEnabled === true
-			? `\n- When the task requires or could benefit from getting up to date information on a topic (e.g. latest best practices, latest documentation, latest news, etc.), use the web_search tool to find current results, then use the web_fetch tool to retrieve and analyze the content from relevant URLs.`
+			? `\n- When the task requires or could benefit from getting up to date information on a topic (e.g. weather, latest best practices, latest documentation, latest news, current events), you MUST use the web_search tool to obtain current results (do not claim you lack web access if this tool is available), then use web_fetch on relevant URLs when you need full page text.`
 			: ""
 
 	const templateEngine = new TemplateEngine()

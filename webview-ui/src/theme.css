@@ -1,6 +1,7 @@
-/* Editor theme mapping */
+/* Editor theme mapping — brand aligned with asi.ai (blue + lime accents) */
 @theme {
-	--color-Asi: #9663f1;
+	--color-Asi: #0052ff;
+	--color-fetch-lime: #7ce074;
 	--color-background: var(--vscode-sideBar-background);
 	--color-border: var(--vscode-focusBorder);
 	--color-border-panel: var(--vscode-panel-border);

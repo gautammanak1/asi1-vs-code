@@ -66,6 +66,13 @@ export async function initialize(
 	const webview = HostProvider.get().createWebviewProvider();
 
 	const stateManager = StateManager.get();
+
+	// Easter egg removed: clear persisted Lazy Teammate flag so prompts/UI never imply "refuse to code"
+	if (stateManager.getGlobalSettingsKey("lazyTeammateModeEnabled")) {
+		Logger.log("[Asi] Clearing deprecated lazyTeammateModeEnabled (feature removed)");
+		stateManager.setGlobalStateBatch({ lazyTeammateModeEnabled: false });
+	}
+
 	// Non-blocking announcement check and display
 	showVersionUpdateAnnouncement(stateManager);
 	// Check if this workspace was opened from worktree quick launch

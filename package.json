@@ -2,7 +2,7 @@
 	"name": "fetch-coder",
 	"displayName": "Fetch Coder",
 	"description": "Fetch Coder POC: autonomous coding agent for VS Code using ASI:One (OpenAI-compatible API). Not for upstream Asi.",
-	"version": "0.2.7",
+	"version": "0.2.8",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
 		"."
@@ -102,25 +102,6 @@
 				]
 			}
 		],
-		"viewsContainers": {
-			"activitybar": [
-				{
-					"id": "fetch-coder-ActivityBar",
-					"title": "Fetch Coder",
-					"icon": "assets/icons/icon.png"
-				}
-			]
-		},
-		"views": {
-			"fetch-coder-ActivityBar": [
-				{
-					"type": "webview",
-					"id": "fetch-coder.SidebarProvider",
-					"name": "",
-					"icon": "assets/icons/icon.png"
-				}
-			]
-		},
 		"commands": [
 			{
 				"command": "Asi.plusButtonClicked",
@@ -270,28 +251,6 @@
 			}
 		],
 		"menus": {
-			"view/title": [
-				{
-					"command": "Asi.plusButtonClicked",
-					"group": "navigation@1",
-					"when": "view == fetch-coder.SidebarProvider"
-				},
-				{
-					"command": "Asi.mcpButtonClicked",
-					"group": "navigation@2",
-					"when": "view == fetch-coder.SidebarProvider"
-				},
-				{
-					"command": "Asi.historyButtonClicked",
-					"group": "navigation@3",
-					"when": "view == fetch-coder.SidebarProvider"
-				},
-				{
-					"command": "Asi.settingsButtonClicked",
-					"group": "navigation@6",
-					"when": "view == fetch-coder.SidebarProvider"
-				}
-			],
 			"editor/context": [
 				{
 					"command": "Asi.addToChat",

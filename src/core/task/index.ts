@@ -2215,18 +2215,8 @@ export class Task {
 		);
 		let globalAsiRulesFileInstructions = globalRules.instructions;
 
-		// Inject Lazy Teammate Mode rules if enabled
-		const lazyTeammateModeEnabled = this.stateManager.getGlobalSettingsKey(
-			"lazyTeammateModeEnabled",
-		);
-		if (lazyTeammateModeEnabled) {
-			const { LAZY_TEAMMATE_RULES } = await import(
-				"@/core/context/instructions/lazy-teammate-rules"
-			);
-			globalAsiRulesFileInstructions = globalAsiRulesFileInstructions
-				? `${globalAsiRulesFileInstructions}\n\n${LAZY_TEAMMATE_RULES}`
-				: LAZY_TEAMMATE_RULES;
-		}
+		// Lazy Teammate Mode was removed from prompt injection: it instructed the model to refuse
+		// all coding (easter egg). Settings key may still exist for backwards compatibility; it has no effect.
 
 		const localRules = await getLocalAsiRules(this.cwd, localToggles, {
 			evaluationContext,

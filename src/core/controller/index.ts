@@ -1066,9 +1066,6 @@ export class Controller {
 		const doubleCheckCompletionEnabled = this.stateManager.getGlobalSettingsKey(
 			"doubleCheckCompletionEnabled",
 		);
-		const lazyTeammateModeEnabled = this.stateManager.getGlobalSettingsKey(
-			"lazyTeammateModeEnabled",
-		);
 		const showFeatureTips =
 			this.stateManager.getGlobalSettingsKey("showFeatureTips");
 
@@ -1210,7 +1207,7 @@ export class Controller {
 				"optOutOfRemoteConfig",
 			),
 			doubleCheckCompletionEnabled,
-			lazyTeammateModeEnabled,
+			lazyTeammateModeEnabled: false,
 			showFeatureTips,
 			banners,
 			welcomeBanners,
