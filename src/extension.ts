@@ -165,6 +165,44 @@ export async function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand(commands.HistoryButton, () => sendHistoryButtonClickedEvent()))
 	context.subscriptions.push(vscode.commands.registerCommand(commands.WorktreesButton, () => sendWorktreesButtonClickedEvent()))
 
+	// Editor selection commands — register early so `Asi.addToChat` et al. exist even if later activation steps fail.
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.AddToChat, async (range?: vscode.Range, diagnostics?: vscode.Diagnostic[]) => {
+			const context = await getContextForCommand(range, diagnostics)
+			if (!context) {
+				return
+			}
+			await addToAsi(context.controller, context.commandContext)
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.FixWithAsi, async (range: vscode.Range, diagnostics: vscode.Diagnostic[]) => {
+			const context = await getContextForCommand(range, diagnostics)
+			if (!context) {
+				return
+			}
+			await fixWithAsi(context.controller, context.commandContext)
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.ExplainCode, async (range: vscode.Range) => {
+			const context = await getContextForCommand(range)
+			if (!context) {
+				return
+			}
+			await explainWithAsi(context.controller, context.commandContext)
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.ImproveCode, async (range: vscode.Range) => {
+			const context = await getContextForCommand(range)
+			if (!context) {
+				return
+			}
+			await improveWithAsi(context.controller, context.commandContext)
+		}),
+	)
+
 	/*
 	We use the text document content provider API to show the left side for diff view by creating a
 	virtual document for the original content. This makes it readonly so users know to edit the right
@@ -432,44 +470,6 @@ export async function activate(context: vscode.ExtensionContext) {
 				],
 			},
 		),
-	)
-
-	// Register the command handlers
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.AddToChat, async (range?: vscode.Range, diagnostics?: vscode.Diagnostic[]) => {
-			const context = await getContextForCommand(range, diagnostics)
-			if (!context) {
-				return
-			}
-			await addToAsi(context.controller, context.commandContext)
-		}),
-	)
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.FixWithAsi, async (range: vscode.Range, diagnostics: vscode.Diagnostic[]) => {
-			const context = await getContextForCommand(range, diagnostics)
-			if (!context) {
-				return
-			}
-			await fixWithAsi(context.controller, context.commandContext)
-		}),
-	)
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.ExplainCode, async (range: vscode.Range) => {
-			const context = await getContextForCommand(range)
-			if (!context) {
-				return
-			}
-			await explainWithAsi(context.controller, context.commandContext)
-		}),
-	)
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.ImproveCode, async (range: vscode.Range) => {
-			const context = await getContextForCommand(range)
-			if (!context) {
-				return
-			}
-			await improveWithAsi(context.controller, context.commandContext)
-		}),
 	)
 
 	context.subscriptions.push(

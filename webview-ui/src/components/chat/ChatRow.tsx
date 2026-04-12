@@ -61,7 +61,9 @@ import {
 	findMatchingResourceOrTemplate,
 	getMcpServerDisplayName,
 } from "@/utils/mcp";
+import { findRetryPrompt } from "@/utils/findRetryPrompt";
 import CodeAccordian, { cleanPathPrefix } from "../common/CodeAccordian";
+import { AssistantMessageToolbar } from "./AssistantMessageToolbar";
 import { CommandOutputContent, CommandOutputRow } from "./CommandOutputRow";
 import { CompletionOutputRow } from "./CompletionOutputRow";
 import { DiffEditRow } from "./DiffEditRow";
@@ -130,6 +132,10 @@ interface ChatRowProps {
 		images: string[],
 		files: string[],
 	) => void;
+	/** Messages after the task row (same as ChatView `modifiedMessages`). Used for Retry. */
+	conversationMessages?: AsiMessage[];
+	/** First message (`say: task`); needed to resolve Retry for early assistant replies. */
+	taskMessage?: AsiMessage;
 	onSetQuote: (text: string) => void;
 	onCancelCommand?: () => void;
 	mode?: Mode;
@@ -201,6 +207,8 @@ export const ChatRowContent = memo(
 		isLast,
 		inputValue,
 		sendMessageFromChatRow,
+		conversationMessages,
+		taskMessage,
 		onSetQuote,
 		onCancelCommand,
 		mode,
@@ -335,6 +343,37 @@ export const ChatRowContent = memo(
 				selectedText: "",
 			});
 		}, [onSetQuote, quoteButtonState.selectedText]); // <-- Use onSetQuote from props
+
+		const handleAssistantMessageRetry = useCallback(() => {
+			if (!sendMessageFromChatRow || !conversationMessages) {
+				return;
+			}
+			if (message.say !== "text") {
+				return;
+			}
+			const payload = findRetryPrompt(
+				message.ts,
+				conversationMessages,
+				taskMessage,
+			);
+			if (!payload) {
+				return;
+			}
+			if (
+				!payload.text.trim() &&
+				payload.images.length === 0 &&
+				payload.files.length === 0
+			) {
+				return;
+			}
+			void sendMessageFromChatRow(payload.text, payload.images, payload.files);
+		}, [
+			sendMessageFromChatRow,
+			conversationMessages,
+			taskMessage,
+			message.say,
+			message.ts,
+		]);
 
 		const handleMouseUp = useCallback((event: MouseEvent<HTMLDivElement>) => {
 			// Get the target element immediately, before the timeout
@@ -1183,6 +1222,18 @@ export const ChatRowContent = memo(
 										text={message.text || ""}
 									/>
 								</div>
+								{!message.partial && (
+									<AssistantMessageToolbar
+										messageText={message.text || ""}
+										messageTs={message.ts}
+										onRetry={
+											sendMessageFromChatRow && conversationMessages
+												? handleAssistantMessageRetry
+												: undefined
+										}
+										retryDisabled={isRequestInProgress}
+									/>
+								)}
 								<RememberThisButton rawText={message.text || ""} />
 							</>
 						);

@@ -14,6 +14,7 @@ interface MessageRendererProps {
 	messageOrGroup: AsiMessage | AsiMessage[]
 	groupedMessages: (AsiMessage | AsiMessage[])[]
 	modifiedMessages: AsiMessage[]
+	task: AsiMessage
 	expandedRows: Record<number, boolean>
 	onToggleExpand: (ts: number) => void
 	onHeightChange: (isTaller: boolean) => void
@@ -32,6 +33,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 	messageOrGroup,
 	groupedMessages,
 	modifiedMessages,
+	task,
 	expandedRows,
 	onToggleExpand,
 	onHeightChange,
@@ -120,6 +122,8 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 				reasoningContent={reasoningData.reasoning}
 				responseStarted={reasoningData.responseStarted}
 				sendMessageFromChatRow={messageHandlers.handleSendMessage}
+				taskMessage={task}
+				conversationMessages={modifiedMessages}
 			/>
 		</div>
 	)
@@ -132,6 +136,7 @@ export const MessageRenderer: React.FC<MessageRendererProps> = ({
 export const createMessageRenderer = (
 	groupedMessages: (AsiMessage | AsiMessage[])[],
 	modifiedMessages: AsiMessage[],
+	task: AsiMessage,
 	expandedRows: Record<number, boolean>,
 	onToggleExpand: (ts: number) => void,
 	onHeightChange: (isTaller: boolean) => void,
@@ -153,6 +158,7 @@ export const createMessageRenderer = (
 			onHeightChange={onHeightChange}
 			onSetQuote={onSetQuote}
 			onToggleExpand={onToggleExpand}
+			task={task}
 		/>
 	)
 }

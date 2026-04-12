@@ -1,8 +1,8 @@
 {
 	"name": "fetch-coder",
 	"displayName": "Fetch Coder",
-	"description": "Fetch Coder POC: autonomous coding agent for VS Code using ASI:One (OpenAI-compatible API). Not for upstream Asi.",
-	"version": "0.2.13",
+	"description": "Fetch Coder is an autonomous AI coding agent integrated into VS Code, powered by asi1.ai. It works like having a senior engineer sitting beside you—understanding your codebase, writing code, debugging issues, running commands, and iterating until the job is done.",
+	"version": "0.2.14",
 	"icon": "assets/icons/icon.png",
 	"workspaces": [
 		"."

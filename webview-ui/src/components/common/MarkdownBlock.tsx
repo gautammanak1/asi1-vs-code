@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { FileServiceClient, StateServiceClient } from "@/services/grpc-client";
 import { WithCopyButton } from "./CopyButton";
 import UnsafeImage from "./UnsafeImage";
+import "./codeblock-parser.css";
 
 function parseMarkdownIntoBlocks(markdown: string): string[] {
 	try {

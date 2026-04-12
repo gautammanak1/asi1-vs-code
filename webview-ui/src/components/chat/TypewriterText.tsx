@@ -1,7 +1,7 @@
 import { memo, useEffect, useState } from "react"
 
 // TypewriterText with shimmer effect after typing completes
-export const TypewriterText = memo(({ text, speed = 30 }: { text: string; speed?: number }) => {
+export const TypewriterText = memo(({ text, speed = 8 }: { text: string; speed?: number }) => {
 	const [displayedLength, setDisplayedLength] = useState(0)
 	const [isComplete, setIsComplete] = useState(false)
 

@@ -2,6 +2,7 @@ import type { ApiConfiguration, ApiProvider, ModelInfo } from "@shared/api";
 import { openAiModelInfoSaneDefaults } from "@shared/api";
 import { Mode } from "@shared/storage/types";
 import * as reasoningSupport from "@shared/utils/reasoning-support";
+import { sanitizeContextWindowTokens } from "@/utils/formatContextWindow";
 
 export function supportsReasoningEffortForModelId(
 	modelId?: string,
@@ -44,11 +45,12 @@ export function normalizeApiConfiguration(
 			? apiConfiguration?.planModeOpenAiModelInfo
 			: apiConfiguration?.actModeOpenAiModelInfo;
 	const base = openAiModelInfo || openAiModelInfoSaneDefaults;
+	const contextWindow = sanitizeContextWindowTokens(base.contextWindow, 128_000);
 	return {
 		selectedModelId: openAiModelId || "asi1-mini",
 		selectedModelInfo: {
 			...base,
-			contextWindow: 128_000,
+			contextWindow,
 			description: undefined,
 		},
 	};

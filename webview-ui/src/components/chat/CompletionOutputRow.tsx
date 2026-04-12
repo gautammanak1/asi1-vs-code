@@ -38,18 +38,18 @@ export const CompletionOutputRow = memo(
 	}: CompletionOutputRowProps) => {
 		return (
 			<div>
-				<div className="rounded-sm border border-border overflow-visible bg-card/80 p-2 pt-3">
+				<div className="rounded-sm border border-white/10 overflow-visible bg-black p-2 pt-3">
 					{/* Title */}
 					<div className={cn(headClassNames, "justify-between px-1")}>
 						<div className="flex gap-2 items-center">
-							<CheckIcon className="size-3 text-muted-foreground" />
-							<span className="text-foreground font-semibold">Result</span>
+							<CheckIcon className="size-3 text-zinc-400" />
+							<span className="text-zinc-100 font-semibold">Result</span>
 						</div>
-						<CopyButton className="text-foreground" textToCopy={text} />
+						<CopyButton className="text-zinc-300" textToCopy={text} />
 					</div>
 					{/* Content */}
-					<div className="w-full relative border-t border-border/80 rounded-b-sm">
-						<div className="completion-output-content p-2 pt-3 w-full [&_hr]:opacity-20 [&_p:last-child]:mb-0 rounded-sm">
+					<div className="w-full relative border-t border-white/10 rounded-b-sm">
+						<div className="completion-output-content bg-black text-zinc-300 p-2 pt-3 w-full [&_hr]:opacity-20 [&_p:last-child]:mb-0 [&_a]:text-sky-400 [&_strong]:text-zinc-100 [&_code]:bg-zinc-900/80 [&_code]:text-zinc-200 rounded-sm">
 							<MarkdownRow markdown={text} />
 							{quoteButtonState.visible && (
 								<QuoteButton

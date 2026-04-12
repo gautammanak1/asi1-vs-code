@@ -231,7 +231,7 @@ export const ToolGroupRenderer = memo(
 									>
 										<info.icon className="opacity-70 shrink-0 size-[12px]" />
 										<span className="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis text-left text-[13px]">
-											<TypewriterText speed={15} text={activityText} />
+											<TypewriterText speed={8} text={activityText} />
 										</span>{" "}
 									</Button>
 								</div>

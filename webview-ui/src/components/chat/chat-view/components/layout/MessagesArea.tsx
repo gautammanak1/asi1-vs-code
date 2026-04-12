@@ -172,6 +172,7 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
 			createMessageRenderer(
 				displayedGroupedMessages,
 				modifiedMessages,
+				task,
 				expandedRows,
 				toggleRowExpansion,
 				handleRowHeightChange,
@@ -183,6 +184,7 @@ export const MessagesArea: React.FC<MessagesAreaProps> = ({
 		[
 			displayedGroupedMessages,
 			modifiedMessages,
+			task,
 			expandedRows,
 			toggleRowExpansion,
 			handleRowHeightChange,

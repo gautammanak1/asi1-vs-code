@@ -18,9 +18,14 @@ jobs:
         outputs:
             matrix: ${{ steps.set-matrix.outputs.matrix }}
         steps:
+            # PRs: Linux only (saves ~2 heavy runners). Push to main / manual: full OS matrix.
             - id: set-matrix
               run: |
-                  echo 'matrix=[{"runner":"ubuntu"},{"runner":"windows"},{"runner":"macos"}]' >> $GITHUB_OUTPUT
+                  if [ "${{ github.event_name }}" = "pull_request" ]; then
+                    echo 'matrix=[{"runner":"ubuntu"}]' >> $GITHUB_OUTPUT
+                  else
+                    echo 'matrix=[{"runner":"ubuntu"},{"runner":"windows"},{"runner":"macos"}]' >> $GITHUB_OUTPUT
+                  fi
 
     e2e:
         needs: matrix_prep

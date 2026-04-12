@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { normalizeApiConfiguration } from "@/components/settings/utils/providerUtils";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { cn } from "@/lib/utils";
+import { formatTokenUsageBarState } from "@/utils/formatContextWindow";
 
 function sumApiTokens(messages: AsiMessage[]): number {
 	let total = 0;
@@ -29,13 +30,11 @@ export const TokenUsageBar: React.FC<{ messages: AsiMessage[] }> = ({
 		apiConfiguration,
 		mode,
 	);
-	const contextWindow = selectedModelInfo.contextWindow || 128_000;
-
 	const used = useMemo(() => sumApiTokens(messages), [messages]);
-	const pct =
-		contextWindow > 0 ? Math.min(100, (used / contextWindow) * 100) : 0;
-	const warn = pct >= 80;
-	const remaining = Math.max(0, contextWindow - used);
+	const { pct, warn, leftLabel, rightLabel } = formatTokenUsageBarState(
+		used,
+		selectedModelInfo.contextWindow,
+	);
 
 	if (messages.length === 0) {
 		return null;
@@ -54,18 +53,23 @@ export const TokenUsageBar: React.FC<{ messages: AsiMessage[] }> = ({
 					style={{ width: `${pct}%` }}
 				/>
 			</div>
-			<div className="text-[10px] text-(--vscode-descriptionForeground) flex justify-between gap-2">
-				<span>~{used.toLocaleString()} tokens (conversation)</span>
-				<span
-					className={cn(
-						"text-right",
-						warn && "text-(--vscode-inputValidation-warningForeground)",
-					)}
-				>
-					{warn ? "Approaching context limit · " : ""}~
-					{remaining.toLocaleString()} left / {contextWindow.toLocaleString()}{" "}
-					window
-				</span>
+			<div
+				className={cn(
+					"text-[10px] text-(--vscode-descriptionForeground) flex gap-2",
+					rightLabel ? "justify-between" : "",
+				)}
+			>
+				<span>{leftLabel}</span>
+				{rightLabel && (
+					<span
+						className={cn(
+							"text-right",
+							warn && "text-(--vscode-inputValidation-warningForeground)",
+						)}
+					>
+						{rightLabel}
+					</span>
+				)}
 			</div>
 		</div>
 	);

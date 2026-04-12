@@ -1,3 +1,4 @@
+# Replaces the old ci.yml job: `ci:build` below already runs protos + build:webview + esbuild.
 name: Tests
 
 on:
@@ -44,8 +45,8 @@ jobs:
             - name: Run Quality Checks (Parallel)
               run: npm run ci:check-all
 
+    # Runs in parallel with quality-checks (no `needs:`) so PR wall time is lower; ci:build still validates compile.
     test:
-        needs: quality-checks
         strategy:
             fail-fast: false
             matrix:

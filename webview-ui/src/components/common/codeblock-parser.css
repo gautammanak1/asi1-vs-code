@@ -183,3 +183,87 @@
 	color: var(--vscode-editor-foreground);
 	background: transparent;
 }
+
+/*
+ * Result panel (dark): distinct token colors similar to common IDE themes.
+ * Scoped so the rest of the chat keeps VS Code–linked styling.
+ */
+.completion-output-content pre {
+	background-color: #0d1117 !important;
+	border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.completion-output-content pre code.hljs {
+	background: transparent !important;
+	color: #e6edf3 !important;
+}
+
+.completion-output-content .hljs-keyword,
+.completion-output-content .hljs-meta .hljs-keyword,
+.completion-output-content .hljs-selector-tag {
+	color: #c792ea !important;
+	font-weight: 600;
+}
+
+.completion-output-content .hljs-string,
+.completion-output-content .hljs-meta .hljs-string,
+.completion-output-content .hljs-regexp,
+.completion-output-content .hljs-template-string {
+	color: #c3e88d !important;
+}
+
+.completion-output-content .hljs-number,
+.completion-output-content .hljs-literal {
+	color: #f78c6c !important;
+}
+
+.completion-output-content .hljs-literal.hljs-boolean {
+	color: #ff5370 !important;
+}
+
+.completion-output-content .hljs-comment,
+.completion-output-content .hljs-quote {
+	color: #546e7a !important;
+	font-style: italic;
+	opacity: 1;
+}
+
+.completion-output-content .hljs-title.function_,
+.completion-output-content .hljs-built_in,
+.completion-output-content .hljs-section {
+	color: #82aaff !important;
+	font-weight: 600;
+}
+
+.completion-output-content .hljs-class,
+.completion-output-content .hljs-title.class_,
+.completion-output-content .hljs-type,
+.completion-output-content .hljs-typedef {
+	color: #ffcb6b !important;
+	font-weight: 600;
+}
+
+.completion-output-content .hljs-attr,
+.completion-output-content .hljs-attribute,
+.completion-output-content .hljs-property {
+	color: #b2ccd6 !important;
+}
+
+.completion-output-content .hljs-tag,
+.completion-output-content .hljs-name {
+	color: #f07178 !important;
+}
+
+.completion-output-content .hljs-variable.language_ {
+	color: #89ddff !important;
+	font-weight: 600;
+}
+
+.completion-output-content .hljs-operator {
+	color: #89ddff !important;
+}
+
+.completion-output-content .hljs-params,
+.completion-output-content .hljs-variable {
+	color: #e6edf3 !important;
+}

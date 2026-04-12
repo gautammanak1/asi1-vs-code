@@ -9,6 +9,7 @@ import { Item, ItemContent, ItemDescription, ItemHeader, ItemMedia, ItemTitle } 
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { cn } from "@/lib/utils"
 import { StateServiceClient } from "@/services/grpc-client"
+import { formatContextWindowShort } from "@/utils/formatContextWindow"
 import ApiConfigurationSection from "../settings/sections/ApiConfigurationSection"
 import { useApiConfigurationHandlers } from "../settings/utils/useApiConfigurationHandlers"
 import {
@@ -101,7 +102,9 @@ const ModelSelection = ({
 									<div className="inline-flex gap-1 [&_svg]:stroke-foreground [&_svg]:size-3 items-center text-sm">
 										<ListIcon />
 										<span>Context: </span>
-										<span className="text-foreground/70">{(model?.info.contextWindow || 0) / 1000}k</span>
+										<span className="text-foreground/70">
+											{formatContextWindowShort(model?.info.contextWindow)}
+										</span>
 									</div>
 									<Badge>{getPriceRange(model.info)}</Badge>
 								</div>

@@ -219,7 +219,7 @@ export const RequestStartRow: React.FC<RequestStartRowProps> = ({
 							{currentActivities.map((activity, _) => (
 								<div className="flex items-center gap-2 h-auto w-full overflow-hidden" key={activity.text}>
 									<activity.icon className="size-2 text-foreground shrink-0" />
-									<TypewriterText speed={15} text={activity.text} />
+									<TypewriterText speed={8} text={activity.text} />
 								</div>
 							))}
 						</div>
