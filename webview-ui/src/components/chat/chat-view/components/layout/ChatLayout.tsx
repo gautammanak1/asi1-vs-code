@@ -28,10 +28,10 @@ const ChatLayoutContainer = styled.div.withConfig({
 	margin: 0;
 	width: 100%;
 	height: 100%;
-	min-height: 100vh;
+	min-height: 100%;
 	position: relative;
-	/* Editor-adjacent chat surface (matches classic Fetch Coder / pre–sidebar-only chat) */
-	background-color: var(--vscode-editor-background);
+	/* Sidebar chat — match VS Code Copilot / panel surface */
+	background-color: var(--vscode-sideBar-background);
 `
 
 const MainContent = styled.div`

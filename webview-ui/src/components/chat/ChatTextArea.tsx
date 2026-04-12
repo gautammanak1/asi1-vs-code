@@ -9,7 +9,6 @@ import { PlanActMode, TogglePlanActModeRequest, UpdateSettingsRequest } from "@s
 import { type SlashCommand } from "@shared/slashCommands";
 import { Mode } from "@shared/storage/types";
 import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
-import { AtSignIcon, GlobeIcon, LayoutTemplateIcon, PlusIcon, SparklesIcon } from "lucide-react";
 import type React from "react";
 import {
 	forwardRef,
@@ -1637,9 +1636,10 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			.replace(/.$/, (match) => match.toUpperCase());
 
 		return (
-			<div>
+			<div className="fc-chat-composer-root">
+				<div className="fc-chat-composer-card rounded-md border border-(--vscode-widget-border) bg-(--vscode-input-background) overflow-hidden shadow-sm">
 				<div
-					className="relative flex transition-colors ease-in-out duration-100 px-3.5 py-2.5"
+					className="relative flex transition-colors ease-in-out duration-100 px-2 py-2"
 					onDragEnter={handleDragEnter}
 					onDragLeave={handleDragLeave}
 					onDragOver={onDragOver}
@@ -1839,14 +1839,14 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							<TooltipTrigger>
 								<div
 									className={cn(
-										"input-icon-button flex items-center justify-center",
+										"input-icon-button flex items-center justify-center codicon codicon-sparkle text-[14px]",
 										{ disabled: !inputValue.trim() || isEnhancing },
+										isEnhancing && "animate-pulse",
 									)}
 									data-testid="enhance-button"
 									onClick={handleEnhancePrompt}
 									style={{ cursor: inputValue.trim() && !isEnhancing ? "pointer" : "default", opacity: inputValue.trim() && !isEnhancing ? 1 : 0.4 }}
 								>
-									<SparklesIcon size={14} className={isEnhancing ? "animate-pulse" : ""} />
 								</div>
 							</TooltipTrigger>
 						</Tooltip>
@@ -1867,7 +1867,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					</div>
 					</div>
 				</div>
-				<div className="flex justify-between items-center -mt-[2px] px-3 pb-2">
+				<div className="fc-chat-composer-toolbar flex justify-between items-center px-2 pb-2 pt-0.5">
 					{/* Always render both components, but control visibility with CSS */}
 					<div className="relative flex-1 min-w-0 h-5">
 						{/* ButtonGroup - always in DOM but visibility controlled */}
@@ -1883,7 +1883,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 										onClick={handleContextButtonClick}
 									>
 										<ButtonContainer>
-											<AtSignIcon size={12} />
+											<span className="codicon codicon-mention" style={{ fontSize: "13px" }} />
 										</ButtonContainer>
 									</VSCodeButton>
 								</TooltipTrigger>
@@ -1905,7 +1905,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 										}}
 									>
 										<ButtonContainer>
-											<PlusIcon size={13} />
+											<span className="codicon codicon-add" style={{ fontSize: "14px" }} />
 										</ButtonContainer>
 									</VSCodeButton>
 								</TooltipTrigger>
@@ -1926,7 +1926,15 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 										}}
 									>
 										<ButtonContainer>
-											<GlobeIcon size={12} style={{ color: AsiWebToolsEnabled?.user ? "#7CE074" : undefined }} />
+											<span
+												className="codicon codicon-globe"
+												style={{
+													fontSize: "13px",
+													color: AsiWebToolsEnabled?.user
+														? "var(--vscode-charts-green, #89d185)"
+														: undefined,
+												}}
+											/>
 										</ButtonContainer>
 									</VSCodeButton>
 								</TooltipTrigger>
@@ -1962,7 +1970,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 											onClick={() => setShowFetchTemplatesMenu((v) => !v)}
 										>
 											<ButtonContainer>
-												<LayoutTemplateIcon size={12} />
+												<span className="codicon codicon-layout-panel" style={{ fontSize: "13px" }} />
 											</ButtonContainer>
 										</VSCodeButton>
 									</TooltipTrigger>
@@ -2060,6 +2068,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							</SwitchContainer>
 						</TooltipTrigger>
 					</Tooltip>
+				</div>
 				</div>
 			</div>
 		);

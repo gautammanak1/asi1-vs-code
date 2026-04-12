@@ -341,6 +341,10 @@ IMPORTANT: Regardless of what else you see in the MCP settings file, you must de
 
 7. Now that you have access to these new tools and resources, you may suggest ways the user can command you to invoke them - for example, with this new weather tool now available, you can invite the user to ask "what's the weather in San Francisco?"
 
+### Hosted MCP servers (e.g. Composio)
+
+For **remote** MCP servers (such as Composio over \`streamableHttp\`), the user enables **toolkits** (Slack, GitHub, Gmail, etc.) in the Composio dashboard, not inside Fetch Coder. After OAuth, the server returns the available tools via MCP \`list_tools\`; use those tools by name like any other MCP tool. Toolkit catalog: https://docs.composio.dev/toolkits
+
 ## Editing MCP Servers
 
 The user may ask to add tools or resources that may make sense to add to an existing MCP server (listed under 'Connected MCP Servers' below: ${

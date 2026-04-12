@@ -3,6 +3,7 @@ import { StringRequest } from "@shared/proto/Asi/common";
 import { McpDownloadResponse } from "@shared/proto/Asi/mcp";
 import axios from "axios";
 import { AsiEnv } from "@/config";
+import { COMPOSIO_MCP_URL } from "@/services/mcp/bundledMcpDefaults";
 import { getAxiosSettings } from "@/shared/net";
 import { Logger } from "@/shared/services/Logger";
 import { Controller } from "..";
@@ -34,6 +35,27 @@ export async function downloadMcp(
 
 		if (isInstalled) {
 			throw new Error("This MCP server is already installed");
+		}
+
+		// Bundled remote server: add Streamable HTTP entry locally (no marketplace /download API).
+		if (mcpId === "composio") {
+			await controller.mcpHub.addRemoteServer(
+				"composio",
+				COMPOSIO_MCP_URL,
+				"streamableHttp",
+			);
+			await controller.postStateToWebview();
+			return McpDownloadResponse.create({
+				mcpId: "composio",
+				githubUrl: "https://github.com/ComposioHQ/composio",
+				name: "Composio",
+				author: "Composio",
+				description: "Composio MCP (Streamable HTTP)",
+				readmeContent:
+					"The Composio server entry was added to your MCP settings. Save if prompted, then complete OAuth in the browser when connecting.",
+				llmsInstallationContent: "",
+				requiresApiKey: false,
+			});
 		}
 
 		// Fetch server details from marketplace

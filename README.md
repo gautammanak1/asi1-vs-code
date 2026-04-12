@@ -10,11 +10,11 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
 [![Powered by asi1.ai](https://img.shields.io/badge/Powered%20by-asi1.ai-0052FF?style=flat-square)](https://asi1.ai)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/fetchai)
-[![Release v0.2.14](https://img.shields.io/badge/release-v0.2.14-0052FF?style=flat-square)](https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.14)
+[![Release v0.2.15](https://img.shields.io/badge/release-v0.2.15-0052FF?style=flat-square)](https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.15)
 
 <p>Write code, debug, edit files, run commands — all conversationally with your AI partner.</p>
 
-<p align="center"><sub>Current extension version: <strong>0.2.14</strong> · Git tag: <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.14"><code>v0.2.14</code></a></sub></p>
+<p align="center"><sub>Current extension version: <strong>0.2.15</strong> · Git tag: <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.15"><code>v0.2.15</code></a></sub></p>
 
 </div>
 

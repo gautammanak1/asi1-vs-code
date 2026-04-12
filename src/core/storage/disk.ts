@@ -17,6 +17,7 @@ import { Logger } from "@/shared/services/Logger"
 import { syncWorker } from "@/shared/services/worker/sync"
 import { reconstructTaskHistory } from "../commands/reconstructTaskHistory"
 import { StateManager } from "./StateManager"
+import { BUNDLED_REMOTE_MCP_SERVER_ENTRIES } from "@/services/mcp/bundledMcpDefaults"
 
 /**
  * Atomically write data to a file using temp file + rename pattern.
@@ -236,7 +237,10 @@ export async function getMcpSettingsFilePath(settingsDirectoryPath: string): Pro
 	const mcpSettingsFilePath = path.join(settingsDirectoryPath, GlobalFileNames.mcpSettings)
 	const fileExists = await fileExistsAtPath(mcpSettingsFilePath)
 	if (!fileExists) {
-		await fs.writeFile(mcpSettingsFilePath, JSON.stringify({ mcpServers: {} }, null, 2))
+		await fs.writeFile(
+			mcpSettingsFilePath,
+			JSON.stringify({ mcpServers: { ...BUNDLED_REMOTE_MCP_SERVER_ENTRIES } }, null, 2),
+		)
 	}
 	return mcpSettingsFilePath
 }

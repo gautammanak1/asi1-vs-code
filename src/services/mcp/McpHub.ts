@@ -44,6 +44,7 @@ import { fetch } from "@/shared/net"
 import { ShowMessageType } from "@/shared/proto/host/window"
 import { Logger } from "@/shared/services/Logger"
 import { expandEnvironmentVariables } from "@/utils/envExpansion"
+import { mergeBundledRemoteMcpServers } from "./bundledMcpDefaults"
 import { fileExistsAtPath } from "@/utils/fs"
 import { getServerAuthHash, mcpConfigHasUserSuppliedCredentials } from "@/utils/mcpAuth"
 import { TelemetryService } from "../telemetry/TelemetryService"
@@ -83,6 +84,9 @@ export class McpHub {
 
 	// Track when remote config is updating to prevent unnecessary watcher triggers
 	private isUpdatingFromRemoteConfig = false
+
+	/** One-time bundled defaults (e.g. Composio) written into the settings file */
+	private isWritingBundledDefaults = false
 
 	/**
 	 * Map of unique keys to each connected server names
@@ -231,6 +235,24 @@ export class McpHub {
 
 			await this.mergeWorkspaceFetchCoderMcp(config)
 
+			if (!config.mcpServers || typeof config.mcpServers !== "object") {
+				config.mcpServers = {}
+			}
+			const bundledAdded = mergeBundledRemoteMcpServers(config.mcpServers)
+			if (bundledAdded) {
+				try {
+					this.isWritingBundledDefaults = true
+					const settingsPath = await getMcpSettingsFilePathHelper(await this.getSettingsDirectoryPath())
+					await fs.writeFile(settingsPath, JSON.stringify({ mcpServers: config.mcpServers }, null, 2))
+				} catch (e) {
+					Logger.warn("[McpHub] Could not persist bundled MCP defaults:", e)
+				} finally {
+					setTimeout(() => {
+						this.isWritingBundledDefaults = false
+					}, 300)
+				}
+			}
+
 			const expanded = expandEnvironmentVariables(config)
 
 			const result = McpSettingsSchema.safeParse(expanded)
@@ -267,7 +289,7 @@ export class McpHub {
 		})
 
 		this.workspaceMcpWatcher.on("change", async () => {
-			if (this.isUpdatingFromRemoteConfig || this.isUpdatingAsiSettings) {
+			if (this.isUpdatingFromRemoteConfig || this.isUpdatingAsiSettings || this.isWritingBundledDefaults) {
 				return
 			}
 			const settings = await this.readAndValidateMcpSettingsFile()
@@ -306,6 +328,9 @@ export class McpHub {
 			}
 			// Skip processing if we're updating Asi-specific settings (autoApprove, timeout)
 			if (this.isUpdatingAsiSettings) {
+				return
+			}
+			if (this.isWritingBundledDefaults) {
 				return
 			}
 

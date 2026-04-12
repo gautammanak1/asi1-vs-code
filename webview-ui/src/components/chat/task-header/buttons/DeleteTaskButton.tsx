@@ -1,5 +1,4 @@
 import { StringArrayRequest } from "@shared/proto/Asi/common";
-import { TrashIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
 	Tooltip,
@@ -32,7 +31,7 @@ const DeleteTaskButton: React.FC<{
 				size="xs"
 				variant="icon"
 			>
-				<TrashIcon />
+				<span className="codicon codicon-trash" style={{ fontSize: "15px" }} />
 			</Button>
 		</TooltipTrigger>
 	</Tooltip>

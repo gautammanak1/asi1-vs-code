@@ -2,7 +2,7 @@ import { mkdirSync } from "node:fs"
 import os from "os"
 import path from "path"
 import type { Extension, ExtensionContext } from "vscode"
-import { ExtensionKind, ExtensionMode } from "vscode"
+import { EventEmitter, ExtensionKind, ExtensionMode } from "vscode"
 import { URI } from "vscode-uri"
 import { ExtensionRegistryInfo } from "@/registry"
 import { log } from "./utils"
@@ -26,6 +26,8 @@ export function initializeContext(AsiDir?: string) {
 
 	const EXTENSION_DIR = path.join(INSTALL_DIR, "extension")
 	const EXTENSION_MODE = process.env.IS_DEV === "true" ? ExtensionMode.Development : ExtensionMode.Production
+
+	const languageModelAccessEmitter = new EventEmitter<void>()
 
 	const extension: Extension<void> = {
 		id: ExtensionRegistryInfo.id,
@@ -66,6 +68,11 @@ export function initializeContext(AsiDir?: string) {
 
 		// Workspace state is per project/workspace when WORKSPACE_STORAGE_DIR is provided by the host.
 		workspaceState: new MementoStore(path.join(WORKSPACE_STORAGE_DIR, "workspaceState.json")),
+
+		languageModelAccessInformation: {
+			onDidChange: languageModelAccessEmitter.event,
+			canSendRequest: () => true,
+		},
 	}
 
 	log("Finished loading vscode context...")

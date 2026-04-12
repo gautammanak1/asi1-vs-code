@@ -9,6 +9,7 @@ import { DEFAULT_FOCUS_CHAIN_SETTINGS } from "@shared/FocusChainSettings";
 import { DEFAULT_MCP_DISPLAY_MODE } from "@shared/McpDisplayMode";
 import type { UserInfo } from "@shared/proto/Asi/account";
 import { EmptyRequest } from "@shared/proto/Asi/common";
+import type { ClineMessage } from "@shared/proto/Asi/ui";
 import type { OpenRouterCompatibleModelInfo } from "@shared/proto/Asi/models";
 import {
 	OnboardingModelGroup,
@@ -465,6 +466,9 @@ export const ExtensionStateContextProvider: React.FC<{
 		null,
 	);
 	const partialMessageUnsubscribeRef = useRef<(() => void) | null>(null);
+	/** Coalesce streaming partial updates to one React update per animation frame. */
+	const partialMessageRafRef = useRef<number | null>(null);
+	const pendingPartialProtoRef = useRef<ClineMessage | null>(null);
 	const mcpMarketplaceUnsubscribeRef = useRef<(() => void) | null>(null);
 	const openRouterModelsUnsubscribeRef = useRef<(() => void) | null>(null);
 	const liteLlmModelsUnsubscribeRef = useRef<(() => void) | null>(null);
@@ -677,12 +681,11 @@ export const ExtensionStateContextProvider: React.FC<{
 				},
 			});
 
-		// Subscribe to partial message events
+		// Subscribe to partial message events (batch UI updates per frame during token streaming)
 		partialMessageUnsubscribeRef.current =
 			UiServiceClient.subscribeToPartialMessage(EmptyRequest.create({}), {
 				onResponse: (protoMessage) => {
 					try {
-						// Validate critical fields
 						if (!protoMessage.ts || protoMessage.ts <= 0) {
 							console.error(
 								"Invalid timestamp in partial message:",
@@ -691,19 +694,39 @@ export const ExtensionStateContextProvider: React.FC<{
 							return;
 						}
 
-						const partialMessage = convertProtoToAsiMessage(protoMessage);
-						setState((prevState) => {
-							// worth noting it will never be possible for a more up-to-date message to be sent here or in normal messages post since the presentAssistantContent function uses lock
-							const lastIndex = findLastIndex(
-								prevState.AsiMessages,
-								(msg) => msg.ts === partialMessage.ts,
-							);
-							if (lastIndex !== -1) {
-								const newAsiMessages = [...prevState.AsiMessages];
-								newAsiMessages[lastIndex] = partialMessage;
-								return { ...prevState, AsiMessages: newAsiMessages };
+						pendingPartialProtoRef.current = protoMessage;
+						if (partialMessageRafRef.current !== null) {
+							return;
+						}
+						partialMessageRafRef.current = requestAnimationFrame(() => {
+							partialMessageRafRef.current = null;
+							const latest = pendingPartialProtoRef.current;
+							pendingPartialProtoRef.current = null;
+							if (!latest) {
+								return;
 							}
-							return prevState;
+
+							try {
+								const partialMessage = convertProtoToAsiMessage(latest);
+								setState((prevState) => {
+									const lastIndex = findLastIndex(
+										prevState.AsiMessages,
+										(msg) => msg.ts === partialMessage.ts,
+									);
+									if (lastIndex !== -1) {
+										const newAsiMessages = [...prevState.AsiMessages];
+										newAsiMessages[lastIndex] = partialMessage;
+										return { ...prevState, AsiMessages: newAsiMessages };
+									}
+									return prevState;
+								});
+							} catch (error) {
+								console.error(
+									"Failed to process partial message:",
+									error,
+									latest,
+								);
+							}
 						});
 					} catch (error) {
 						console.error(
@@ -853,6 +876,11 @@ export const ExtensionStateContextProvider: React.FC<{
 				partialMessageUnsubscribeRef.current();
 				partialMessageUnsubscribeRef.current = null;
 			}
+			if (partialMessageRafRef.current !== null) {
+				cancelAnimationFrame(partialMessageRafRef.current);
+				partialMessageRafRef.current = null;
+			}
+			pendingPartialProtoRef.current = null;
 			if (mcpMarketplaceUnsubscribeRef.current) {
 				mcpMarketplaceUnsubscribeRef.current();
 				mcpMarketplaceUnsubscribeRef.current = null;

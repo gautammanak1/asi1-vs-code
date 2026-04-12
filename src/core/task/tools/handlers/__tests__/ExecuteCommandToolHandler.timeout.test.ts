@@ -1,6 +1,10 @@
 import assert from "node:assert/strict"
 import { describe, it } from "mocha"
-import { isLikelyLongRunningCommand, resolveCommandTimeoutSeconds } from "../ExecuteCommandToolHandler"
+import {
+	inferRequiresApprovalWhenMissing,
+	isLikelyLongRunningCommand,
+	resolveCommandTimeoutSeconds,
+} from "../ExecuteCommandToolHandler"
 
 describe("ExecuteCommandToolHandler timeout policy", () => {
 	it("returns undefined when managed timeout is disabled", () => {
@@ -27,5 +31,18 @@ describe("ExecuteCommandToolHandler timeout policy", () => {
 		assert.equal(isLikelyLongRunningCommand("cargo build --release"), true)
 		assert.equal(isLikelyLongRunningCommand("docker build ."), true)
 		assert.equal(isLikelyLongRunningCommand("pytest -q"), true)
+	})
+})
+
+describe("inferRequiresApprovalWhenMissing", () => {
+	it("defaults read-only style commands to false", () => {
+		assert.equal(inferRequiresApprovalWhenMissing("git status"), "false")
+		assert.equal(inferRequiresApprovalWhenMissing("ls -la"), "false")
+		assert.equal(inferRequiresApprovalWhenMissing("npm run dev"), "false")
+	})
+
+	it("defaults potentially impactful commands to true", () => {
+		assert.equal(inferRequiresApprovalWhenMissing("rm -rf node_modules"), "true")
+		assert.equal(inferRequiresApprovalWhenMissing("npm install"), "true")
 	})
 })

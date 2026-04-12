@@ -8,6 +8,7 @@ import type { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager"
 import { cleanupLegacyCheckpoints } from "@integrations/checkpoints/CheckpointMigration";
 import { AsiAccountService } from "@services/account/ClineAccountService";
 import { McpHub } from "@services/mcp/McpHub";
+import { getBundledMcpMarketplaceItems } from "@/services/mcp/bundledMcpDefaults";
 import type { ApiProvider, ModelInfo } from "@shared/api";
 import type { ChatContent } from "@shared/ChatContent";
 import type { ExtensionState, Platform } from "@shared/ExtensionMessage";
@@ -721,43 +722,59 @@ export class Controller {
 
 	// MCP Marketplace
 	private async fetchMcpMarketplaceFromApi(): Promise<McpMarketplaceCatalog> {
-		const response = await axios.get(
-			`${AsiEnv.config().mcpBaseUrl}/marketplace`,
-			{
-				headers: {
-					"Content-Type": "application/json",
-					"User-Agent": "Asi-vscode-extension",
+		let items: McpMarketplaceItem[] = [];
+
+		try {
+			const response = await axios.get(
+				`${AsiEnv.config().mcpBaseUrl}/marketplace`,
+				{
+					headers: {
+						"Content-Type": "application/json",
+						"User-Agent": "Asi-vscode-extension",
+					},
+					...getAxiosSettings(),
 				},
-				...getAxiosSettings(),
-			},
-		);
+			);
 
-		if (!response.data) {
-			throw new Error("Invalid response from MCP marketplace API");
-		}
+			if (!response.data) {
+				throw new Error("Invalid response from MCP marketplace API");
+			}
 
-		// Get allowlist from remote config
-		const allowedMCPServers =
-			this.stateManager.getRemoteConfigSettings().allowedMCPServers;
+			// Get allowlist from remote config
+			const allowedMCPServers =
+				this.stateManager.getRemoteConfigSettings().allowedMCPServers;
 
-		let items: McpMarketplaceItem[] = (response.data || []).map(
-			(item: McpMarketplaceItem) => ({
+			items = (response.data || []).map((item: McpMarketplaceItem) => ({
 				...item,
 				githubStars: item.githubStars ?? 0,
 				downloadCount: item.downloadCount ?? 0,
 				tags: item.tags ?? [],
-			}),
-		);
+			}));
 
-		// Filter by allowlist if configured
-		if (allowedMCPServers) {
-			const allowedIds = new Set(allowedMCPServers.map((server) => server.id));
-			items = items.filter((item: McpMarketplaceItem) =>
-				allowedIds.has(item.mcpId),
+			// Filter by allowlist if configured
+			if (allowedMCPServers) {
+				const allowedIds = new Set(
+					allowedMCPServers.map((server) => server.id),
+				);
+				items = items.filter((item: McpMarketplaceItem) =>
+					allowedIds.has(item.mcpId),
+				);
+			}
+		} catch (error) {
+			Logger.warn(
+				"MCP marketplace API unavailable or invalid; showing bundled entries only:",
+				error,
 			);
+			items = [];
 		}
 
-		const catalog: McpMarketplaceCatalog = { items };
+		// Always prepend built-in marketplace entries (e.g. Composio) so the UI lists them even if the API omits them.
+		const bundledExtra = getBundledMcpMarketplaceItems().filter(
+			(b) => !items.some((i) => i.mcpId === b.mcpId),
+		);
+		const catalog: McpMarketplaceCatalog = {
+			items: [...bundledExtra, ...items],
+		};
 
 		// Store in cache file
 		await writeMcpMarketplaceCatalogToCache(catalog);

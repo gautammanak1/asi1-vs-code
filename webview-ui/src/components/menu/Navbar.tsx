@@ -1,30 +1,27 @@
-import { HistoryIcon, PlusIcon, SettingsIcon } from "lucide-react"
 import { useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { TaskServiceClient } from "@/services/grpc-client"
+import { cn } from "@/lib/utils"
 import { useExtensionState } from "../../context/ExtensionStateContext"
 
-// Custom MCP Server Icon component using VSCode codicon
-const McpServerIcon = ({ className, size }: { className?: string; size?: number }) => (
-	<span
-		className={`codicon codicon-server flex items-center ${className || ""}`}
-		style={{ fontSize: size ? `${size}px` : "12.5px", marginBottom: "1px" }}
-	/>
-)
+type NavTab = {
+	id: string
+	tooltip: string
+	codicon: string
+	navigate: () => void
+}
 
 export const Navbar = () => {
 	const { navigateToHistory, navigateToSettings, navigateToMcp, navigateToChat } = useExtensionState()
 
-	const SETTINGS_TABS = useMemo(
+	const SETTINGS_TABS: NavTab[] = useMemo(
 		() => [
 			{
 				id: "chat",
-				name: "Chat",
-				tooltip: "New Task",
-				icon: PlusIcon,
+				tooltip: "New task",
+				codicon: "codicon-add",
 				navigate: () => {
-					// Close the current task, then navigate to the chat view
 					TaskServiceClient.clearTask({})
 						.catch((error) => {
 							console.error("Failed to clear task:", error)
@@ -34,23 +31,20 @@ export const Navbar = () => {
 			},
 			{
 				id: "mcp",
-				name: "MCP",
-				tooltip: "MCP Servers",
-				icon: McpServerIcon,
+				tooltip: "MCP servers",
+				codicon: "codicon-server",
 				navigate: navigateToMcp,
 			},
 			{
 				id: "history",
-				name: "History",
 				tooltip: "History",
-				icon: HistoryIcon,
+				codicon: "codicon-history",
 				navigate: navigateToHistory,
 			},
 			{
 				id: "settings",
-				name: "Settings",
 				tooltip: "Settings",
-				icon: SettingsIcon,
+				codicon: "codicon-gear",
 				navigate: navigateToSettings,
 			},
 		],
@@ -59,21 +53,25 @@ export const Navbar = () => {
 
 	return (
 		<nav
-			className="flex-none inline-flex justify-end bg-transparent gap-2 mb-1 z-10 border-none items-center mr-4!"
-			id="Asi-navbar-container">
+			className="flex-none inline-flex justify-end gap-0.5 mb-0.5 z-10 border-none items-center mr-2 opacity-95"
+			id="Asi-navbar-container"
+		>
 			{SETTINGS_TABS.map((tab) => (
 				<Tooltip key={`navbar-tooltip-${tab.id}`}>
 					<TooltipContent side="bottom">{tab.tooltip}</TooltipContent>
 					<TooltipTrigger asChild>
 						<Button
 							aria-label={tab.tooltip}
-							className="p-0 h-7"
+							className="p-0 h-7 w-7 rounded-sm hover:bg-(--vscode-toolbar-hoverBackground)"
 							data-testid={`tab-${tab.id}`}
-							key={`navbar-button-${tab.id}`}
 							onClick={() => tab.navigate()}
 							size="icon"
-							variant="icon">
-							<tab.icon className="stroke-1 [svg]:size-4" size={18} />
+							variant="icon"
+						>
+							<span
+								className={cn("codicon", tab.codicon)}
+								style={{ fontSize: "16px", lineHeight: 1 }}
+							/>
 						</Button>
 					</TooltipTrigger>
 				</Tooltip>

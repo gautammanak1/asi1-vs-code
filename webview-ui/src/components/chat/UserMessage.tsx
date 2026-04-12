@@ -114,10 +114,10 @@ const UserMessage: React.FC<UserMessageProps> = ({
 
 	return (
 		<div
-			className="fc-chat-bubble-user p-2.5 pr-1 my-1 text-badge-foreground rounded-[12px]"
+			className="fc-chat-bubble-user p-2.5 pr-1 my-1 text-foreground rounded-[10px]"
 			onClick={handleClick}
 			style={{
-				backgroundColor: isEditing ? "unset" : "var(--vscode-badge-background)",
+				backgroundColor: isEditing ? "var(--vscode-input-background)" : undefined,
 				whiteSpace: "pre-line",
 				wordWrap: "break-word",
 			}}

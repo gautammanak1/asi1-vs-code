@@ -76,10 +76,55 @@ import { fileExistsAtPath } from "./utils/fs"
 export async function activate(context: vscode.ExtensionContext) {
 	const activationStartTime = performance.now()
 
-	// 1. Set up HostProvider for VSCode
-	// IMPORTANT: This must be done before any service can be registered
+	// 1. Set up HostProvider for VSCode — must run before any service registration
 	setupHostProvider(context)
 
+	const { commands } = ExtensionRegistryInfo
+	const activationDone = activateFetchCoderExtensionBody(context, activationStartTime)
+
+	// Register immediately so `onCommand:Asi.openAiChat` / keybindings never hit "command not found"
+	// while long-running migrations or `initialize()` are still in progress.
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.OpenAiChat, async () => {
+			try {
+				const w = await activationDone
+				await w.createOrShowWebviewPanel(false)
+				sendShowWebviewEvent(false)
+				telemetryService.captureButtonClick("command_openAiChat", w.controller?.task?.ulid)
+			} catch (e) {
+				Logger.error("[Asi] OpenAiChat command failed:", e)
+				const msg = e instanceof Error ? e.message : String(e)
+				void vscode.window.showErrorMessage(`Fetch Coder could not open chat: ${msg}`)
+			}
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.FocusChatInput, async (preserveEditorFocus = false) => {
+			try {
+				const w = await activationDone
+				await w.createOrShowWebviewPanel(preserveEditorFocus)
+				sendShowWebviewEvent(preserveEditorFocus)
+				telemetryService.captureButtonClick("command_focusChatInput", w.controller?.task?.ulid)
+			} catch (e) {
+				Logger.error("[Asi] FocusChatInput command failed:", e)
+				const msg = e instanceof Error ? e.message : String(e)
+				void vscode.window.showErrorMessage(`Fetch Coder could not focus chat: ${msg}`)
+			}
+		}),
+	)
+
+	const webview = await activationDone
+	return createAsiAPI(webview.controller)
+}
+
+/**
+ * Heavy activation work (storage, webview, commands). Runs concurrently with early command handlers
+ * that await the same promise.
+ */
+async function activateFetchCoderExtensionBody(
+	context: vscode.ExtensionContext,
+	activationStartTime: number,
+): Promise<VscodeWebviewProvider> {
 	// 2. Clean up legacy data patterns within VSCode's native storage.
 	// Moves workspace→global keys, task history→file, custom instructions→rules, etc.
 	// Must run BEFORE the file export so we copy clean state.
@@ -128,7 +173,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		},
 	)
 
-	// Chat webview in secondary (right) sidebar; activity bar hosts a one-click launcher tree
+	// Chat webview + launcher tree under the same activity-bar container (left sidebar)
 	context.subscriptions.push(
 		vscode.window.registerWebviewViewProvider(
 			ExtensionRegistryInfo.views.Sidebar,
@@ -472,25 +517,6 @@ export async function activate(context: vscode.ExtensionContext) {
 		),
 	)
 
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.FocusChatInput, async (preserveEditorFocus = false) => {
-			const w = WebviewProvider.getInstance() as VscodeWebviewProvider
-			await w.createOrShowWebviewPanel(preserveEditorFocus)
-			sendShowWebviewEvent(preserveEditorFocus)
-			telemetryService.captureButtonClick("command_focusChatInput", w.controller?.task?.ulid)
-		}),
-	)
-
-	// Opens secondary sidebar + chat; `package.json` includes `onCommand:Asi.openAiChat` so this runs even if activation was deferred.
-	context.subscriptions.push(
-		vscode.commands.registerCommand(commands.OpenAiChat, async () => {
-			const w = WebviewProvider.getInstance() as VscodeWebviewProvider
-			await w.createOrShowWebviewPanel(false)
-			sendShowWebviewEvent(false)
-			telemetryService.captureButtonClick("command_openAiChat", w.controller?.task?.ulid)
-		}),
-	)
-
 	// Register Jupyter Notebook command handlers
 	const NOTEBOOK_EDIT_INSTRUCTIONS = `Special considerations for using replace_in_file on *.ipynb files:
 * Jupyter notebook files are JSON format with specific structure for source code cells
@@ -640,7 +666,7 @@ ${ctx.cellJson || "{}"}
 
 	Logger.log(`[Fetch Coder] extension activated in ${performance.now() - activationStartTime} ms`)
 
-	return createAsiAPI(webview.controller)
+	return webview
 }
 
 async function showJupyterPromptInput(title: string, placeholder: string): Promise<string | undefined> {

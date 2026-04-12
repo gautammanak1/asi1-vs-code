@@ -11,11 +11,11 @@ import type { ExtensionMessage } from "@/shared/ExtensionMessage";
 import { Logger } from "@/shared/services/Logger";
 import { WebviewMessage } from "@/shared/WebviewMessage";
 
-/** Must match `package.json` → `viewsContainers.secondarySideBar[].id` */
-const SECONDARY_SIDEBAR_CONTAINER_ID = "fetch-coder-secondary";
+/** Must match `package.json` → `viewsContainers.activitybar[].id` */
+const ACTIVITY_BAR_CONTAINER_ID = "fetch-coder-ActivityBar";
 
 /**
- * Chat UI lives in the **secondary (right) sidebar** — docked, resizable; does not use an editor column.
+ * Chat UI lives in the **primary sidebar** (activity bar container) — docked, resizable; does not use an editor column.
  */
 export class VscodeWebviewProvider
 	extends WebviewProvider
@@ -112,17 +112,16 @@ export class VscodeWebviewProvider
 		this.controller.clearTask();
 
 		Logger.log(
-			"[VscodeWebviewProvider] Sidebar webview resolved (secondary sidebar)",
+			"[VscodeWebviewProvider] Sidebar webview resolved (activity bar container)",
 		);
 	}
 
 	/**
-	 * Focuses the secondary sidebar and shows the webview. Does not open an editor column.
+	 * Focuses the Fetch Coder activity-bar sidebar and shows the webview. Does not open an editor column.
 	 */
 	public async createOrShowWebviewPanel(preserveFocus = true): Promise<void> {
-		await vscode.commands.executeCommand("workbench.action.focusAuxiliaryBar");
 		await vscode.commands.executeCommand(
-			`workbench.view.extension.${SECONDARY_SIDEBAR_CONTAINER_ID}`,
+			`workbench.view.extension.${ACTIVITY_BAR_CONTAINER_ID}`,
 		);
 		this.webviewView?.show(preserveFocus);
 	}

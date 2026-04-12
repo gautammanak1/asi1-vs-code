@@ -38,6 +38,25 @@ export function isLikelyLongRunningCommand(command: string): boolean {
 	return LONG_RUNNING_COMMAND_PATTERNS.some((pattern) => pattern.test(normalized))
 }
 
+/**
+ * When the model omits `requires_approval`, infer a safe default so the agent
+ * can proceed instead of looping on "missing parameter" retries.
+ */
+export function inferRequiresApprovalWhenMissing(command: string): "true" | "false" {
+	const c = command.trim().toLowerCase()
+	// Read-only / low-impact introspection — treat as not requiring explicit approval in auto-approve flows
+	if (
+		/^(ls|dir|pwd|whoami|echo|env|printenv|which|type|where)\b/.test(c) ||
+		/^(cat|head|tail|less|more)\s/.test(c) ||
+		/^git\s+(status|log|diff|show|branch|remote|rev-parse)\b/.test(c) ||
+		/^(grep|find|rg|fd)\s/.test(c) ||
+		/^(npm|pnpm|yarn|bun)\s+(run\s+)?(dev|start|serve)\b/.test(c)
+	) {
+		return "false"
+	}
+	return "true"
+}
+
 export function resolveCommandTimeoutSeconds(
 	command: string,
 	timeoutParam: string | undefined,
@@ -86,7 +105,11 @@ export class ExecuteCommandToolHandler implements IFullyManagedTool {
 
 	async execute(config: TaskConfig, block: ToolUse): Promise<ToolResponse> {
 		let command: string | undefined = block.params.command
-		const requiresApprovalRaw: string | undefined = block.params.requires_approval
+		let requiresApprovalRaw: string | undefined = block.params.requires_approval
+		if (command && !requiresApprovalRaw?.trim()) {
+			requiresApprovalRaw = inferRequiresApprovalWhenMissing(command)
+			block.params.requires_approval = requiresApprovalRaw
+		}
 		const requiresApprovalPerLLM = requiresApprovalRaw?.toLowerCase() === "true"
 		const timeoutParam: string | undefined = block.params.timeout
 		let timeoutSeconds: number | undefined

@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.15] - 2026-04-12
+
+### Fixed
+
+- TypeScript: align with `@types/vscode` ^1.98 (Language Model typings in `vscode-lm`, `SecretStorage.keys` on standalone `SecretStore`, `ExtensionContext.languageModelAccessInformation` mock, remove conflicting `Terminal.shellIntegration` augmentations); guard optional `CommentThread.range` in review controller.
+
+### Removed
+
+- Orphan `go.work.sum` (no Go workspace in this repo).
+
+### Changed
+
+- **Versions:** extension **0.2.15**, webview-ui package **0.3.2** (unchanged).
+
+---
+
 ## [0.2.14] - 2026-04-12
 
 ### Added
@@ -149,6 +165,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+[0.2.15]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.15
 [0.2.14]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.14
 [0.2.13]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.13
 [0.2.12]: https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.12

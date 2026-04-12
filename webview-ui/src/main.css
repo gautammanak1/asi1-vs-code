@@ -24,11 +24,11 @@ html {
 body {
 	margin: 0;
 	padding: 0;
-	line-height: 1.25;
+	line-height: 1.35;
 	height: 100%;
 	width: 100%;
 	background-color: var(--vscode-sideBar-background);
-	font-family: "Lexend", var(--vscode-font-family), sans-serif;
+	font-family: var(--vscode-font-family), system-ui, sans-serif;
 }
 
 #root {

@@ -1,0 +1,54 @@
+/**
+ * VS Code / Copilot Chat–style shell for the sidebar webview.
+ * Uses only theme tokens so light/dark/high-contrast themes match the editor.
+ */
+
+.fetch-coder-webview-root {
+	min-height: 100%;
+	background-color: var(--vscode-sideBar-background);
+	color: var(--vscode-sideBar-foreground);
+}
+
+/* Unified chat composer (input + tool row) */
+.fc-chat-composer-card {
+	border-color: color-mix(in srgb, var(--vscode-widget-border) 85%, transparent);
+	box-shadow: 0 1px 0 color-mix(in srgb, var(--vscode-widget-shadow) 40%, transparent);
+}
+
+.fc-chat-composer-toolbar {
+	border-top: 1px solid color-mix(in srgb, var(--vscode-editorGroup-border) 80%, transparent);
+	background-color: color-mix(in srgb, var(--vscode-sideBar-background) 92%, var(--vscode-input-background));
+}
+
+/* User bubbles — subtle “pill” like inline chat */
+.fc-chat-bubble-user {
+	align-self: flex-end;
+	max-width: min(100%, 52rem);
+	border: 1px solid color-mix(in srgb, var(--vscode-widget-border) 65%, transparent);
+	background-color: color-mix(
+		in srgb,
+		var(--vscode-input-background) 88%,
+		var(--vscode-sideBar-background)
+	) !important;
+	color: var(--vscode-foreground);
+	border-radius: 10px;
+}
+
+/* Message list breathing room (Copilot-like density) */
+.fc-chat-messages-scroll {
+	padding-left: 10px;
+	padding-right: 8px;
+}
+
+/* Tool proposal rows (delete file, etc.) — Cline-like notice strip */
+.fc-tool-notice {
+	border: 1px solid color-mix(in srgb, var(--vscode-editorWarning-foreground, #cca700) 35%, transparent);
+	border-radius: 8px;
+	padding: 10px 12px;
+	margin-bottom: 6px;
+	background-color: color-mix(
+		in srgb,
+		var(--vscode-inputValidation-warningBackground, #663c00) 18%,
+		var(--vscode-sideBar-background)
+	);
+}

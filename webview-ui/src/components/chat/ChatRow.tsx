@@ -32,7 +32,6 @@ import {
 	SearchIcon,
 	SettingsIcon,
 	SquareArrowOutUpRightIcon,
-	SquareMinusIcon,
 	TerminalIcon,
 	TriangleAlertIcon,
 } from "lucide-react";
@@ -646,9 +645,13 @@ export const ChatRowContent = memo(
 					);
 				case "fileDeleted":
 					return (
-						<div>
+						<div className="fc-tool-notice">
 							<div className={HEADER_CLASSNAMES}>
-								<SquareMinusIcon className="size-2" />
+								<span
+									aria-hidden
+									className="codicon codicon-trash"
+									style={{ fontSize: "15px", opacity: 0.9 }}
+								/>
 								{tool.operationIsLocatedInWorkspace === false &&
 									toolIcon(
 										"sign-out",
@@ -656,8 +659,8 @@ export const ChatRowContent = memo(
 										-90,
 										"This file is outside of your workspace",
 									)}
-								<span style={{ fontWeight: "bold" }}>
-									Fetch Coder wants to delete this file:
+								<span className="text-sm font-semibold text-foreground">
+									Delete file
 								</span>
 							</div>
 							<CodeAccordian

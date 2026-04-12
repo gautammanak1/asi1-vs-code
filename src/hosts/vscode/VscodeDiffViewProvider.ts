@@ -136,13 +136,40 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 		);
 	}
 
+	/**
+	 * If the user closed the diff tab while content is still streaming, the stale
+	 * `TextEditor` reference throws or points at a closed document. Re-run the
+	 * same open logic so streaming can continue instead of failing the tool.
+	 */
+	private async ensureActiveDiffEditor(): Promise<void> {
+		const ed = this.activeDiffEditor;
+		if (ed && !ed.document.isClosed) {
+			return;
+		}
+		this.activeDiffEditor = undefined;
+		this.fadedOverlayController = undefined;
+		this.activeLineController = undefined;
+		if (!this.absolutePath) {
+			throw new Error(
+				"Cannot reopen diff editor: internal file path was lost. Please run the task again.",
+			);
+		}
+		Logger.warn(
+			"[VscodeDiffViewProvider] Diff editor was closed mid-edit; reopening diff view",
+		);
+		await this.openDiffEditor();
+	}
+
 	override async replaceText(
 		content: string,
 		rangeToReplace: { startLine: number; endLine: number },
 		currentLine: number | undefined,
 	): Promise<void> {
-		if (!this.activeDiffEditor || !this.activeDiffEditor.document) {
-			throw new Error("User closed text editor, unable to edit file...");
+		await this.ensureActiveDiffEditor();
+		if (!this.activeDiffEditor || this.activeDiffEditor.document.isClosed) {
+			throw new Error(
+				"Unable to edit file: the diff editor could not be reopened. Keep the diff tab open while Fetch Coder streams edits, then approve or retry.",
+			);
 		}
 
 		// Place cursor at the beginning of the diff editor to keep it out of the way of the stream animation
@@ -202,7 +229,7 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 	}
 
 	override async scrollEditorToLine(line: number): Promise<void> {
-		if (!this.activeDiffEditor) {
+		if (!this.activeDiffEditor || this.activeDiffEditor.document.isClosed) {
 			return;
 		}
 		const scrollLine = line + 4;
@@ -216,7 +243,7 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 		startLine: number,
 		endLine: number,
 	): Promise<void> {
-		if (!this.activeDiffEditor) {
+		if (!this.activeDiffEditor || this.activeDiffEditor.document.isClosed) {
 			return;
 		}
 		const totalLines = endLine - startLine;
@@ -234,7 +261,14 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 	}
 
 	override async truncateDocument(lineNumber: number): Promise<void> {
-		if (!this.activeDiffEditor) {
+		if (!this.activeDiffEditor || this.activeDiffEditor.document.isClosed) {
+			try {
+				await this.ensureActiveDiffEditor();
+			} catch {
+				return;
+			}
+		}
+		if (!this.activeDiffEditor || this.activeDiffEditor.document.isClosed) {
 			return;
 		}
 		const document = this.activeDiffEditor.document;
@@ -255,18 +289,26 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 	}
 
 	protected override async getDocumentLineCount(): Promise<number> {
-		return this.activeDiffEditor?.document.lineCount ?? 0;
+		const d = this.activeDiffEditor?.document;
+		if (!d || d.isClosed) {
+			return 0;
+		}
+		return d.lineCount;
 	}
 
 	protected override async getDocumentText(): Promise<string | undefined> {
-		if (!this.activeDiffEditor || !this.activeDiffEditor.document) {
+		if (
+			!this.activeDiffEditor ||
+			!this.activeDiffEditor.document ||
+			this.activeDiffEditor.document.isClosed
+		) {
 			return undefined;
 		}
 		return this.activeDiffEditor.document.getText();
 	}
 
 	protected override async saveDocument(): Promise<Boolean> {
-		if (!this.activeDiffEditor) {
+		if (!this.activeDiffEditor || this.activeDiffEditor.document.isClosed) {
 			return false;
 		}
 		if (!this.activeDiffEditor.document.isDirty) {
