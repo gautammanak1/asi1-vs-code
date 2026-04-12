@@ -8,7 +8,7 @@
 		"."
 	],
 	"engines": {
-		"vscode": "^1.98.0"
+		"vscode": "^1.115.0"
 	},
 	"author": {
 		"name": "gautammanak2"
