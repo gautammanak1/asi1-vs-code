@@ -146,8 +146,8 @@ describe("ErrorRow", () => {
 			)
 
 			expect(screen.getByText(/PowerShell is not recognized/)).toBeInTheDocument()
-			expect(screen.getByText("troubleshooting guide")).toBeInTheDocument()
-			expect(screen.getByRole("link", { name: "troubleshooting guide" })).toHaveAttribute(
+			expect(screen.getByText("PowerShell troubleshooting guide")).toBeInTheDocument()
+			expect(screen.getByRole("link", { name: "PowerShell troubleshooting guide" })).toHaveAttribute(
 				"href",
 				"https://github.com/gautammanak1/asi1-vs-code/wiki/TroubleShooting-%E2%80%90-%22PowerShell-is-not-recognized-as-an-internal-or-external-command%22",
 			)

@@ -8,10 +8,11 @@ export class VoiceInputService {
 	private isRecording = false;
 
 	isSupported(): boolean {
-		return !!(
-			navigator.mediaDevices &&
-			navigator.mediaDevices.getUserMedia &&
-			window.MediaRecorder
+		return (
+			typeof navigator !== "undefined" &&
+			!!navigator.mediaDevices &&
+			typeof navigator.mediaDevices.getUserMedia === "function" &&
+			typeof MediaRecorder !== "undefined"
 		);
 	}
 

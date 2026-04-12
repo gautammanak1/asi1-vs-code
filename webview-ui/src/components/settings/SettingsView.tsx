@@ -47,6 +47,7 @@ type SettingsTabID =
 	| "browser"
 	| "terminal"
 	| "general"
+	| "voice"
 	| "about"
 	| "debug"
 	| "remote-config";
