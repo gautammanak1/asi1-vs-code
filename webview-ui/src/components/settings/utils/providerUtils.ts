@@ -45,7 +45,7 @@ export function normalizeApiConfiguration(
 			: apiConfiguration?.actModeOpenAiModelInfo;
 	const base = openAiModelInfo || openAiModelInfoSaneDefaults;
 	return {
-		selectedModelId: openAiModelId || "asi1",
+		selectedModelId: openAiModelId || "asi1-mini",
 		selectedModelInfo: {
 			...base,
 			contextWindow: 128_000,

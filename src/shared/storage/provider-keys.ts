@@ -90,7 +90,7 @@ const ProviderDefaultModelMap: Partial<Record<ApiProvider, string>> = {
 	anthropic: anthropicDefaultModelId,
 	openrouter: openRouterDefaultModelId,
 	Asi: openRouterDefaultModelId,
-	openai: "asi1",
+	openai: "asi1-mini",
 	ollama: "",
 	lmstudio: "",
 	litellm: liteLlmDefaultModelId,

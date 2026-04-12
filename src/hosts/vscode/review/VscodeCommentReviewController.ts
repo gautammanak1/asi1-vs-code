@@ -6,7 +6,10 @@ import {
 	type ReviewComment,
 } from "@/integrations/editor/CommentReviewController";
 import { Logger } from "@/shared/services/Logger";
-import { DIFF_VIEW_URI_SCHEME } from "../VscodeDiffViewProvider";
+import {
+	createAsiDiffVirtualUri,
+	DIFF_VIEW_URI_SCHEME,
+} from "../VscodeDiffViewProvider";
 
 /**
  * Asi's GitHub avatar URL
@@ -112,11 +115,7 @@ export class VscodeCommentReviewController
 		// This allows comments to attach to the diff view's virtual documents
 		let uri: vscode.Uri;
 		if (comment.relativePath && comment.fileContent !== undefined) {
-			uri = vscode.Uri.parse(
-				`${DIFF_VIEW_URI_SCHEME}:${comment.relativePath}`,
-			).with({
-				query: Buffer.from(comment.fileContent).toString("base64"),
-			});
+			uri = createAsiDiffVirtualUri(comment.relativePath, comment.fileContent);
 		} else {
 			uri = vscode.Uri.file(comment.filePath);
 		}
@@ -170,9 +169,7 @@ export class VscodeCommentReviewController
 		// Use virtual diff URI if relativePath and fileContent are provided
 		let uri: vscode.Uri;
 		if (relativePath && fileContent !== undefined) {
-			uri = vscode.Uri.parse(`${DIFF_VIEW_URI_SCHEME}:${relativePath}`).with({
-				query: Buffer.from(fileContent).toString("base64"),
-			});
+			uri = createAsiDiffVirtualUri(relativePath, fileContent);
 		} else {
 			uri = vscode.Uri.file(filePath);
 		}

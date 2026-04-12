@@ -59,6 +59,13 @@ import {
 	validateSlashCommand,
 } from "@/utils/slash-commands";
 import AsiRulesToggleModal from "../asi-rules/ClineRulesToggleModal";
+import {
+	VoiceInputButton,
+	type VoiceInputHandle,
+} from "@/components/voice/VoiceInputButton";
+import { useVoiceSettings } from "@/hooks/useVoiceSettings";
+import { stopGlobalTts } from "@/services/globalTts";
+import { resolveSpeechLanguage } from "@/types/voice-settings";
 import ServersToggleModal from "./ServersToggleModal";
 
 const { MAX_IMAGES_AND_FILES_PER_MESSAGE } = CHAT_CONSTANTS;
@@ -248,6 +255,27 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			mcpServers,
 			AsiWebToolsEnabled,
 		} = useExtensionState();
+		const { settings, update: updateVoiceSettings } = useVoiceSettings();
+		const speechLang = useMemo(
+			() => resolveSpeechLanguage(settings),
+			[settings],
+		);
+		const voiceLanguageBadge = useMemo(() => {
+			if (settings.language === "en") {
+				return null;
+			}
+			if (settings.language === "auto") {
+				const short = (navigator.language || "en")
+					.split("-")[0]
+					?.toLowerCase();
+				return short === "en" ? null : speechLang.label;
+			}
+			return speechLang.label;
+		}, [settings.language, speechLang.label]);
+		const voiceInputRef = useRef<VoiceInputHandle>(null);
+		const [voiceInterim, setVoiceInterim] = useState("");
+		const inputValueRef = useRef(inputValue);
+		inputValueRef.current = inputValue;
 		const [isTextAreaFocused, setIsTextAreaFocused] = useState(false);
 		const [isDraggingOver, setIsDraggingOver] = useState(false);
 		const [gitCommits, setGitCommits] = useState<GitCommit[]>([]);
@@ -675,6 +703,31 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				const isComposing = isSafari
 					? event.nativeEvent.keyCode === 229
 					: (event.nativeEvent?.isComposing ?? false);
+
+				if (
+					(event.metaKey || event.ctrlKey) &&
+					event.shiftKey &&
+					event.key.toLowerCase() === "v"
+				) {
+					event.preventDefault();
+					updateVoiceSettings({
+						autoReadAi: !settings.autoReadAi,
+					});
+					return;
+				}
+
+				if (
+					settings.inputMode === "hold" &&
+					event.key === " " &&
+					!event.repeat &&
+					!isComposing
+				) {
+					if (!showSlashCommandsMenu && !showContextMenu) {
+						event.preventDefault();
+						voiceInputRef.current?.beginHold();
+					}
+				}
+
 				if (event.key === "Enter" && !event.shiftKey && !isComposing) {
 					event.preventDefault();
 
@@ -789,6 +842,9 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				slashCommandsQuery,
 				handleSlashCommandsSelect,
 				sendingDisabled,
+				settings.autoReadAi,
+				settings.inputMode,
+				updateVoiceSettings,
 			],
 		);
 
@@ -837,6 +893,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 		const handleInputChange = useCallback(
 			(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+				stopGlobalTts();
+				setVoiceInterim("");
 				const newValue = e.target.value;
 				const newCursorPosition = e.target.selectionStart;
 				setInputValue(newValue);
@@ -1155,6 +1213,15 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const handleKeyUp = useCallback(
 			(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 				if (
+					settings.inputMode === "hold" &&
+					e.key === " " &&
+					!showSlashCommandsMenu &&
+					!showContextMenu
+				) {
+					e.preventDefault();
+					voiceInputRef.current?.endHold();
+				}
+				if (
 					[
 						"ArrowLeft",
 						"ArrowRight",
@@ -1167,7 +1234,12 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					updateCursorPosition();
 				}
 			},
-			[updateCursorPosition],
+			[
+				settings.inputMode,
+				showContextMenu,
+				showSlashCommandsMenu,
+				updateCursorPosition,
+			],
 		);
 
 		const onModeToggle = useCallback(() => {
@@ -1213,7 +1285,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					method: "POST",
 					headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
 					body: JSON.stringify({
-						model: "asi1",
+						model: "asi1-mini",
 						messages: [
 							{ role: "system", content: "You are a prompt engineer. Rewrite the user's prompt to be clearer, more specific, and more likely to produce excellent results from an AI coding assistant. Keep the same intent but make it detailed and well-structured. Return ONLY the improved prompt text, nothing else." },
 							{ role: "user", content: text },
@@ -1727,6 +1799,11 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						}}
 						value={inputValue}
 					/>
+					{voiceInterim ? (
+						<div className="interim-transcript pointer-events-none absolute bottom-11 left-9 right-20 z-[2] truncate text-xs italic text-(--vscode-input-placeholderForeground)">
+							{voiceInterim}
+						</div>
+					) : null}
 					{!inputValue &&
 						selectedImages.length === 0 &&
 						selectedFiles.length === 0 && (
@@ -1854,6 +1931,22 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									</VSCodeButton>
 								</TooltipTrigger>
 							</Tooltip>
+
+							<VoiceInputButton
+								apiKey={apiConfiguration?.openAiApiKey ?? ""}
+								disabled={sendingDisabled}
+								languageBadge={voiceLanguageBadge}
+								onInterimResult={setVoiceInterim}
+								onTranscription={(text) => {
+									setVoiceInterim("");
+									const v = inputValueRef.current;
+									setInputValue(v.length ? `${v} ${text}` : text);
+								}}
+								ref={voiceInputRef}
+								transcriptionMethod={settings.transcriptionMethod}
+								webSpeechLang={speechLang.webSpeech}
+								whisperLang={speechLang.whisper}
+							/>
 
 							<div className="relative">
 								<Tooltip>

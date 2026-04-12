@@ -11,7 +11,59 @@ import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 
 const ASI_ONE_BASE_URL = "https://api.asi1.ai/v1"
-const ASI_ONE_MODEL = "asi1"
+/** Default ASI:One chat model — use `asi1` only when the user explicitly selects the full model. */
+const ASI_ONE_MODEL_DEFAULT = "asi1-mini"
+
+const UNSUPPORTED_ASI1_BODY_KEYS = new Set([
+	"logprobs",
+	"top_logprobs",
+	"n",
+	"best_of",
+	"logit_bias",
+	"suffix",
+	"echo",
+])
+
+function stripUnsupportedAsi1Params(body: Record<string, unknown>): void {
+	for (const key of UNSUPPORTED_ASI1_BODY_KEYS) {
+		delete body[key]
+	}
+}
+
+function formatAsiCompletionError(
+	err: unknown,
+	modelId: string,
+	baseUrl: string,
+): Error {
+	if (err instanceof Error && err.message && !(err as { status?: number }).status) {
+		return err
+	}
+	const e = err as {
+		status?: number
+		message?: string
+		error?: { message?: string }
+		response?: { text?: () => Promise<string> }
+	}
+	let detail = e?.message || e?.error?.message || ""
+	const status = e?.status
+	if (!detail && typeof e?.response?.text === "function") {
+		// Best-effort: OpenAI SDK may attach response body async
+		return new Error(
+			`ASI:One request failed${status != null ? ` (HTTP ${status})` : ""}. Model: ${modelId}. Check the model name, API key, and that the endpoint supports this request. Endpoint: ${baseUrl}`,
+		)
+	}
+	if (status === 400 && !detail.trim()) {
+		return new Error(
+			`ASI:One rejected the request (400) with no error details. Check the model name and API key. Model used: ${modelId}. Endpoint: ${baseUrl}`,
+		)
+	}
+	if (!detail.trim()) {
+		return new Error(
+			`ASI:One request failed${status != null ? ` (HTTP ${status})` : ""}. Model: ${modelId}. Endpoint: ${baseUrl}`,
+		)
+	}
+	return new Error(detail)
+}
 
 interface OpenAiHandlerOptions extends CommonApiHandlerOptions {
 	openAiApiKey?: string
@@ -54,12 +106,16 @@ export class OpenAiHandler implements ApiHandler {
 	@withRetry()
 	async *createMessage(systemPrompt: string, messages: AsiStorageMessage[], tools?: ChatCompletionTool[]): ApiStream {
 		const client = this.ensureClient()
-		const modelId = this.options.openAiModelId || ASI_ONE_MODEL
+		const baseUrl = this.options.openAiBaseUrl || ASI_ONE_BASE_URL
+		const modelId = (this.options.openAiModelId || ASI_ONE_MODEL_DEFAULT).trim()
 
 		const openAiMessages: OpenAI.Chat.ChatCompletionMessageParam[] = [
 			{ role: "system", content: systemPrompt },
 			...convertToOpenAiMessages(messages),
 		]
+		if (!openAiMessages.some((m) => m.role !== "system")) {
+			throw new Error("Missing conversation messages to send to ASI:One.")
+		}
 
 		let temperature: number | undefined
 		if (this.options.openAiModelInfo?.temperature !== undefined) {
@@ -76,7 +132,7 @@ export class OpenAiHandler implements ApiHandler {
 			maxTokens = undefined
 		}
 
-		const createParams: any = {
+		const createParams: Record<string, unknown> = {
 			model: modelId,
 			messages: openAiMessages,
 			temperature,
@@ -86,8 +142,16 @@ export class OpenAiHandler implements ApiHandler {
 			...getOpenAIToolParams(tools),
 			...(this.options.webSearchEnabled ? { web_search: true } : {}),
 		}
+		stripUnsupportedAsi1Params(createParams)
 
-		const stream: any = await client.chat.completions.create(createParams)
+		let stream: AsyncIterable<OpenAI.Chat.ChatCompletionChunk>
+		try {
+			stream = (await client.chat.completions.create(
+				createParams as unknown as OpenAI.Chat.ChatCompletionCreateParamsStreaming,
+			)) as AsyncIterable<OpenAI.Chat.ChatCompletionChunk>
+		} catch (err) {
+			throw formatAsiCompletionError(err, modelId, baseUrl)
+		}
 
 		const toolCallProcessor = new ToolCallProcessor()
 		let chunkCount = 0
@@ -145,9 +209,17 @@ export class OpenAiHandler implements ApiHandler {
 
 		if (yieldedContentChunks === 0) {
 			Logger.warn(`[OpenAiHandler] Stream produced no content (${chunkCount} chunks). Falling back to non-streaming request.`)
-			const fallbackParams: any = { ...createParams, stream: false }
+			const fallbackParams = { ...createParams, stream: false } as Record<string, unknown>
 			delete fallbackParams.stream_options
-			const fallback: any = await client.chat.completions.create(fallbackParams)
+			stripUnsupportedAsi1Params(fallbackParams)
+			let fallback: OpenAI.Chat.ChatCompletion
+			try {
+				fallback = (await client.chat.completions.create(
+					fallbackParams as unknown as OpenAI.Chat.ChatCompletionCreateParamsNonStreaming,
+				)) as OpenAI.Chat.ChatCompletion
+			} catch (err) {
+				throw formatAsiCompletionError(err, modelId, baseUrl)
+			}
 			const fallbackContent = fallback.choices?.[0]?.message?.content
 			if (fallbackContent) {
 				yield { type: "text", text: fallbackContent }
@@ -164,7 +236,7 @@ export class OpenAiHandler implements ApiHandler {
 
 	getModel(): { id: string; info: ModelInfo } {
 		return {
-			id: this.options.openAiModelId || ASI_ONE_MODEL,
+			id: this.options.openAiModelId || ASI_ONE_MODEL_DEFAULT,
 			info: this.options.openAiModelInfo ?? openAiModelInfoSaneDefaults,
 		}
 	}

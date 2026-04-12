@@ -5,7 +5,7 @@ import {
 	OpenMultiFileDiffResponse,
 } from "@/shared/proto/index.host";
 import { getCwd } from "@/utils/path";
-import { DIFF_VIEW_URI_SCHEME } from "../../VscodeDiffViewProvider";
+import { createAsiDiffVirtualUri } from "../../VscodeDiffViewProvider";
 
 export async function openMultiFileDiff(
 	request: OpenMultiFileDiffRequest,
@@ -21,12 +21,8 @@ export async function openMultiFileDiff(
 			const right = diff.rightContent ?? "";
 			return [
 				file,
-				vscode.Uri.parse(`${DIFF_VIEW_URI_SCHEME}:${relativePath}`).with({
-					query: Buffer.from(left).toString("base64"),
-				}),
-				vscode.Uri.parse(`${DIFF_VIEW_URI_SCHEME}:${relativePath}`).with({
-					query: Buffer.from(right).toString("base64"),
-				}),
+				createAsiDiffVirtualUri(relativePath, left),
+				createAsiDiffVirtualUri(relativePath, right),
 			];
 		}),
 	);

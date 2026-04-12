@@ -169,7 +169,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 					break;
 
 				case BannerActionType.SetModel: {
-					const modelId = action.arg || "asi1";
+					const modelId = action.arg || "asi1-mini";
 					const initialModelTab = action.tab || "recommended";
 					handleFieldsChange({
 						planModeOpenAiModelId: modelId,

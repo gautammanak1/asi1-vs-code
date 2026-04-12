@@ -397,7 +397,7 @@ const ChatView = ({
 				)}
 			</div>
 			<footer
-				className="bg-(--vscode-sidebar-background)"
+				className="bg-(--vscode-sideBar-background) border-t border-(--vscode-panel-border)"
 				style={{ gridRow: "2" }}
 			>
 				<AutoApproveBar />

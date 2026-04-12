@@ -8,6 +8,26 @@ import { arePathsEqual } from "@/utils/path";
 
 export const DIFF_VIEW_URI_SCHEME = "Asi-diff";
 
+/**
+ * Build a virtual URI for the diff left pane. The path **must** start with `/`
+ * so VS Code treats it as a path (not an authority). `Asi-diff:index.html` fails to resolve.
+ */
+export function createAsiDiffVirtualUri(
+	pathSegment: string,
+	utf8Content: string,
+): vscode.Uri {
+	let p = pathSegment.replace(/\\/g, "/").trim();
+	if (!p.startsWith("/")) {
+		p = `/${p}`;
+	}
+	p = p.replace(/\/{2,}/g, "/");
+	return vscode.Uri.from({
+		scheme: DIFF_VIEW_URI_SCHEME,
+		path: p,
+		query: Buffer.from(utf8Content ?? "").toString("base64"),
+	});
+}
+
 export class VscodeDiffViewProvider extends DiffViewProvider {
 	private activeDiffEditor?: vscode.TextEditor;
 
@@ -61,44 +81,44 @@ export class VscodeDiffViewProvider extends DiffViewProvider {
 				},
 			);
 		} else {
-			// Open new diff editor.
-			this.activeDiffEditor = await new Promise<vscode.TextEditor>(
-				(resolve, reject) => {
-					const fileName = path.basename(uri.fsPath);
-					const fileExists = this.editType === "modify";
-					const disposable = vscode.window.onDidChangeActiveTextEditor(
-						(editor) => {
-							if (
-								editor &&
-								arePathsEqual(editor.document.uri.fsPath, uri.fsPath)
-							) {
-								disposable.dispose();
-								resolve(editor);
-							}
-						},
-					);
-					vscode.commands.executeCommand(
-						"vscode.diff",
-						vscode.Uri.parse(
-							`${DIFF_VIEW_URI_SCHEME}:${fileName.replace(/%/g, "%25").replace(/#/g, "%23").replace(/\?/g, "%3F")}`,
-						).with({
-							query: Buffer.from(this.originalContent ?? "").toString("base64"),
-						}),
-						uri,
-						`${fileName}: ${fileExists ? "Original ↔ Asi's Changes" : "New File"} (Editable)`,
-						{
-							preserveFocus: true,
-						},
-					);
-					// This may happen on very slow machines ie project idx
-					setTimeout(() => {
-						disposable.dispose();
-						reject(
-							new Error("Failed to open diff editor, please try again..."),
-						);
-					}, 10_000);
-				},
+			// Open new diff editor — virtual URI must use `path: /...` (see createAsiDiffVirtualUri).
+			const fileName = path.basename(uri.fsPath);
+			const pathKey = (this.relPath || fileName).replace(/\\/g, "/");
+			const originalVirtualUri = createAsiDiffVirtualUri(
+				pathKey,
+				this.originalContent ?? "",
 			);
+			const fileExists = this.editType === "modify";
+			const title = `${fileName}: ${fileExists ? "Original ↔ Asi's Changes" : "New File"} (Editable)`;
+
+			await vscode.commands.executeCommand(
+				"vscode.diff",
+				originalVirtualUri,
+				uri,
+				title,
+				{ preserveFocus: true },
+			);
+
+			const pickModifiedEditor = (): vscode.TextEditor | undefined =>
+				vscode.window.visibleTextEditors.find((e) =>
+					arePathsEqual(e.document.uri.fsPath, uri.fsPath),
+				);
+
+			let editor = pickModifiedEditor();
+			if (!editor) {
+				await new Promise((r) => setTimeout(r, 80));
+				editor = pickModifiedEditor();
+			}
+			if (!editor) {
+				editor = vscode.window.activeTextEditor;
+				if (editor && !arePathsEqual(editor.document.uri.fsPath, uri.fsPath)) {
+					editor = undefined;
+				}
+			}
+			if (!editor) {
+				throw new Error("Failed to open diff editor, please try again...");
+			}
+			this.activeDiffEditor = editor;
 		}
 
 		this.fadedOverlayController = new DecorationController(

@@ -28,6 +28,6 @@ describe("ApiOptions (ASI:One only)", () => {
 		);
 		expect(screen.getAllByText(/ASI:One/).length).toBeGreaterThan(0);
 		expect(screen.getByText("Model")).toBeInTheDocument();
-		expect(screen.getByText("asi1", { exact: true })).toBeInTheDocument();
+		expect(screen.getByText("asi1-mini", { exact: true })).toBeInTheDocument();
 	});
 });

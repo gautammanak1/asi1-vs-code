@@ -6,6 +6,7 @@ import {
 	FlaskConical,
 	HardDriveDownload,
 	Info,
+	Mic,
 	type LucideIcon,
 	SlidersHorizontal,
 	SquareMousePointer,
@@ -33,6 +34,7 @@ import BrowserSettingsSection from "./sections/BrowserSettingsSection";
 import DebugSection from "./sections/DebugSection";
 import FeatureSettingsSection from "./sections/FeatureSettingsSection";
 import GeneralSettingsSection from "./sections/GeneralSettingsSection";
+import VoiceSettingsSection from "./sections/VoiceSettingsSection";
 import { RemoteConfigSection } from "./sections/RemoteConfigSection";
 import TerminalSettingsSection from "./sections/TerminalSettingsSection";
 
@@ -96,6 +98,13 @@ export const SETTINGS_TABS: SettingsTab[] = [
 		icon: Wrench,
 	},
 	{
+		id: "voice",
+		name: "Voice",
+		tooltipText: "Voice & speech",
+		headerText: "Voice & speech",
+		icon: Mic,
+	},
+	{
 		id: "remote-config",
 		name: "Remote Config",
 		tooltipText: "Remotely configured fields",
@@ -150,6 +159,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 		() => ({
 			"api-config": ApiConfigurationSection,
 			general: GeneralSettingsSection,
+			voice: VoiceSettingsSection,
 			features: FeatureSettingsSection,
 			browser: BrowserSettingsSection,
 			terminal: TerminalSettingsSection,

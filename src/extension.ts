@@ -481,6 +481,7 @@ export async function activate(context: vscode.ExtensionContext) {
 		}),
 	)
 
+	// Opens secondary sidebar + chat; `package.json` includes `onCommand:Asi.openAiChat` so this runs even if activation was deferred.
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.OpenAiChat, async () => {
 			const w = WebviewProvider.getInstance() as VscodeWebviewProvider

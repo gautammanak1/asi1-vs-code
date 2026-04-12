@@ -38,10 +38,28 @@ export function withRetry(options: RetryOptions = {}) {
 					yield* originalMethod.apply(this, args)
 					return
 				} catch (error: any) {
-					const isRateLimit = error?.status === 429 || error instanceof RetriableError
+					const status: number | undefined =
+						error?.status ?? error?.response?.status ?? error?.statusCode
 					const isLastAttempt = attempt === maxRetries - 1
 
-					if ((!isRateLimit && !retryAllErrors) || isLastAttempt) {
+					// Never retry client / auth errors — they will not succeed on repeat
+					if (
+						status === 400 ||
+						status === 401 ||
+						status === 403 ||
+						status === 404
+					) {
+						throw error
+					}
+
+					const isRetriable =
+						status === 429 ||
+						status === 500 ||
+						status === 502 ||
+						status === 503 ||
+						error instanceof RetriableError
+
+					if ((!isRetriable && !retryAllErrors) || isLastAttempt) {
 						throw error
 					}
 

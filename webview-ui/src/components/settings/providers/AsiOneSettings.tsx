@@ -6,9 +6,9 @@ import { ApiKeyField } from "../common/ApiKeyField";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers";
 
-/** ASI:One — `baseURL` + model `asi1` (same shape as OpenAI client config). */
+/** ASI:One — `baseURL` + model `asi1-mini` (same shape as OpenAI client config). */
 export const ASI_ONE_BASE_URL = "https://api.asi1.ai/v1";
-export const ASI_ONE_MODEL_ID = "asi1";
+export const ASI_ONE_MODEL_ID = "asi1-mini";
 
 const ASI_ONE_MODEL_INFO: OpenAiCompatibleModelInfo = {
 	...openAiModelInfoSaneDefaults,

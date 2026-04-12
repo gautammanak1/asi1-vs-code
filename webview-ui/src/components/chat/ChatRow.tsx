@@ -52,6 +52,8 @@ import { WithCopyButton } from "@/components/common/CopyButton";
 import McpResponseDisplay from "@/components/mcp/chat-display/McpResponseDisplay";
 import McpResourceRow from "@/components/mcp/configuration/tabs/installed/server-row/McpResourceRow";
 import McpToolRow from "@/components/mcp/configuration/tabs/installed/server-row/McpToolRow";
+import { AssistantVoiceAutoPlay } from "@/components/voice/AssistantVoiceAutoPlay";
+import { MessageTTSControls } from "@/components/voice/MessageTTSControls";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { cn } from "@/lib/utils";
 import { FileServiceClient, UiServiceClient } from "@/services/grpc-client";
@@ -207,6 +209,7 @@ export const ChatRowContent = memo(
 		responseStarted,
 	}: ChatRowContentProps) => {
 		const {
+			apiConfiguration,
 			backgroundEditEnabled,
 			mcpServers,
 			mcpMarketplaceCatalog,
@@ -1139,27 +1142,47 @@ export const ChatRowContent = memo(
 							</div>
 						);
 					case "text": {
+						const apiKey = apiConfiguration?.openAiApiKey ?? "";
 						return (
 							<>
-								<WithCopyButton
-									onMouseUp={handleMouseUp}
-									position="bottom-right"
-									ref={contentRef}
-									textToCopy={message.text}
-								>
-									<div className="flex items-center">
-										<div className={cn("flex-1 min-w-0 pl-1")}>
-											<MarkdownRow markdown={message.text} showCursor={false} />
-										</div>
-									</div>
-									{quoteButtonState.visible && (
-										<QuoteButton
-											left={quoteButtonState.left}
-											onClick={handleQuoteClick}
-											top={quoteButtonState.top}
+								<div className="group flex w-full flex-col gap-1">
+									<div className="flex w-full items-start gap-1">
+										<WithCopyButton
+											className="flex-1 min-w-0"
+											onMouseUp={handleMouseUp}
+											position="bottom-right"
+											ref={contentRef}
+											textToCopy={message.text}
+										>
+											<div className="flex items-center">
+												<div className={cn("flex-1 min-w-0 pl-1")}>
+													<MarkdownRow
+														markdown={message.text}
+														showCursor={false}
+													/>
+												</div>
+											</div>
+											{quoteButtonState.visible && (
+												<QuoteButton
+													left={quoteButtonState.left}
+													onClick={handleQuoteClick}
+													top={quoteButtonState.top}
+												/>
+											)}
+										</WithCopyButton>
+										<MessageTTSControls
+											apiKey={apiKey}
+											text={message.text || ""}
 										/>
-									)}
-								</WithCopyButton>
+									</div>
+									<AssistantVoiceAutoPlay
+										apiKey={apiKey}
+										isLast={isLast}
+										messageTs={message.ts}
+										partial={message.partial}
+										text={message.text || ""}
+									/>
+								</div>
 								<RememberThisButton rawText={message.text || ""} />
 							</>
 						);
