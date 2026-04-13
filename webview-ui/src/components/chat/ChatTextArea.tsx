@@ -1637,7 +1637,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 		return (
 			<div className="fc-chat-composer-root">
-				<div className="fc-chat-composer-card rounded-md border border-(--vscode-widget-border) bg-(--vscode-input-background) overflow-hidden shadow-sm">
+				<div className="fc-chat-composer-card group rounded-lg border border-(--vscode-input-border) bg-(--vscode-input-background) overflow-hidden shadow-none transition-[border-color,box-shadow] duration-150 focus-within:border-(--vscode-focusBorder) focus-within:shadow-[0_0_0_1px_var(--vscode-focusBorder)]">
 				<div
 					className="relative flex transition-colors ease-in-out duration-100 px-2 py-2"
 					onDragEnter={handleDragEnter}

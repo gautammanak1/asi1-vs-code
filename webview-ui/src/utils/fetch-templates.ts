@@ -36,7 +36,7 @@ Use @file: and @folder: mentions if you need project-specific paths.`,
 		id: "asi-one-api",
 		title: "ASI:One API integration",
 		description: "Template for calling ASI:One from app code",
-		body: `Help integrate ASI:One  API calls into this codebase.
+		body: `Help integrate ASI:One API calls into this codebase.
 
 - Find existing HTTP/client patterns and match them.
 - Use environment variables for the API key; never hardcode secrets.
@@ -47,14 +47,16 @@ If the project already has ASI:One config, extend it rather than duplicating.`,
 	{
 		id: "multi-agent",
 		title: "Multi-agent communication",
-		description: "Coordinate multiple agents or services",
-		body: `Design a concise multi-agent communication approach for this project.
+		description: "Agent Chat Protocol (official uAgents pattern)",
+		body: `Implement or document multi-agent messaging using the Fetch.ai Agent Chat Protocol.
 
-Cover:
-- Roles of each agent and the message format between them.
-- How to avoid duplicate work and conflicting state.
-- Testing strategy (integration vs mocked agents).
+Authoritative reference: https://innovationlab.fetch.ai/resources/docs/agent-communication/agent-chat-protocol
 
-Reference relevant files with @file: where useful.`,
+Requirements:
+- Use ChatMessage, ChatAcknowledgement, and TextContent from uagents_core.contrib.protocols.chat with chat_protocol_spec.
+- Show the request/acknowledgement/reply flow (ack immediately, then optional ChatMessage reply).
+- If you add code, use two agents with Protocol(spec=chat_protocol_spec) and include(..., publish_manifest=True) on each.
+
+Use @file: mentions for any existing agent code in this repo.`,
 	},
 ]

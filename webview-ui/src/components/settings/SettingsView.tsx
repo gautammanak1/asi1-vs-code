@@ -28,6 +28,7 @@ import { isAdminOrOwner } from "../account/helpers";
 import { Tab, TabContent, TabList, TabTrigger } from "../common/Tab";
 import ViewHeader from "../common/ViewHeader";
 import SectionHeader from "./SectionHeader";
+import { settingsUi } from "./settingsUi";
 import AboutSection from "./sections/AboutSection";
 import ApiConfigurationSection from "./sections/ApiConfigurationSection";
 import BrowserSettingsSection from "./sections/BrowserSettingsSection";
@@ -146,10 +147,8 @@ const renderSectionHeader = (tabId: string) => {
 
 	return (
 		<SectionHeader>
-			<div className="flex items-center gap-2">
-				<tab.icon className="w-4" />
-				<div>{tab.headerText}</div>
-			</div>
+			<tab.icon className="h-4 w-4 shrink-0 opacity-90" />
+			<span>{tab.headerText}</span>
 		</SectionHeader>
 	);
 };
@@ -252,14 +251,13 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 						<TooltipTrigger>
 							<div
 								className={cn(
-									"whitespace-nowrap overflow-hidden h-12 sm:py-3 box-border flex items-center border-l-2 border-transparent text-foreground opacity-70 bg-transparent hover:bg-list-hover p-4 cursor-pointer gap-2",
-									{
-										"opacity-100 border-l-2 border-l-foreground border-t-0 border-r-0 border-b-0 bg-selection":
-											activeTab === tab.id,
-									},
+									"box-border flex h-11 cursor-pointer items-center gap-2 overflow-hidden whitespace-nowrap sm:h-auto sm:min-h-11 sm:py-0",
+									activeTab === tab.id
+										? settingsUi.sidebarNavActive
+										: settingsUi.sidebarNavInactive,
 								)}
 							>
-								<tab.icon className="w-4 h-4" />
+								<tab.icon className="h-4 w-4 shrink-0" />
 								<span className="hidden sm:block">{tab.name}</span>
 							</div>
 						</TooltipTrigger>
@@ -296,9 +294,9 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 		<Tab>
 			<ViewHeader environment={environment} onDone={onDone} title="Settings" />
 
-			<div className="flex flex-1 overflow-hidden">
+			<div className="flex min-h-0 flex-1 overflow-hidden bg-(--vscode-editor-background)">
 				<TabList
-					className="shrink-0 flex flex-col overflow-y-auto border-r border-sidebar-background"
+					className="shrink-0 flex flex-col overflow-y-auto border-r border-(--vscode-widget-border) bg-(--vscode-sideBar-background)/35 py-2"
 					onValueChange={setActiveTab}
 					value={activeTab}
 				>
@@ -307,7 +305,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 					).map(renderTabItem)}
 				</TabList>
 
-				<TabContent className="flex-1 overflow-auto">
+				<TabContent className="min-w-0 flex-1 overflow-auto bg-(--vscode-editor-background)">
 					{ActiveContent}
 				</TabContent>
 			</div>

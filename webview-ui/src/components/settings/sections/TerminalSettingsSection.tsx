@@ -2,10 +2,12 @@ import { UpdateTerminalConnectionTimeoutResponse } from "@shared/proto/index.Asi
 import { VSCodeCheckbox, VSCodeDropdown, VSCodeOption, VSCodeTextField } from "@vscode/webview-ui-toolkit/react"
 import React, { useState } from "react"
 import { PlatformType } from "@/config/platform.config"
+import { cn } from "@/lib/utils"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { usePlatform } from "@/context/PlatformContext"
 import { StateServiceClient } from "../../../services/grpc-client"
 import Section from "../Section"
+import { settingsUi } from "../settingsUi"
 import TerminalOutputLineLimitSlider from "../TerminalOutputLineLimitSlider"
 import { updateSetting } from "../utils/settingsHandlers"
 
@@ -90,10 +92,10 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 		<div>
 			{renderSectionHeader("terminal")}
 			<Section>
-				<div className="mb-5" id="terminal-settings-section">
-					<div className="mb-4">
-						<label className="font-medium block mb-1" htmlFor="default-terminal-profile">
-							Default Terminal Profile
+				<div className={settingsUi.stack} id="terminal-settings-section">
+					<div className={settingsUi.card}>
+						<label className={settingsUi.formLabel} htmlFor="default-terminal-profile">
+							Default terminal profile
 						</label>
 						<VSCodeDropdown
 							className="w-full"
@@ -106,14 +108,14 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 								</VSCodeOption>
 							))}
 						</VSCodeDropdown>
-						<p className="text-xs text-(--vscode-descriptionForeground) mt-1">
-							Select the default terminal Asi will use. 'Default' uses your VSCode global setting.
+						<p className={cn(settingsUi.hint, "mt-2")}>
+							Select the default terminal Asi will use. &apos;Default&apos; uses your VS Code global setting.
 						</p>
 					</div>
 
-					<div className="mb-4">
+					<div className={settingsUi.card}>
 						<div className="mb-2">
-							<label className="font-medium block mb-1">Shell integration timeout (seconds)</label>
+							<label className={settingsUi.formLabel}>Shell integration timeout (seconds)</label>
 							<div className="flex items-center">
 								<VSCodeTextField
 									className="w-full"
@@ -125,13 +127,13 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 							</div>
 							{inputError && <div className="text-(--vscode-errorForeground) text-xs mt-1">{inputError}</div>}
 						</div>
-						<p className="text-xs text-(--vscode-descriptionForeground)">
+						<p className={cn(settingsUi.hint, "mt-2")}>
 							Set how long Asi waits for shell integration to activate before executing commands. Increase this
 							value if you experience terminal connection timeouts.
 						</p>
 					</div>
 
-					<div className="mb-4">
+					<div className={settingsUi.card}>
 						<div className="flex items-center mb-2">
 							<VSCodeCheckbox
 								checked={terminalReuseEnabled ?? true}
@@ -139,15 +141,15 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 								Enable aggressive terminal reuse
 							</VSCodeCheckbox>
 						</div>
-						<p className="text-xs text-(--vscode-descriptionForeground)">
-							When enabled, Asi will reuse existing terminal windows that aren't in the current working directory.
+						<p className={settingsUi.hint}>
+							When enabled, Asi will reuse existing terminal windows that aren&apos;t in the current working directory.
 							Disable this if you experience issues with task lockout after a terminal command.
 						</p>
 					</div>
 					{isVsCodePlatform && (
-						<div className="mb-4">
-							<label className="font-medium block mb-1" htmlFor="terminal-execution-mode">
-								Terminal Execution Mode
+						<div className={settingsUi.card}>
+							<label className={settingsUi.formLabel} htmlFor="terminal-execution-mode">
+								Terminal execution mode
 							</label>
 							<VSCodeDropdown
 								className="w-full"
@@ -157,14 +159,16 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 								<VSCodeOption value="vscodeTerminal">VS Code Terminal</VSCodeOption>
 								<VSCodeOption value="backgroundExec">Background Exec</VSCodeOption>
 							</VSCodeDropdown>
-							<p className="text-xs text-[var(--vscode-descriptionForeground)] mt-1">
+							<p className={cn(settingsUi.hint, "mt-2")}>
 								Choose whether Asi runs commands in the VS Code terminal or a background process.
 							</p>
 						</div>
 					)}
-					<TerminalOutputLineLimitSlider />
-					<div className="mt-5 p-3 bg-(--vscode-textBlockQuote-background) rounded border border-(--vscode-textBlockQuote-border)">
-						<p className="text-[13px] m-0">
+					<div className={settingsUi.card}>
+						<TerminalOutputLineLimitSlider />
+					</div>
+					<div className={settingsUi.cardMuted}>
+						<p className="m-0 text-[13px] leading-relaxed text-(--vscode-foreground)/95">
 							<strong>Having terminal issues?</strong> Check our{" "}
 							<a
 								className="text-(--vscode-textLink-foreground) underline hover:no-underline"

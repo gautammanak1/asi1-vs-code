@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/tooltip";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import Section from "../Section";
+import { settingsUi } from "../settingsUi";
 import SettingsSlider from "../SettingsSlider";
 import { updateSetting } from "../utils/settingsHandlers";
+import { cn } from "@/lib/utils";
 
 // Reusable checkbox component for feature settings
 interface FeatureCheckboxProps {
@@ -206,7 +208,9 @@ const FeatureRow = memo(
 						checkbox
 					)}
 				</div>
-				<div className="text-xs text-description">{description}</div>
+				<div className="text-xs leading-relaxed text-(--vscode-descriptionForeground)">
+					{description}
+				</div>
 			</div>
 		);
 	},
@@ -298,19 +302,14 @@ const FeatureSettingsSection = ({
 	);
 
 	return (
-		<div className="mb-2">
+		<div>
 			{renderSectionHeader("features")}
 			<Section>
-				<div className="mb-5 flex flex-col gap-3">
+				<div className="flex flex-col gap-5">
 					{/* Core features */}
 					<div>
-						<div className="text-xs font-medium text-foreground/80 uppercase tracking-wider mb-3">
-							Agent
-						</div>
-						<div
-							className="relative p-3 pt-0 my-3 rounded-md border border-editor-widget-border/50"
-							id="agent-features"
-						>
+						<div className={settingsUi.groupLabel}>Agent</div>
+						<div className={cn(settingsUi.card, "pt-2")} id="agent-features">
 							{agentFeatures.map((feature) => (
 								<div key={feature.id}>
 									<FeatureRow
@@ -344,13 +343,8 @@ const FeatureSettingsSection = ({
 
 					{/* Editor features */}
 					<div>
-						<div className="text-xs font-medium text-foreground/80 uppercase tracking-wider mb-3">
-							Editor
-						</div>
-						<div
-							className="relative p-3 pt-0 my-3 rounded-md border border-editor-widget-border/50"
-							id="optional-features"
-						>
+						<div className={settingsUi.groupLabel}>Editor</div>
+						<div className={cn(settingsUi.card, "pt-2")} id="optional-features">
 							{editorFeatures.map((feature) => (
 								<FeatureRow
 									checked={featureState[feature.stateKey]}
@@ -366,11 +360,9 @@ const FeatureSettingsSection = ({
 
 					{/* Experimental features */}
 					<div>
-						<div className="text-xs font-medium uppercase tracking-wider mb-3 text-warning/80">
-							Experimental
-						</div>
+						<div className={settingsUi.groupLabelWarning}>Experimental</div>
 						<div
-							className="relative p-3 pt-0 my-3 rounded-md border border-editor-widget-border/50 w-full"
+							className={cn(settingsUi.card, "w-full pt-2")}
 							id="experimental-features"
 						>
 							{experimentalFeatures.map((feature) => (
@@ -392,13 +384,8 @@ const FeatureSettingsSection = ({
 
 				{/* Advanced */}
 				<div>
-					<div className="text-xs font-medium text-foreground/80 uppercase tracking-wider mb-3">
-						Advanced
-					</div>
-					<div
-						className="relative p-3 my-3 rounded-md border border-editor-widget-border/50"
-						id="advanced-features"
-					>
+					<div className={settingsUi.groupLabel}>Advanced</div>
+					<div className={settingsUi.card} id="advanced-features">
 						<div className="space-y-3">
 							{advancedFeatures.map((feature) => (
 								<FeatureRow

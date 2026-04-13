@@ -7,12 +7,14 @@ import {
 } from "@vscode/webview-ui-toolkit/react";
 import React, { useCallback, useEffect, useState } from "react";
 import styled from "styled-components";
+import { cn } from "@/lib/utils";
 import { BROWSER_VIEWPORT_PRESETS } from "../../../../../src/shared/BrowserSettings";
 import { useExtensionState } from "../../../context/ExtensionStateContext";
 import { BrowserServiceClient } from "../../../services/grpc-client";
 import CollapsibleContent from "../CollapsibleContent";
 import { DebouncedTextField } from "../common/DebouncedTextField";
 import Section from "../Section";
+import { settingsUi } from "../settingsUi";
 import { updateSetting } from "../utils/settingsHandlers";
 
 interface BrowserSettingsSectionProps {
@@ -183,9 +185,9 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 		<div>
 			{renderSectionHeader("browser")}
 			<Section>
-				<div id="browser-settings-section" style={{ marginBottom: 20 }}>
+				<div className={settingsUi.stack} id="browser-settings-section">
 					{/* Master Toggle */}
-					<div style={{ marginBottom: isSubSettingsOpen ? 0 : 10 }}>
+					<div className={settingsUi.card}>
 						<VSCodeCheckbox
 							checked={browserSettings.disableToolUse || false}
 							onChange={(e) =>
@@ -196,30 +198,19 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 						>
 							Disable browser tool usage
 						</VSCodeCheckbox>
-						<p
-							style={{
-								fontSize: "12px",
-								color: "var(--vscode-descriptionForeground)",
-								margin: "4px 0 0 0px",
-							}}
-						>
+						<p className={cn(settingsUi.hint, "mt-2")}>
 							Prevent Asi from using browser actions (e.g. launch, click, type).
 						</p>
 					</div>
 
 					<CollapsibleContent isOpen={isSubSettingsOpen}>
-						<div style={{ marginBottom: 15 }}>
-							<div style={{ marginBottom: 8 }}>
-								<label
-									style={{
-										fontWeight: "500",
-										display: "block",
-										marginBottom: 5,
-									}}
-								>
+						<div className={settingsUi.card}>
+							<div className="mb-4">
+								<label className={settingsUi.formLabel} htmlFor="browser-viewport-preset">
 									Viewport size
 								</label>
 								<VSCodeDropdown
+									id="browser-viewport-preset"
 									onChange={(event) => handleViewportChange(event as Event)}
 									style={{ width: "100%" }}
 									value={
@@ -244,29 +235,12 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 									))}
 								</VSCodeDropdown>
 							</div>
-							<p
-								style={{
-									fontSize: "12px",
-									color: "var(--vscode-descriptionForeground)",
-									margin: 0,
-								}}
-							>
-								Set the size of the browser viewport for screenshots and
-								interactions.
+							<p className={cn(settingsUi.hint, "mt-2")}>
+								Set the size of the browser viewport for screenshots and interactions.
 							</p>
-						</div>
 
-						<div style={{ marginBottom: 0 }}>
-							{" "}
-							{/* This div now contains Remote Connection & Chrome Path */}
-							<div
-								style={{
-									marginBottom: 4,
-									display: "flex",
-									alignItems: "center",
-									justifyContent: "space-between",
-								}}
-							>
+						<div className="mt-4 border-t border-(--vscode-widget-border) pt-4">
+							<div className="mb-3 flex items-center justify-between gap-3">
 								<VSCodeCheckbox
 									checked={browserSettings.remoteBrowserEnabled}
 									onChange={(e) => {
@@ -290,13 +264,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 									remoteBrowserEnabled={browserSettings.remoteBrowserEnabled}
 								/>
 							</div>
-							<p
-								style={{
-									fontSize: "12px",
-									color: "var(--vscode-descriptionForeground)",
-									margin: "0 0 6px 0px",
-								}}
-							>
+							<p className={cn(settingsUi.hint, "mb-2")}>
 								Enable Asi to use your Chrome
 								{isBundled
 									? "(not detected on your machine)"
@@ -318,7 +286,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 							</p>
 							{/* Moved remote-specific settings to appear directly after enabling remote connection */}
 							{browserSettings.remoteBrowserEnabled && (
-								<div style={{ marginLeft: 0, marginTop: 8 }}>
+								<div className="mt-2">
 									<DebouncedTextField
 										initialValue={browserSettings.remoteBrowserHost || ""}
 										onChange={(value) =>
@@ -353,45 +321,22 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 
 									{relaunchResult && (
 										<div
-											style={{
-												padding: "8px",
-												marginBottom: "8px",
-												backgroundColor: relaunchResult.success
-													? "rgba(0, 128, 0, 0.1)"
-													: "rgba(255, 0, 0, 0.1)",
-												color: relaunchResult.success
-													? "var(--vscode-terminal-ansiGreen)"
-													: "var(--vscode-terminal-ansiRed)",
-												borderRadius: "3px",
-												fontSize: "11px",
-												whiteSpace: "pre-wrap",
-												wordBreak: "break-word",
-											}}
+											className={cn(
+												"mb-2 rounded-lg border px-3 py-2 text-[11px] leading-snug",
+												relaunchResult.success
+													? "border-(--vscode-terminal-ansiGreen)/40 bg-(--vscode-terminal-ansiGreen)/10 text-(--vscode-terminal-ansiGreen)"
+													: "border-(--vscode-errorForeground)/40 bg-(--vscode-errorForeground)/10 text-(--vscode-errorForeground)",
+											)}
+											style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}
 										>
 											{relaunchResult.message}
 										</div>
 									)}
-
-									<p
-										style={{
-											fontSize: "12px",
-											color: "var(--vscode-descriptionForeground)",
-											margin: 0,
-										}}
-									></p>
 								</div>
 							)}
-							{/* Chrome Executable Path section now follows remote-specific settings */}
-							<div style={{ marginBottom: 8, marginTop: 8 }}>
-								<label
-									htmlFor="chrome-executable-path"
-									style={{
-										fontWeight: "500",
-										display: "block",
-										marginBottom: 5,
-									}}
-								>
-									Chrome Executable Path (Optional)
+							<div className="mt-4 border-t border-(--vscode-widget-border) pt-4">
+								<label className={settingsUi.formLabel} htmlFor="chrome-executable-path">
+									Chrome executable path (optional)
 								</label>
 								<DebouncedTextField
 									id="chrome-executable-path"
@@ -404,27 +349,11 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 									placeholder="e.g., /usr/bin/google-chrome or C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"
 									style={{ width: "100%" }}
 								/>
-								<p
-									style={{
-										fontSize: "12px",
-										color: "var(--vscode-descriptionForeground)",
-										margin: "4px 0 0 0",
-									}}
-								>
-									Leave blank to auto-detect.
-								</p>
+								<p className={cn(settingsUi.hint, "mt-2")}>Leave blank to auto-detect.</p>
 							</div>
-							{/* Custom Browser Arguments section */}
-							<div style={{ marginBottom: 8, marginTop: 8 }}>
-								<label
-									htmlFor="custom-browser-args"
-									style={{
-										fontWeight: "500",
-										display: "block",
-										marginBottom: 5,
-									}}
-								>
-									Custom Browser Arguments (Optional)
+							<div className="mt-4 border-t border-(--vscode-widget-border) pt-4">
+								<label className={settingsUi.formLabel} htmlFor="custom-browser-args">
+									Custom browser arguments (optional)
 								</label>
 								<DebouncedTextField
 									id="custom-browser-args"
@@ -435,16 +364,11 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 									placeholder="e.g., --no-sandbox --disable-setuid-sandbox --disable-dev-shm-usage --disable-gpu --no-first-run --no-zygote"
 									style={{ width: "100%" }}
 								/>
-								<p
-									style={{
-										fontSize: "12px",
-										color: "var(--vscode-descriptionForeground)",
-										margin: "4px 0 0 0",
-									}}
-								>
+								<p className={cn(settingsUi.hint, "mt-2")}>
 									Space-separated arguments to pass to the browser executable.
 								</p>
 							</div>
+						</div>
 						</div>
 					</CollapsibleContent>
 				</div>

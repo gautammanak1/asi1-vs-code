@@ -87,16 +87,9 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 				title="MCP Servers"
 			/>
 
-			<div style={{ flex: 1, overflow: "auto" }}>
+			<div className="flex min-h-0 flex-1 flex-col overflow-auto bg-(--vscode-editor-background)">
 				{/* Tabs container */}
-				<div
-					style={{
-						display: "flex",
-						gap: "1px",
-						padding: "0 20px 0 20px",
-						borderBottom: "1px solid var(--vscode-panel-border)",
-					}}
-				>
+				<div className="flex gap-0.5 border-b border-(--vscode-widget-border) bg-(--vscode-sideBar-background)/25 px-5 pt-2">
 					{showMarketplace && (
 						<TabButton
 							isActive={activeTab === "marketplace"}
@@ -122,7 +115,7 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 				</div>
 
 				{/* Content container */}
-				<div style={{ width: "100%" }}>
+				<div className="w-full min-w-0 flex-1">
 					{showMarketplace && activeTab === "marketplace" && (
 						<McpMarketplaceView />
 					)}
@@ -141,20 +134,34 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 const StyledTabButton = styled.button.withConfig({
 	shouldForwardProp: (prop) => !["isActive"].includes(prop),
 })<{ isActive: boolean; disabled?: boolean }>`
-	background: none;
-	border: none;
-	border-bottom: 2px solid ${(props) => (props.isActive ? "var(--vscode-foreground)" : "transparent")};
-	color: ${(props) => (props.isActive ? "var(--vscode-foreground)" : "var(--vscode-descriptionForeground)")};
-	padding: 8px 16px;
+	background: ${(props) =>
+		props.isActive ? "var(--vscode-list-activeSelectionBackground)" : "transparent"};
+	border: 1px solid
+		${(props) =>
+			props.isActive ? "color-mix(in srgb, var(--vscode-widget-border) 80%, transparent)" : "transparent"};
+	border-bottom-color: transparent;
+	border-radius: 8px 8px 0 0;
+	color: ${(props) =>
+		props.isActive ? "var(--vscode-foreground)" : "var(--vscode-descriptionForeground)"};
+	padding: 10px 16px;
 	cursor: ${(props) => (props.disabled ? "not-allowed" : "pointer")};
 	font-size: 13px;
+	font-weight: ${(props) => (props.isActive ? 600 : 400)};
 	margin-bottom: -1px;
 	font-family: inherit;
 	opacity: ${(props) => (props.disabled ? 0.6 : 1)};
 	pointer-events: ${(props) => (props.disabled ? "none" : "auto")};
+	transition:
+		background 0.15s ease,
+		color 0.15s ease,
+		border-color 0.15s ease;
 
 	&:hover {
 		color: ${(props) => (props.disabled ? "var(--vscode-descriptionForeground)" : "var(--vscode-foreground)")};
+		background: ${(props) =>
+			props.isActive
+				? "var(--vscode-list-activeSelectionBackground)"
+				: "var(--vscode-list-hoverBackground)"};
 	}
 `;
 

@@ -313,7 +313,7 @@ const McpMarketplaceView = () => {
 				</div>
 			)}
 
-			<div style={{ display: "flex", flexDirection: "column" }}>
+			<div className="flex flex-col gap-3 px-5 pb-6">
 				{filteredItems.length === 0 ? (
 					<div
 						style={{

@@ -510,12 +510,20 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
         if isinstance(item, TextContent):
             ctx.logger.info(f"Received message from {sender}: {item.text}")
             
-            # Send acknowledgment
+            # Send acknowledgment (required before replying; see Agent Chat Protocol)
             ack = ChatAcknowledgement(
                 timestamp=datetime.utcnow(),
                 acknowledged_msg_id=msg.msg_id
             )
             await ctx.send(sender, ack)
+
+            # Optional: reply with another ChatMessage (same pattern as Innovation Lab examples)
+            reply = ChatMessage(
+                timestamp=datetime.utcnow(),
+                msg_id=uuid4(),
+                content=[TextContent(type="text", text="Acknowledged your message.")],
+            )
+            await ctx.send(sender, reply)
 
 @chat_proto.on_message(ChatAcknowledgement)
 async def handle_acknowledgement(ctx: Context, sender: str, msg: ChatAcknowledgement):
@@ -899,6 +907,65 @@ cleanup_all_uagents()
 
 ## Chat Protocol Integration
 
+Canonical specification and message types: [Agent Chat Protocol](https://innovationlab.fetch.ai/resources/docs/agent-communication/agent-chat-protocol) (Innovation Lab). Always align generated code with that document: `ChatMessage` carries `TextContent` items; receivers send `ChatAcknowledgement` for the incoming `msg_id`, then may send another `ChatMessage` as a reply.
+
+### Official minimal pattern (two agents)
+
+Use the same structure as the Innovation Lab **agent1 / agent2** examples: each agent creates `chat_proto = Protocol(spec=chat_protocol_spec)` and calls `agent.include(chat_proto, publish_manifest=True)`. **Agent A** sends an initial `ChatMessage` in `startup`. **Agent B** handles `ChatMessage` by sending `ChatAcknowledgement` first, then a reply `ChatMessage` (both sides should register handlers for `ChatAcknowledgement` for logging).
+
+```python
+from datetime import datetime
+from uuid import uuid4
+
+from uagents import Agent, Context, Protocol
+from uagents_core.contrib.protocols.chat import (
+    ChatAcknowledgement,
+    ChatMessage,
+    TextContent,
+    chat_protocol_spec,
+)
+
+# peer_address = "<paste other agent address from its startup logs>"
+
+chat_proto = Protocol(spec=chat_protocol_spec)
+
+# --- Agent A: startup sends first ChatMessage to peer ---
+# @agent_a.on_event("startup")
+# async def startup_handler(ctx: Context):
+#     await ctx.send(peer_address, ChatMessage(
+#         timestamp=datetime.utcnow(),
+#         msg_id=uuid4(),
+#         content=[TextContent(type="text", text="Hello from Agent A")],
+#     ))
+
+# --- Shared: on ChatMessage, ack then optional reply ---
+@chat_proto.on_message(ChatMessage)
+async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
+    for item in msg.content:
+        if isinstance(item, TextContent):
+            await ctx.send(
+                sender,
+                ChatAcknowledgement(
+                    timestamp=datetime.utcnow(),
+                    acknowledged_msg_id=msg.msg_id,
+                ),
+            )
+            await ctx.send(
+                sender,
+                ChatMessage(
+                    timestamp=datetime.utcnow(),
+                    msg_id=uuid4(),
+                    content=[TextContent(type="text", text="Reply from this agent")],
+                ),
+            )
+
+@chat_proto.on_message(ChatAcknowledgement)
+async def handle_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
+    ctx.logger.info("Ack for msg %s from %s", msg.acknowledged_msg_id, sender)
+
+# agent.include(chat_proto, publish_manifest=True)
+```
+
 ### Enhanced Chat with ASI:One
 ```python
 from uagents_core.contrib.protocols.chat import (
@@ -929,6 +996,13 @@ from datetime import datetime
 from uuid import uuid4
 from typing import Any
 from uagents import Context, Model, Protocol
+from uagents_core.contrib.protocols.chat import (
+    ChatAcknowledgement,
+    ChatMessage,
+    EndSessionContent,
+    TextContent,
+    chat_protocol_spec,
+)
 
 # Chat protocol setup
 def create_text_chat(text: str, end_session: bool = True) -> ChatMessage:

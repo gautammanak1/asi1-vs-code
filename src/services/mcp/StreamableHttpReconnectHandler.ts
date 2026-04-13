@@ -1,4 +1,5 @@
 import { Logger } from "@/shared/services/Logger"
+import { isRecoverableRemoteStreamClosureError } from "./mcpTransportErrorUtils"
 
 /**
  * Callbacks that the reconnect handler uses to interact with McpHub.
@@ -75,7 +76,14 @@ export class StreamableHttpReconnectHandler {
 	 * Handle a transport error. Call this from `transport.onerror`.
 	 */
 	async handleError(error: unknown): Promise<void> {
-		Logger.error(`Transport error for "${this.serverName}":`, error)
+		if (isRecoverableRemoteStreamClosureError(error)) {
+			Logger.debug(
+				`StreamableHTTP transport stream closed (recoverable) for "${this.serverName}" — will retry if needed:`,
+				error,
+			)
+		} else {
+			Logger.error(`Transport error for "${this.serverName}":`, error)
+		}
 
 		const connection = this.callbacks.findConnection()
 		if (!connection) {

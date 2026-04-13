@@ -2,10 +2,12 @@ import { EmptyRequest } from "@shared/proto/index.Asi"
 import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react"
 import { useEffect, useRef, useState } from "react"
 import { RemoteConfigToggle } from "@/components/account/RemoteConfigToggle"
+import { cn } from "@/lib/utils"
 import { useAsiAuth } from "@/context/AsiAuthContext"
 import { useExtensionState } from "@/context/ExtensionStateContext"
 import { StateServiceClient } from "@/services/grpc-client"
 import Section from "../Section"
+import { settingsUi } from "../settingsUi"
 
 interface RemoteConfigSectionProps {
 	renderSectionHeader: (tabId: string) => JSX.Element | null
@@ -85,7 +87,7 @@ function SettingRow({ label, value, isSecret }: SettingRowProps) {
 	const isLongValue = typeof value === "string" && value.length > 25
 	if (isLongValue) {
 		return (
-			<div className="flex flex-col gap-1 py-1.5 border-b border-vscode-widget-border last:border-b-0">
+			<div className="flex flex-col gap-1 py-1.5 border-b border-(--vscode-widget-border) last:border-b-0">
 				<span className="text-description text-xs">{label}</span>
 				<div className="pl-2 overflow-hidden text-right">{displayValue}</div>
 			</div>
@@ -93,7 +95,7 @@ function SettingRow({ label, value, isSecret }: SettingRowProps) {
 	}
 
 	return (
-		<div className="flex justify-between items-center py-1.5 border-b border-vscode-widget-border last:border-b-0 gap-2">
+		<div className="flex justify-between items-center py-1.5 border-b border-(--vscode-widget-border) last:border-b-0 gap-2">
 			<span className="text-description text-xs shrink-0">{label}</span>
 			<span className="text-right overflow-hidden text-ellipsis">{displayValue}</span>
 		</div>
@@ -175,7 +177,7 @@ function OtelSettingsSection() {
 				<i className="codicon codicon-pulse" />
 				OpenTelemetry Configuration
 			</h4>
-			<div className="bg-vscode-textBlockQuote-background rounded p-3 mb-2">
+			<div className={cn(settingsUi.cardMuted, "mb-2")}>
 				<SettingRow label="Enabled" value={otelEnabled} />
 				<SettingRow label="Metrics Exporter" value={remoteConfigSettings?.openTelemetryMetricsExporter} />
 				<SettingRow label="Logs Exporter" value={remoteConfigSettings?.openTelemetryLogsExporter} />
@@ -248,7 +250,7 @@ function PromptUploadingSection() {
 				<i className="codicon codicon-cloud-upload" />
 				Prompt Uploading Configuration
 			</h4>
-			<div className="bg-vscode-textBlockQuote-background rounded p-3 mb-2">
+			<div className={cn(settingsUi.cardMuted, "mb-2")}>
 				<SettingRow label="Storage Type" value={blobStoreConfig.adapterType?.toUpperCase()} />
 				<SettingRow label="Bucket" value={blobStoreConfig.bucket} />
 				<SettingRow label="Region" value={blobStoreConfig.region} />
@@ -302,8 +304,8 @@ export function RemoteConfigSection({ renderSectionHeader }: RemoteConfigSection
 	return (
 		<BaseRemoteConfigSection renderSectionHeader={renderSectionHeader}>
 			<div className="flex flex-col gap-2">
-				<p className="text-description text-xs mb-2">
-					These settings are managed by your organization's remote configuration.
+				<p className={cn(settingsUi.hint, "mb-2")}>
+					These settings are managed by your organization&apos;s remote configuration.
 				</p>
 
 				<OtelSettingsSection />

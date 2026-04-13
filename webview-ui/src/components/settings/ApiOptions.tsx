@@ -1,11 +1,13 @@
 import type React from "react";
 import type { ReactNode } from "react";
 import { Mode } from "@shared/storage/types";
+import { cn } from "@/lib/utils";
 import {
 	DROPDOWN_Z_INDEX,
 	OPENROUTER_MODEL_PICKER_Z_INDEX,
 } from "./z-index-constants";
 import { AsiOneSettings } from "./providers/AsiOneSettings";
+import { settingsUi } from "./settingsUi";
 
 export { DROPDOWN_Z_INDEX, OPENROUTER_MODEL_PICKER_Z_INDEX };
 
@@ -51,44 +53,29 @@ const ApiOptions = ({
 	initialModelTab: _initialModelTab,
 }: ApiOptionsProps) => {
 	return (
-		<div
-			style={{
-				display: "flex",
-				flexDirection: "column",
-				gap: 5,
-				marginBottom: isPopup ? -10 : 0,
-			}}
-		>
+		<div className={cn(settingsUi.stack, isPopup && "-mb-2.5")}>
 			<div className="mb-1">
-				<span style={{ fontWeight: 500 }}>ASI:One</span>
-				<p className="text-description text-sm mt-0.5 mb-2">
+				<span className="text-[13px] font-semibold text-(--vscode-foreground)">
+					ASI:One
+				</span>
+				<p className={cn(settingsUi.hint, "mt-1.5")}>
 					Add your API key (or set{" "}
-					<code className="text-xs">ASI_ONE_API_KEY</code> in the environment).
-					Endpoint and model are fixed.
+					<code className="rounded bg-(--vscode-textCodeBlock-background) px-1 text-[11px]">
+						ASI_ONE_API_KEY
+					</code>{" "}
+					in the environment). Endpoint and model are fixed.
 				</p>
 			</div>
 
 			<AsiOneSettings currentMode={currentMode} />
 
 			{apiErrorMessage && (
-				<p
-					style={{
-						margin: "-10px 0 4px 0",
-						fontSize: 12,
-						color: "var(--vscode-errorForeground)",
-					}}
-				>
+				<p className="m-0 text-xs text-(--vscode-errorForeground)">
 					{apiErrorMessage}
 				</p>
 			)}
 			{modelIdErrorMessage && (
-				<p
-					style={{
-						margin: "-10px 0 4px 0",
-						fontSize: 12,
-						color: "var(--vscode-errorForeground)",
-					}}
-				>
+				<p className="m-0 text-xs text-(--vscode-errorForeground)">
 					{modelIdErrorMessage}
 				</p>
 			)}

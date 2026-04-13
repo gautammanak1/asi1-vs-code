@@ -7,6 +7,7 @@ import { StateServiceClient } from "@/services/grpc-client";
 import { TabButton } from "../../mcp/configuration/McpConfigurationView";
 import ApiOptions from "../ApiOptions";
 import Section from "../Section";
+import { settingsUi } from "../settingsUi";
 import { syncModeConfigurations } from "../utils/providerUtils";
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers";
 
@@ -29,34 +30,25 @@ const ApiConfigurationSection = ({
 			<Section>
 				{/* Tabs container */}
 				{planActSeparateModelsSetting ? (
-					<div className="rounded-md mb-5">
-						<div className="flex gap-px mb-[10px] -mt-2 border-0 border-b border-solid border-(--vscode-panel-border)">
+					<div className={`${settingsUi.card} mb-2`}>
+						<div className="-mx-4 -mt-4 mb-4 flex gap-0.5 border-b border-(--vscode-widget-border) px-2">
 							<TabButton
 								disabled={currentTab === "plan"}
 								isActive={currentTab === "plan"}
 								onClick={() => setCurrentTab("plan")}
-								style={{
-									opacity: 1,
-									cursor: "pointer",
-								}}
 							>
-								Plan Mode
+								Plan mode
 							</TabButton>
 							<TabButton
 								disabled={currentTab === "act"}
 								isActive={currentTab === "act"}
 								onClick={() => setCurrentTab("act")}
-								style={{
-									opacity: 1,
-									cursor: "pointer",
-								}}
 							>
-								Act Mode
+								Act mode
 							</TabButton>
 						</div>
 
-						{/* Content container */}
-						<div className="-mb-3">
+						<div className="-mb-1">
 							<ApiOptions
 								currentMode={currentTab}
 								initialModelTab={initialModelTab}
@@ -65,17 +57,19 @@ const ApiConfigurationSection = ({
 						</div>
 					</div>
 				) : (
-					<ApiOptions
-						currentMode={mode}
-						initialModelTab={initialModelTab}
-						showModelOptions={true}
-					/>
+					<div className={settingsUi.card}>
+						<ApiOptions
+							currentMode={mode}
+							initialModelTab={initialModelTab}
+							showModelOptions={true}
+						/>
+					</div>
 				)}
 
-				<div className="mb-[5px]">
+				<div className={settingsUi.cardMuted}>
 					<VSCodeCheckbox
 						checked={planActSeparateModelsSetting}
-						className="mb-[5px]"
+						className="mb-0"
 						onChange={async (e: any) => {
 							const checked = e.target.checked === true;
 							try {

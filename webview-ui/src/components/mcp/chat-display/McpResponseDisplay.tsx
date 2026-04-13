@@ -21,12 +21,12 @@ const ResponseHeader = styled.div`
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 5px 5px 5px 8px;
+	padding: 8px 10px;
 	color: var(--vscode-descriptionForeground);
 	cursor: pointer;
 	user-select: none;
-	border-bottom: 1px dashed var(--vscode-editorGroup-border);
-	margin-bottom: 8px;
+	border-bottom: 1px solid color-mix(in srgb, var(--vscode-widget-border) 85%, transparent);
+	margin-bottom: 0;
 	font-family: var(--vscode-font-family);
 	font-size: var(--vscode-font-size);
 
@@ -50,16 +50,17 @@ const ResponseContainer = styled.div`
 	font-size: var(--vscode-editor-font-size, 12px);
 	background-color: ${CODE_BLOCK_BG_COLOR};
 	color: var(--vscode-editor-foreground, #d4d4d4);
-	border-radius: 3px;
-	border: 1px solid var(--vscode-editorGroup-border);
+	border-radius: 8px;
+	border: 1px solid color-mix(in srgb, var(--vscode-widget-border) 90%, transparent);
 	overflow: hidden;
 	z-index: 0;
+	box-shadow: 0 1px 0 color-mix(in srgb, var(--vscode-foreground) 4%, transparent);
 
 	.response-content {
 		overflow-x: auto;
 		overflow-y: hidden;
 		max-width: 100%;
-		padding: 10px;
+		padding: 12px;
 	}
 `
 

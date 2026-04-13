@@ -4,6 +4,8 @@ import { Mode } from "@shared/storage/types";
 import { useEffect } from "react";
 import { ApiKeyField } from "../common/ApiKeyField";
 import { useExtensionState } from "@/context/ExtensionStateContext";
+import { cn } from "@/lib/utils";
+import { settingsUi } from "../settingsUi";
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers";
 
 /** ASI:One — `baseURL` + model `asi1-mini` (same shape as OpenAI client config). */
@@ -90,20 +92,16 @@ export const AsiOneSettings = ({
 	]);
 
 	return (
-		<div>
-			<div className="mb-2.5">
-				<div className="flex items-center gap-2 mb-1">
-					<span style={{ fontWeight: 500 }}>Endpoint</span>
+		<div className="flex flex-col gap-4">
+			<div>
+				<div className="mb-1.5 flex items-center gap-2">
+					<span className={cn(settingsUi.formLabel, "!mb-0")}>Endpoint</span>
 					{remoteLocksBase && (
 						<i className="codicon codicon-lock text-description text-sm" />
 					)}
 				</div>
 				<div
-					className="px-2 py-1.5 rounded text-sm"
-					style={{
-						background: "var(--vscode-editor-inactiveSelectionBackground)",
-						opacity: 0.95,
-					}}
+					className={`rounded-lg border border-(--vscode-widget-border) bg-(--vscode-editor-inactiveSelectionBackground)/80 px-3 py-2 text-sm`}
 				>
 					<code className="text-xs">
 						{(remoteLocksBase
@@ -111,7 +109,7 @@ export const AsiOneSettings = ({
 							: ASI_ONE_BASE_URL) || ASI_ONE_BASE_URL}
 					</code>
 				</div>
-				<p className="text-description text-xs mt-1 mb-0">
+				<p className={cn(settingsUi.hint, "mt-2")}>
 					ASI:One chat API — fixed for this extension.
 				</p>
 			</div>
@@ -124,17 +122,13 @@ export const AsiOneSettings = ({
 				providerName="ASI:One"
 			/>
 
-			<div className="mt-3 mb-1">
-				<span style={{ fontWeight: 500 }}>Model</span>
-				<div
-					className="mt-1 px-2 py-1.5 rounded text-sm"
-					style={{
-						background: "var(--vscode-editor-inactiveSelectionBackground)",
-						opacity: 0.95,
-					}}
-				>
+			<div>
+				<span className={settingsUi.formLabel}>Model</span>
+				<div className="mt-1.5 rounded-lg border border-(--vscode-widget-border) bg-(--vscode-editor-inactiveSelectionBackground)/80 px-3 py-2 text-sm">
 					<code className="text-xs">{ASI_ONE_MODEL_ID}</code>
-					<span className="text-description text-xs ml-2">· 128k context</span>
+					<span className="ml-2 text-xs text-(--vscode-descriptionForeground)">
+						· 128k context
+					</span>
 				</div>
 			</div>
 		</div>

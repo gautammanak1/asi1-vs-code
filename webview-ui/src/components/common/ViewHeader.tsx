@@ -22,7 +22,7 @@ const ViewHeader = ({ title, onDone, showEnvironmentSuffix, environment }: ViewH
 	const titleColor = getEnvironmentColor(environment)
 
 	return (
-		<div className="flex justify-between items-center py-2.5 px-5 mb-[17px]">
+		<div className="mb-0 flex items-center justify-between border-b border-(--vscode-widget-border) px-5 py-3">
 			<div className="relative">
 				<h3 className="m-0 text-lg font-normal" style={{ color: titleColor }}>
 					{title}

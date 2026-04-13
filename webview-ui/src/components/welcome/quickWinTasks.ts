@@ -24,7 +24,16 @@ export const quickWinTasks: QuickWinTask[] = [
 		description: "Set up two agents communicating via the Fetch.ai Chat Protocol",
 		icon: "ChatIcon",
 		actionCommand: "Asi/createChatAgents",
-		prompt: "Create two Fetch.ai uAgents that communicate using the Agent Chat Protocol (ChatMessage, ChatAcknowledgement, TextContent from uagents_core.contrib.protocols.chat). Agent 1 sends a message on startup, Agent 2 receives and replies. Include requirements.txt, .env.example, and a README with run instructions.",
+		prompt: `Create two Fetch.ai uAgent Python files that follow the official Agent Chat Protocol exactly as documented at https://innovationlab.fetch.ai/resources/docs/agent-communication/agent-chat-protocol
+
+Required pattern (do not invent alternate APIs):
+- Import from uagents_core.contrib.protocols.chat: ChatMessage, ChatAcknowledgement, TextContent, chat_protocol_spec
+- Use chat_proto = Protocol(spec=chat_protocol_spec) and agent.include(chat_proto, publish_manifest=True) on BOTH agents
+- Agent A: on startup, send a ChatMessage whose content is [TextContent(type="text", text="...")] to Agent B's address (placeholder; README explains copying the real address from logs)
+- Agent B: on ChatMessage, for each TextContent: send ChatAcknowledgement(timestamp=..., acknowledged_msg_id=msg.msg_id), then send a reply ChatMessage with new msg_id and TextContent (same pattern as the Innovation Lab agent2 example)
+- Include handlers for ChatAcknowledgement on both sides (log only is fine)
+- Use distinct ports/endpoints for local runs (e.g. 8000 and 8001) with endpoint=["http://localhost:PORT/submit"] as in the docs
+- Add requirements.txt (uagents, uagents-core as needed), .env.example (no secrets), and README: start Agent B first, copy address into Agent A, then run Agent A`,
 		buttonText: ">",
 	},
 	{

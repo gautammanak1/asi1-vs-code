@@ -38,6 +38,7 @@ import deepEqual from "fast-deep-equal"
 import * as fs from "fs/promises"
 import { nanoid } from "nanoid"
 import ReconnectingEventSource from "reconnecting-eventsource"
+import { isRecoverableRemoteStreamClosureError } from "./mcpTransportErrorUtils"
 import { z } from "zod"
 import { HostProvider } from "@/hosts/host-provider"
 import { fetch } from "@/shared/net"
@@ -577,6 +578,13 @@ export class McpHub {
 					})
 
 					transport.onerror = async (error) => {
+						if (isRecoverableRemoteStreamClosureError(error)) {
+							Logger.debug(
+								`SSE transport stream closed (recoverable) for "${name}" — remote may reconnect:`,
+								error,
+							)
+							return
+						}
 						Logger.error(`Transport error for "${name}":`, error)
 						const connection = this.findConnection(name, source)
 						if (connection) {
