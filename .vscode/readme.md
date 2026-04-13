@@ -8,3 +8,5 @@ This folder holds editor and debugger settings for working on the Fetch Coder ex
 - **`extensions.json`** — Recommended extensions for contributors.
 
 Open the Run and Debug view (`Cmd+Shift+D` / `Ctrl+Shift+D`) and pick a configuration to start debugging the extension.
+
+For CI status, check the GitHub Actions tab on the repository.
