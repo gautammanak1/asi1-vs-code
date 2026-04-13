@@ -1,5 +1,6 @@
 import type React from "react";
 import type { ReactNode } from "react";
+import { VSCodeLink } from "@vscode/webview-ui-toolkit/react";
 import { Mode } from "@shared/storage/types";
 import { cn } from "@/lib/utils";
 import {
@@ -63,7 +64,23 @@ const ApiOptions = ({
 					<code className="rounded bg-(--vscode-textCodeBlock-background) px-1 text-[11px]">
 						ASI_ONE_API_KEY
 					</code>{" "}
-					in the environment). Endpoint and model are fixed.
+					in the environment). New to ASI:One? Follow the{" "}
+					<VSCodeLink
+						className="text-inherit"
+						href="https://docs.asi1.ai/documentation/getting-started/quickstart"
+						style={{ fontSize: "inherit", textDecoration: "underline" }}
+					>
+						developer quickstart
+					</VSCodeLink>{" "}
+					to create a key. Product overview:{" "}
+					<VSCodeLink
+						className="text-inherit"
+						href="https://fetch-coder.vercel.app/"
+						style={{ fontSize: "inherit", textDecoration: "underline" }}
+					>
+						Fetch Coder
+					</VSCodeLink>
+					.
 				</p>
 			</div>
 

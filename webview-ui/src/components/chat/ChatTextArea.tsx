@@ -1637,7 +1637,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 
 		return (
 			<div className="fc-chat-composer-root">
-				<div className="fc-chat-composer-card group rounded-lg border border-(--vscode-input-border) bg-(--vscode-input-background) overflow-hidden shadow-none transition-[border-color,box-shadow] duration-150 focus-within:border-(--vscode-focusBorder) focus-within:shadow-[0_0_0_1px_var(--vscode-focusBorder)]">
+				<div className="fc-chat-composer-card group rounded-lg border border-(--vscode-input-border) bg-(--vscode-input-background) overflow-visible shadow-none transition-[border-color,box-shadow] duration-150 focus-within:border-(--vscode-focusBorder) focus-within:shadow-[0_0_0_1px_var(--vscode-focusBorder)]">
 				<div
 					className="relative flex transition-colors ease-in-out duration-100 px-2 py-2"
 					onDragEnter={handleDragEnter}
@@ -1714,7 +1714,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							borderRight: isTextAreaFocused ? 0 : undefined,
 							borderTop: isTextAreaFocused ? 0 : undefined,
 							borderBottom: isTextAreaFocused ? 0 : undefined,
-							padding: `9px 28px ${9 + thumbnailsHeight}px 9px`,
+							padding: `9px 36px ${9 + thumbnailsHeight}px 9px`,
 						}}
 					/>
 					<DynamicTextArea
@@ -1784,7 +1784,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							// borderLeft: "9px solid transparent", // NOTE: react-textarea-autosize doesn't calculate correct height when using borderLeft/borderRight so we need to use horizontal padding instead
 							// Instead of using boxShadow, we use a div with a border to better replicate the behavior when the textarea is focused
 							// boxShadow: "0px 0px 0px 1px var(--vscode-input-border)",
-							padding: "9px 28px 9px 9px",
+							padding: "9px 36px 9px 9px",
 							cursor: "text",
 							flex: 1,
 							zIndex: 1,
@@ -1834,6 +1834,17 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						style={{ height: textAreaBaseHeight }}
 					>
 					<div className="flex flex-row items-center gap-1">
+						<Tooltip>
+							<TooltipContent>Open API settings</TooltipContent>
+							<TooltipTrigger>
+								<div
+									className="input-icon-button flex items-center justify-center codicon codicon-settings-gear text-[14px]"
+									data-testid="composer-settings-button"
+									onClick={handleModelButtonClick}
+									style={{ cursor: "pointer" }}
+								/>
+							</TooltipTrigger>
+						</Tooltip>
 						<Tooltip>
 							<TooltipContent>Enhance prompt</TooltipContent>
 							<TooltipTrigger>

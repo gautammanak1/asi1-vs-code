@@ -4,8 +4,6 @@ import { Mode } from "@shared/storage/types";
 import { useEffect } from "react";
 import { ApiKeyField } from "../common/ApiKeyField";
 import { useExtensionState } from "@/context/ExtensionStateContext";
-import { cn } from "@/lib/utils";
-import { settingsUi } from "../settingsUi";
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers";
 
 /** ASI:One — `baseURL` + model `asi1-mini` (same shape as OpenAI client config). */
@@ -93,27 +91,6 @@ export const AsiOneSettings = ({
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div>
-				<div className="mb-1.5 flex items-center gap-2">
-					<span className={cn(settingsUi.formLabel, "!mb-0")}>Endpoint</span>
-					{remoteLocksBase && (
-						<i className="codicon codicon-lock text-description text-sm" />
-					)}
-				</div>
-				<div
-					className={`rounded-lg border border-(--vscode-widget-border) bg-(--vscode-editor-inactiveSelectionBackground)/80 px-3 py-2 text-sm`}
-				>
-					<code className="text-xs">
-						{(remoteLocksBase
-							? apiConfiguration?.openAiBaseUrl
-							: ASI_ONE_BASE_URL) || ASI_ONE_BASE_URL}
-					</code>
-				</div>
-				<p className={cn(settingsUi.hint, "mt-2")}>
-					ASI:One chat API — fixed for this extension.
-				</p>
-			</div>
-
 			<ApiKeyField
 				initialValue={apiConfiguration?.openAiApiKey || ""}
 				onChange={(value) => {
@@ -121,16 +98,6 @@ export const AsiOneSettings = ({
 				}}
 				providerName="ASI:One"
 			/>
-
-			<div>
-				<span className={settingsUi.formLabel}>Model</span>
-				<div className="mt-1.5 rounded-lg border border-(--vscode-widget-border) bg-(--vscode-editor-inactiveSelectionBackground)/80 px-3 py-2 text-sm">
-					<code className="text-xs">{ASI_ONE_MODEL_ID}</code>
-					<span className="ml-2 text-xs text-(--vscode-descriptionForeground)">
-						· 128k context
-					</span>
-				</div>
-			</div>
 		</div>
 	);
 };

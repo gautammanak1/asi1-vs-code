@@ -20,14 +20,14 @@ describe("ApiOptions (ASI:One only)", () => {
 		global.vscode = { postMessage: mockPostMessage };
 	});
 
-	it("renders ASI:One API section and fixed model", () => {
+	it("renders ASI:One API section and documentation links", () => {
 		render(
 			<ExtensionStateContextProvider>
 				<ApiOptions currentMode="plan" showModelOptions={true} />
 			</ExtensionStateContextProvider>,
 		);
 		expect(screen.getAllByText(/ASI:One/).length).toBeGreaterThan(0);
-		expect(screen.getByText("Model")).toBeInTheDocument();
-		expect(screen.getByText("asi1-mini", { exact: true })).toBeInTheDocument();
+		expect(screen.getByText("developer quickstart")).toBeInTheDocument();
+		expect(screen.getByText("Fetch Coder")).toBeInTheDocument();
 	});
 });
