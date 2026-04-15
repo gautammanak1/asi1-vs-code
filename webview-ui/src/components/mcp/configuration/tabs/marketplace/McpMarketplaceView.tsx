@@ -161,10 +161,10 @@ const McpMarketplaceView = () => {
 		>
 			<div
 				style={{
-					padding: "20px 20px 5px",
+					padding: "12px 12px 4px",
 					display: "flex",
 					flexDirection: "column",
-					gap: "16px",
+					gap: "10px",
 				}}
 			>
 				{/* Search row */}

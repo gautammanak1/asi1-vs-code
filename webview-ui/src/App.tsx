@@ -1,8 +1,7 @@
 import type { Boolean, EmptyRequest } from "@shared/proto/Asi/common";
 import { useCallback, useEffect } from "react";
 import ChatView from "./components/chat/ChatView";
-// Kanban promo modal disabled for POC (ASI:One focus — no extra modal on startup).
-// import AsiKanbanLaunchModal, { Asi_KANBAN_MODAL_DISMISS_ID } from "./components/common/AsiKanbanLaunchModal"
+// Kanban promo modal removed — ASI:One-focused UX.
 import HistoryView from "./components/history/HistoryView";
 import McpView from "./components/mcp/configuration/McpConfigurationView";
 import OnboardingView from "./components/onboarding/OnboardingView";
@@ -71,24 +70,6 @@ const AppContent = () => {
 		showAnnouncement,
 		showUpdateAnnouncementModal,
 	]);
-
-	/*
-	const [showKanbanModal, setShowKanbanModal] = useState(false)
-	const [hasShownKanbanModal, setHasShownKanbanModal] = useState(false)
-	useEffect(() => {
-		if (!didHydrateState || showWelcome || hasShownKanbanModal) return
-		const hasDismissedKanbanModal = dismissedBanners?.some((b) => b.bannerId === Asi_KANBAN_MODAL_DISMISS_ID)
-		if (!hasDismissedKanbanModal) setShowKanbanModal(true)
-		setHasShownKanbanModal(true)
-	}, [didHydrateState, dismissedBanners, hasShownKanbanModal, showWelcome])
-	const handleCloseKanbanModal = useCallback((doNotShowAgain: boolean) => {
-		setShowKanbanModal(false)
-		if (doNotShowAgain) {
-			StateServiceClient.dismissBanner({ value: Asi_KANBAN_MODAL_DISMISS_ID }).catch(console.error)
-		}
-	}, [])
-	<AsiKanbanLaunchModal onClose={handleCloseKanbanModal} open={showKanbanModal} />
-	*/
 
 	if (!didHydrateState) {
 		return null;

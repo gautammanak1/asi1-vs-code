@@ -7,6 +7,7 @@ import {
 	DROPDOWN_Z_INDEX,
 	OPENROUTER_MODEL_PICKER_Z_INDEX,
 } from "./z-index-constants";
+import { ASI_DEVELOPER_PORTAL_URL } from "@/config/urls";
 import { AsiOneSettings } from "./providers/AsiOneSettings";
 import { settingsUi } from "./settingsUi";
 
@@ -64,23 +65,31 @@ const ApiOptions = ({
 					<code className="rounded bg-(--vscode-textCodeBlock-background) px-1 text-[11px]">
 						ASI_ONE_API_KEY
 					</code>{" "}
-					in the environment). New to ASI:One? Follow the{" "}
+					in the environment). Create or manage keys in the{" "}
+					<VSCodeLink
+						className="text-inherit"
+						href={ASI_DEVELOPER_PORTAL_URL}
+						style={{ fontSize: "inherit", textDecoration: "underline" }}
+					>
+						ASI:One developer portal
+					</VSCodeLink>
+					. New to the API? See the{" "}
 					<VSCodeLink
 						className="text-inherit"
 						href="https://docs.asi1.ai/documentation/getting-started/quickstart"
 						style={{ fontSize: "inherit", textDecoration: "underline" }}
 					>
-						developer quickstart
+						quickstart
 					</VSCodeLink>{" "}
-					to create a key. Product overview:{" "}
+					and the{" "}
 					<VSCodeLink
 						className="text-inherit"
 						href="https://fetch-coder.vercel.app/"
 						style={{ fontSize: "inherit", textDecoration: "underline" }}
 					>
 						Fetch Coder
-					</VSCodeLink>
-					.
+					</VSCodeLink>{" "}
+					site.
 				</p>
 			</div>
 

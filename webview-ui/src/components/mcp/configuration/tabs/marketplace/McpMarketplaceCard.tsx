@@ -32,7 +32,7 @@ const McpMarketplaceCard = ({
 	return (
 		<a
 			className={cn(
-				"mcp-marketplace-card group flex flex-col gap-3 rounded-xl border border-(--vscode-widget-border) bg-(--vscode-editor-background) p-4 no-underline text-inherit transition-colors duration-150",
+				"mcp-marketplace-card group flex flex-col gap-2 rounded-lg border border-(--vscode-widget-border) bg-(--vscode-sideBar-background) p-3 no-underline text-inherit transition-colors duration-150",
 				"hover:border-(--vscode-focusBorder)/50 hover:bg-(--vscode-list-hoverBackground)",
 				isDownloading && "pointer-events-none opacity-80",
 			)}

@@ -10,11 +10,13 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
 [![Powered by asi1.ai](https://img.shields.io/badge/Powered%20by-asi1.ai-0052FF?style=flat-square)](https://asi1.ai)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/fetchai)
-[![Release v0.2.15](https://img.shields.io/badge/release-v0.2.15-0052FF?style=flat-square)](https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.15)
+[![Release v0.2.18](https://img.shields.io/badge/release-v0.2.18-0052FF?style=flat-square)](https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.18)
 
 <p>Write code, debug, edit files, run commands — all conversationally with your AI partner.</p>
 
-<p align="center"><sub>Current extension version: <strong>0.2.15</strong> · Git tag: <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.15"><code>v0.2.15</code></a></sub></p>
+<p align="center"><sub>Current extension version: <strong>0.2.18</strong> · Git tag: <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.18"><code>v0.2.18</code></a></sub></p>
+
+<p align="center"><sub><strong>Marketplace note:</strong> VS Code Marketplace, Open VSX, and Cursor use this <code>README.md</code> from the repo root. Keep it aligned with the <code>description</code> field in <code>package.json</code> so store listings stay consistent.</sub></p>
 
 </div>
 
@@ -42,9 +44,9 @@ Search **"Fetch Coder"** in VS Code Extensions, or [install from VS Code Marketp
 
 ### 2️⃣ Get API Access
 
-1. Visit **[asi1.ai/dashboard](https://asi1.ai/dashboard)**
-2. Create an API key
-3. Paste it in Fetch Coder's welcome screen
+1. Open the **[ASI:One developer portal](https://asi1.ai/developer?utm_source=vscode&utm_medium=aff&utm_campaign=india2026)** (create and manage API keys).
+2. Optionally follow the **[API quickstart](https://docs.asi1.ai/documentation/getting-started/quickstart)**.
+3. Paste the key in Fetch Coder’s welcome screen or **Settings → API Configuration**.
 
 ### 3️⃣ Start Building
 
@@ -182,11 +184,13 @@ export ASI_ONE_API_KEY="your-api-key-here"
 
 | Button | Function |
 |--------|----------|
-| **@** | Add context (files, folders, screenshots) |
+| **@** | Add context (files, folders, git, etc.) |
 | **+** | Attach files or images |
 | **🌐** | Toggle web search |
-| **🔌** | Configure MCP servers |
-| **✨** | Enhance prompt with AI |
+| **⚙** | Open API / extension settings |
+| **▤** | Templates (Fetch.ai / uAgents shortcuts) |
+| **🔌** | MCP servers |
+| **✨** | Enhance **prompt only** (rewrites your instruction, not the answer) |
 | **📤** | Send message |
 
 ---
@@ -218,7 +222,7 @@ npm run compile
 | Resource | Link |
 |----------|------|
 | **Website** | [asi1.ai](https://asi1.ai) |
-| **Dashboard** | [asi1.ai/dashboard](https://asi1.ai/dashboard) |
+| **Developer portal (keys)** | [asi1.ai/developer](https://asi1.ai/developer?utm_source=vscode&utm_medium=aff&utm_campaign=india2026) |
 | **API Docs** | [docs.asi1.ai](https://docs.asi1.ai) |
 | **GitHub** | [gautammanak1/asi1-vs-code](https://github.com/gautammanak1/asi1-vs-code) |
 | **Agentverse** | [agentverse.ai](https://agentverse.ai) |

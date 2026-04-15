@@ -58,13 +58,7 @@ import {
 	validateSlashCommand,
 } from "@/utils/slash-commands";
 import AsiRulesToggleModal from "../asi-rules/ClineRulesToggleModal";
-import {
-	VoiceInputButton,
-	type VoiceInputHandle,
-} from "@/components/voice/VoiceInputButton";
-import { useVoiceSettings } from "@/hooks/useVoiceSettings";
 import { stopGlobalTts } from "@/services/globalTts";
-import { resolveSpeechLanguage } from "@/types/voice-settings";
 import ServersToggleModal from "./ServersToggleModal";
 
 const { MAX_IMAGES_AND_FILES_PER_MESSAGE } = CHAT_CONSTANTS;
@@ -254,25 +248,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 			mcpServers,
 			AsiWebToolsEnabled,
 		} = useExtensionState();
-		const { settings, update: updateVoiceSettings } = useVoiceSettings();
-		const speechLang = useMemo(
-			() => resolveSpeechLanguage(settings),
-			[settings],
-		);
-		const voiceLanguageBadge = useMemo(() => {
-			if (settings.language === "en") {
-				return null;
-			}
-			if (settings.language === "auto") {
-				const short = (navigator.language || "en")
-					.split("-")[0]
-					?.toLowerCase();
-				return short === "en" ? null : speechLang.label;
-			}
-			return speechLang.label;
-		}, [settings.language, speechLang.label]);
-		const voiceInputRef = useRef<VoiceInputHandle>(null);
-		const [voiceInterim, setVoiceInterim] = useState("");
 		const inputValueRef = useRef(inputValue);
 		inputValueRef.current = inputValue;
 		const [isTextAreaFocused, setIsTextAreaFocused] = useState(false);
@@ -703,30 +678,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					? event.nativeEvent.keyCode === 229
 					: (event.nativeEvent?.isComposing ?? false);
 
-				if (
-					(event.metaKey || event.ctrlKey) &&
-					event.shiftKey &&
-					event.key.toLowerCase() === "v"
-				) {
-					event.preventDefault();
-					updateVoiceSettings({
-						autoReadAi: !settings.autoReadAi,
-					});
-					return;
-				}
-
-				if (
-					settings.inputMode === "hold" &&
-					event.key === " " &&
-					!event.repeat &&
-					!isComposing
-				) {
-					if (!showSlashCommandsMenu && !showContextMenu) {
-						event.preventDefault();
-						voiceInputRef.current?.beginHold();
-					}
-				}
-
 				if (event.key === "Enter" && !event.shiftKey && !isComposing) {
 					event.preventDefault();
 
@@ -841,9 +792,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				slashCommandsQuery,
 				handleSlashCommandsSelect,
 				sendingDisabled,
-				settings.autoReadAi,
-				settings.inputMode,
-				updateVoiceSettings,
 			],
 		);
 
@@ -893,7 +841,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const handleInputChange = useCallback(
 			(e: React.ChangeEvent<HTMLTextAreaElement>) => {
 				stopGlobalTts();
-				setVoiceInterim("");
 				const newValue = e.target.value;
 				const newCursorPosition = e.target.selectionStart;
 				setInputValue(newValue);
@@ -1212,15 +1159,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 		const handleKeyUp = useCallback(
 			(e: React.KeyboardEvent<HTMLTextAreaElement>) => {
 				if (
-					settings.inputMode === "hold" &&
-					e.key === " " &&
-					!showSlashCommandsMenu &&
-					!showContextMenu
-				) {
-					e.preventDefault();
-					voiceInputRef.current?.endHold();
-				}
-				if (
 					[
 						"ArrowLeft",
 						"ArrowRight",
@@ -1233,12 +1171,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					updateCursorPosition();
 				}
 			},
-			[
-				settings.inputMode,
-				showContextMenu,
-				showSlashCommandsMenu,
-				updateCursorPosition,
-			],
+			[updateCursorPosition],
 		);
 
 		const onModeToggle = useCallback(() => {
@@ -1277,7 +1210,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 				const apiKey = apiConfiguration?.openAiApiKey;
 				const baseUrl = apiConfiguration?.openAiBaseUrl || "https://api.asi1.ai/v1";
 				if (!apiKey) {
-					setInputValue(`${text}\n\nPlease provide a detailed, well-structured solution with code examples and best practices. Think step by step.`);
 					return;
 				}
 				const res = await fetch(`${baseUrl}/chat/completions`, {
@@ -1286,11 +1218,15 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					body: JSON.stringify({
 						model: "asi1-mini",
 						messages: [
-							{ role: "system", content: "You are a prompt engineer. Rewrite the user's prompt to be clearer, more specific, and more likely to produce excellent results from an AI coding assistant. Keep the same intent but make it detailed and well-structured. Return ONLY the improved prompt text, nothing else." },
+							{
+								role: "system",
+								content:
+									"You rewrite user prompts for a coding assistant. Output rules: (1) Return ONLY the improved prompt, one block of text. (2) Do not answer the task, do not add code, do not add bullet lists of solutions. (3) Keep the same goal; make it clearer, scoped, and actionable for an IDE agent.",
+							},
 							{ role: "user", content: text },
 						],
-						temperature: 0.3,
-						max_tokens: 500,
+						temperature: 0.2,
+						max_tokens: 4096,
 						stream: false,
 					}),
 				});
@@ -1302,7 +1238,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					}
 				}
 			} catch {
-				setInputValue(`${text}\n\nPlease provide a detailed, well-structured solution with code examples and best practices. Think step by step.`);
+				// Keep original prompt on failure
 			} finally {
 				setIsEnhancing(false);
 			}
@@ -1720,8 +1656,8 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					<DynamicTextArea
 						autoFocus={true}
 						data-testid="chat-input"
-						maxRows={10}
-						minRows={3}
+						maxRows={14}
+						minRows={2}
 						onBlur={handleBlur}
 						onChange={(e) => {
 							handleInputChange(e);
@@ -1799,11 +1735,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						}}
 						value={inputValue}
 					/>
-					{voiceInterim ? (
-						<div className="interim-transcript pointer-events-none absolute bottom-11 left-9 right-20 z-[2] truncate text-xs italic text-(--vscode-input-placeholderForeground)">
-							{voiceInterim}
-						</div>
-					) : null}
 					{!inputValue &&
 						selectedImages.length === 0 &&
 						selectedFiles.length === 0 && (
@@ -1834,17 +1765,6 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						style={{ height: textAreaBaseHeight }}
 					>
 					<div className="flex flex-row items-center gap-1">
-						<Tooltip>
-							<TooltipContent>Open API settings</TooltipContent>
-							<TooltipTrigger>
-								<div
-									className="input-icon-button flex items-center justify-center codicon codicon-settings-gear text-[14px]"
-									data-testid="composer-settings-button"
-									onClick={handleModelButtonClick}
-									style={{ cursor: "pointer" }}
-								/>
-							</TooltipTrigger>
-						</Tooltip>
 						<Tooltip>
 							<TooltipContent>Enhance prompt</TooltipContent>
 							<TooltipTrigger>
@@ -1878,11 +1798,11 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					</div>
 					</div>
 				</div>
-				<div className="fc-chat-composer-toolbar flex justify-between items-center px-2 pb-2 pt-0.5">
+				<div className="fc-chat-composer-toolbar flex justify-between items-center px-1.5 pb-1.5 pt-0.5">
 					{/* Always render both components, but control visibility with CSS */}
-					<div className="relative flex-1 min-w-0 h-5">
+					<div className="relative flex-1 min-w-0 h-4">
 						{/* ButtonGroup - always in DOM but visibility controlled */}
-						<ButtonGroup className="absolute top-0 left-0 right-0 ease-in-out w-full h-5 z-10 flex items-center">
+						<ButtonGroup className="absolute top-0 left-0 right-0 ease-in-out w-full h-4 z-10 flex items-center">
 							<Tooltip>
 								<TooltipContent>Add Context</TooltipContent>
 								<TooltipTrigger>
@@ -1951,21 +1871,22 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 								</TooltipTrigger>
 							</Tooltip>
 
-							<VoiceInputButton
-								apiKey={apiConfiguration?.openAiApiKey ?? ""}
-								disabled={sendingDisabled}
-								languageBadge={voiceLanguageBadge}
-								onInterimResult={setVoiceInterim}
-								onTranscription={(text) => {
-									setVoiceInterim("");
-									const v = inputValueRef.current;
-									setInputValue(v.length ? `${v} ${text}` : text);
-								}}
-								ref={voiceInputRef}
-								transcriptionMethod={settings.transcriptionMethod}
-								webSpeechLang={speechLang.webSpeech}
-								whisperLang={speechLang.whisper}
-							/>
+							<Tooltip>
+								<TooltipContent>Open API settings</TooltipContent>
+								<TooltipTrigger>
+									<VSCodeButton
+										appearance="icon"
+										aria-label="Open API settings"
+										className="p-0 m-0 flex items-center"
+										data-testid="composer-settings-button"
+										onClick={handleModelButtonClick}
+									>
+										<ButtonContainer>
+											<span className="codicon codicon-settings-gear" style={{ fontSize: "12px" }} />
+										</ButtonContainer>
+									</VSCodeButton>
+								</TooltipTrigger>
+							</Tooltip>
 
 							<div className="relative">
 								<Tooltip>

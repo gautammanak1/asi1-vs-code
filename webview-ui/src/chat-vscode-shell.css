@@ -7,6 +7,14 @@
 	min-height: 100%;
 	background-color: var(--vscode-sideBar-background);
 	color: var(--vscode-sideBar-foreground);
+	/* Slightly denser than default editor font; still follows theme. */
+	font-size: max(11px, calc(var(--vscode-font-size, 13px) * 0.94));
+	line-height: 1.35;
+}
+
+.fetch-coder-webview-root .fc-chat-composer-root textarea,
+.fetch-coder-webview-root .fc-chat-composer-root .fc-chat-composer-card {
+	font-size: max(11px, calc(var(--vscode-editor-font-size, var(--vscode-font-size, 13px)) * 0.96));
 }
 
 /* Unified chat composer (input + tool row) */

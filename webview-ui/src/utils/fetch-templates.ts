@@ -48,15 +48,16 @@ If the project already has ASI:One config, extend it rather than duplicating.`,
 		id: "multi-agent",
 		title: "Multi-agent communication",
 		description: "Agent Chat Protocol (official uAgents pattern)",
-		body: `Implement or document multi-agent messaging using the Fetch.ai Agent Chat Protocol.
+		body: `Implement multi-agent messaging using ONLY the official Fetch.ai **Agent Chat Protocol** (ACP) as documented — do not invent a separate "chat proto" or parallel protocol.
 
 Authoritative reference: https://innovationlab.fetch.ai/resources/docs/agent-communication/agent-chat-protocol
 
-Requirements:
-- Use ChatMessage, ChatAcknowledgement, and TextContent from uagents_core.contrib.protocols.chat with chat_protocol_spec.
-- Show the request/acknowledgement/reply flow (ack immediately, then optional ChatMessage reply).
-- If you add code, use two agents with Protocol(spec=chat_protocol_spec) and include(..., publish_manifest=True) on each.
+Requirements (strict):
+- Import and use \`chat_protocol_spec\` from \`uagents_core.contrib.protocols.chat\` (or the current documented import path in the installed uagents version). Wire handlers with \`Protocol(spec=chat_protocol_spec)\` and \`include(..., publish_manifest=True)\` on each agent.
+- Use \`ChatMessage\`, \`ChatAcknowledgement\`, and \`TextContent\` from the same module tree as in the official docs — do not substitute ad-hoc JSON/protobuf "chat" schemas.
+- Implement the flow: inbound ChatMessage → send ChatAcknowledgement promptly → optional follow-up ChatMessage reply, as in the docs.
+- If the repo already has agent code, extend it to match ACP instead of adding a second, duplicate chat layer.
 
-Use @file: mentions for any existing agent code in this repo.`,
+Use @file: mentions for existing agent modules in this repo.`,
 	},
 ]

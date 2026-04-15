@@ -1548,6 +1548,56 @@ export class McpHub {
 		}
 	}
 
+	public async addStdioServer(
+		serverName: string,
+		config: {
+			command: string
+			args?: string[]
+			env?: Record<string, string>
+			cwd?: string
+		},
+	): Promise<McpServer[]> {
+		try {
+			const settings = await this.readAndValidateMcpSettingsFile()
+			if (!settings) {
+				throw new Error("Failed to read MCP settings")
+			}
+
+			if (settings.mcpServers[serverName]) {
+				throw new Error(`An MCP server with the name "${serverName}" already exists`)
+			}
+
+			const serverConfig = {
+				type: "stdio" as const,
+				command: config.command,
+				args: config.args ?? [],
+				...(config.env ? { env: config.env } : {}),
+				...(config.cwd ? { cwd: config.cwd } : {}),
+				disabled: false,
+				autoApprove: [],
+			}
+
+			const expandedConfig = expandEnvironmentVariables(serverConfig)
+			const parsedConfig = ServerConfigSchema.parse(expandedConfig)
+
+			settings.mcpServers[serverName] = parsedConfig
+			const settingsPath = await getMcpSettingsFilePathHelper(await this.getSettingsDirectoryPath())
+
+			await fs.writeFile(
+				settingsPath,
+				JSON.stringify({ mcpServers: { ...settings.mcpServers, [serverName]: serverConfig } }, null, 2),
+			)
+
+			await this.updateServerConnectionsRPC(settings.mcpServers)
+
+			const serverOrder = Object.keys(settings.mcpServers || {})
+			return this.getSortedMcpServers(serverOrder)
+		} catch (error) {
+			Logger.error("Failed to add stdio MCP server:", error)
+			throw error
+		}
+	}
+
 	public async addRemoteServer(serverName: string, serverUrl: string, transportType = "streamableHttp"): Promise<McpServer[]> {
 		try {
 			const settings = await this.readAndValidateMcpSettingsFile()

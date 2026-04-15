@@ -27,7 +27,8 @@ describe("ApiOptions (ASI:One only)", () => {
 			</ExtensionStateContextProvider>,
 		);
 		expect(screen.getAllByText(/ASI:One/).length).toBeGreaterThan(0);
-		expect(screen.getByText("developer quickstart")).toBeInTheDocument();
+		expect(screen.getByText("ASI:One developer portal")).toBeInTheDocument();
+		expect(screen.getByText("quickstart")).toBeInTheDocument();
 		expect(screen.getByText("Fetch Coder")).toBeInTheDocument();
 	});
 });
