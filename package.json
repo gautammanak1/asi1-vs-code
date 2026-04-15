@@ -2,7 +2,7 @@
 	"name": "fetch-coder",
 	"displayName": "Fetch Coder",
 	"description": "Fetch Coder is an autonomous AI coding agent integrated into VS Code, powered by asi1.ai. It works like having a senior engineer sitting beside you—understanding your codebase, writing code, debugging issues, running commands, and iterating until the job is done.",
-	"version": "0.2.19",
+	"version": "0.2.20",
 	"icon": "assets/icons/icon.png",
 	"galleryBanner": {
 		"color": "#1e1e1e",

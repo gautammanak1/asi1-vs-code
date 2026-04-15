@@ -363,6 +363,24 @@ const ChatView = ({
 		return text;
 	}, [task]);
 
+	const followUpSnippet = useMemo(() => {
+		for (let i = modifiedMessages.length - 1; i >= 0; i--) {
+			const m = modifiedMessages[i];
+			if (m.type === "say" && m.say === "text" && m.text?.trim()) {
+				return m.text;
+			}
+		}
+		return null;
+	}, [modifiedMessages]);
+
+	const lastMessage = modifiedMessages[modifiedMessages.length - 1];
+	const followUpVisible = Boolean(
+		task &&
+			followUpSnippet &&
+			lastMessage?.partial !== true &&
+			!chatState.sendingDisabled,
+	);
+
 	return (
 		<ChatLayout isHidden={isHidden}>
 			<div className="flex flex-col flex-1 overflow-hidden">
@@ -416,6 +434,8 @@ const ChatView = ({
 				/>
 				<InputSection
 					chatState={chatState}
+					followUpSnippet={followUpSnippet}
+					followUpVisible={followUpVisible}
 					messageHandlers={messageHandlers}
 					placeholderText={placeholderText}
 					scrollBehavior={scrollBehavior}

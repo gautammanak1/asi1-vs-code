@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.20] - 2026-04-16
+
+### Changed
+
+- **Chat UI:** Removed custom Copilot-style cursor overlay. Removed per-message TTS controls and auto-read from assistant rows; Voice settings tab hidden (speech features off by default in product UI).
+- **Chat:** Deduplicate adjacent identical assistant messages and consecutive duplicate markdown blocks to fix repeated lines. Markdown code fences collapse with **Show more / Show less**; language label on fenced blocks; default unlabeled fences use plain text highlighting instead of JavaScript.
+- **Chat:** Follow-up prompt suggestion chips above the input (context-aware + defaults).
+- **MCP:** Clearer workspace config card styling and JSON format preview.
+- **Workspace paths:** Inline file paths confirmed in the repo show a stronger focus ring and “open in workspace editor” tooltip.
+
+---
+
+## [0.2.19] - 2026-04-13
+
+### Summary
+
+This release focuses the product on **ASI:One / OpenAI-compatible** usage: the API layer and tooling surface are trimmed to a single client path, **account Auth0 integration is present in the tree but disabled** in favor of the existing **Asi / WorkOS** account flow, and prompts plus extension wiring are aligned with the **ASI1** tool set.
+
+### Highlights
+
+- **API providers:** Removed the large multi-provider matrix; core chat goes through the **ASI1-oriented client** (`asi1Client` / renamed provider path). Related unit tests for removed providers were dropped.
+- **Account / auth:** **OCA** account flows and proto (`oca_account`) removed. **Auth0** implementation files remain for future use; **Auth0 is not selected at runtime** (`selectAccountAuthProvider` stays on **AsiAuthProvider**). **OAuth `state`** is still forwarded on `/auth` callbacks for when PKCE is re-enabled.
+- **Controller:** After login, **Auth0-specific “don’t overwrite LLM provider”** handling is commented out with Auth0 disabled; legacy behavior continues to apply **Asi** API provider switching where applicable.
+- **Prompts:** System prompt **registry and tools** are consolidated around **ASI1**; many unused model **variants** (e.g. Gemini, GLM, Hermes, Trinity, XS, native GPT variants, etc.) were removed.
+- **Extension / webview:** New **extension AI** scaffolding (`src/extension/ai/…`), **Copilot-style cursor** UI pieces in the webview, and a **refactor-with-Cline** command path.
+- **Docs:** Added `docs/architecture/AI_CODING_ASSISTANT.md`.
+
+### Quality
+
+- **`npm run ci:check-all`** (TypeScript, lint, format) passed before release.
+
+### Upgrade note
+
+Users relying on **non–ASI1 providers** or **OCA** from older builds should expect those code paths to be gone; configure **ASI:One** (`asiAssistant.*` / API key) as documented for this fork.
+
+---
+
 ## [0.2.15] - 2026-04-12
 
 ### Fixed

@@ -3,9 +3,16 @@ import { PlanActMode, TogglePlanActModeRequest } from "@shared/proto/Asi/state";
 import { SquareArrowOutUpRightIcon } from "lucide-react";
 import { marked } from "marked";
 import type { ComponentProps } from "react";
-import React, { memo, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+	memo,
+	useEffect,
+	useLayoutEffect,
+	useMemo,
+	useRef,
+	useState,
+} from "react";
 import ReactMarkdown from "react-markdown";
-import rehypeHighlight, { Options } from "rehype-highlight";
+import rehypeHighlight, { type Options } from "rehype-highlight";
 import remarkGfm from "remark-gfm";
 import type { Node } from "unist";
 import { visit } from "unist-util-visit";
@@ -18,10 +25,44 @@ import { WithCopyButton } from "./CopyButton";
 import UnsafeImage from "./UnsafeImage";
 import "./codeblock-parser.css";
 
+/** Drop consecutive lexer blocks with identical trimmed content (duplicate paragraphs). */
+function dedupeConsecutiveMarkdownBlocks(blocks: string[]): string[] {
+	const out: string[] = [];
+	for (const raw of blocks) {
+		const t = raw.trim().replace(/\s+/g, " ");
+		if (t.length < 12) {
+			out.push(raw);
+			continue;
+		}
+		if (out.length === 0) {
+			out.push(raw);
+			continue;
+		}
+		const prev = out[out.length - 1].trim().replace(/\s+/g, " ");
+		if (t === prev) {
+			continue;
+		}
+		// Near-duplicate opening lines (model repeated the same intro)
+		if (
+			t.length > 48 &&
+			prev.length > 48 &&
+			t.slice(0, 96) === prev.slice(0, 96)
+		) {
+			if (t.length >= prev.length) {
+				out[out.length - 1] = raw;
+			}
+			continue;
+		}
+		out.push(raw);
+	}
+	return out;
+}
+
 function parseMarkdownIntoBlocks(markdown: string): string[] {
 	try {
 		const tokens = marked.lexer(markdown);
-		return tokens?.map((token) => token.raw);
+		const blocks = tokens?.map((token) => token.raw) ?? [markdown];
+		return dedupeConsecutiveMarkdownBlocks(blocks);
 	} catch {
 		return [markdown];
 	}
@@ -103,7 +144,7 @@ const MemoizedMarkdownBlock = memo(
 						return (tree: any) => {
 							visit(tree, "code", (node: any) => {
 								if (!node.lang) {
-									node.lang = "javascript";
+									node.lang = "plaintext";
 								} else if (node.lang.includes(".")) {
 									node.lang = node.lang.split(".").slice(-1)[0];
 								}
@@ -348,11 +389,28 @@ const remarkPreventBoldFilenames = () => {
 	};
 };
 
+const COLLAPSED_PRE_MAX_PX = 288;
+
 const PreWithCopyButton = ({
 	children,
 	...preProps
 }: React.HTMLAttributes<HTMLPreElement>) => {
 	const preRef = useRef<HTMLPreElement>(null);
+	const [expanded, setExpanded] = useState(false);
+	const [needsCollapse, setNeedsCollapse] = useState(false);
+	const [langLabel, setLangLabel] = useState<string | null>(null);
+
+	useLayoutEffect(() => {
+		const pre = preRef.current;
+		if (!pre) {
+			return;
+		}
+		const code = pre.querySelector("code");
+		const cls = code?.className ?? "";
+		const m = cls.match(/language-([\w#+-]+)/);
+		setLangLabel(m?.[1] ?? null);
+		setNeedsCollapse(pre.scrollHeight > COLLAPSED_PRE_MAX_PX + 20);
+	}, [children]);
 
 	const handleCopy = () => {
 		if (preRef.current) {
@@ -370,15 +428,42 @@ const PreWithCopyButton = ({
 	};
 
 	return (
-		<WithCopyButton
-			ariaLabel="Copy code"
-			onCopy={handleCopy}
-			position="top-right"
-		>
-			<pre {...preProps} ref={preRef}>
-				{children}
-			</pre>
-		</WithCopyButton>
+		<div className="my-1 overflow-hidden rounded-md border border-(--vscode-widget-border) bg-(--vscode-textCodeBlock-background)">
+			{langLabel && (
+				<div className="flex items-center justify-between border-b border-(--vscode-widget-border) bg-(--vscode-sideBar-background) px-2 py-1">
+					<span className="font-mono text-[10px] uppercase tracking-wide text-(--vscode-descriptionForeground)">
+						{langLabel}
+					</span>
+				</div>
+			)}
+			<WithCopyButton
+				ariaLabel="Copy code"
+				onCopy={handleCopy}
+				position="top-right"
+			>
+				<pre
+					{...preProps}
+					ref={preRef}
+					style={{
+						...preProps.style,
+						maxHeight:
+							expanded || !needsCollapse ? undefined : COLLAPSED_PRE_MAX_PX,
+						overflow: expanded || !needsCollapse ? undefined : "hidden",
+					}}
+				>
+					{children}
+				</pre>
+			</WithCopyButton>
+			{needsCollapse && (
+				<button
+					className="w-full border-t border-(--vscode-widget-border) bg-(--vscode-sideBar-background) py-1.5 text-center text-[11px] text-(--vscode-textLink-foreground) hover:underline"
+					onClick={() => setExpanded((e) => !e)}
+					type="button"
+				>
+					{expanded ? "Show less" : "Show more"}
+				</button>
+			)}
+		</div>
 	);
 };
 
@@ -448,12 +533,12 @@ const InlineCodeWithFileCheck: React.FC<
 	if (isFilePath) {
 		return (
 			<Button
-				className="p-0 ml-0.5 leading-none align-middle transition-opacity text-preformat gap-0.5 inline text-left"
+				className="p-0 ml-0.5 leading-none align-middle transition-opacity text-preformat gap-0.5 inline text-left rounded px-0.5 ring-1 ring-(--vscode-focusRing) ring-offset-1 ring-offset-(--vscode-editor-background)"
 				onClick={() =>
 					FileServiceClient.openFileRelativePath({ value: filePath })
 				}
 				size="icon"
-				title={`Open ${filePath} in editor`}
+				title={`Open ${filePath} in workspace editor`}
 				type="button"
 				variant="icon"
 			>

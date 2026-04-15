@@ -111,16 +111,43 @@ function collectDuplicateTextBeforeCompletion(
 	return hideTextTs;
 }
 
+/** Hide back-to-back identical assistant text rows (model / client duplicate). */
+function collectAdjacentDuplicateTextTs(messages: AsiMessage[]): Set<number> {
+	const hideTs = new Set<number>();
+	for (let i = 1; i < messages.length; i++) {
+		const cur = messages[i];
+		const prev = messages[i - 1];
+		if (
+			cur.type !== "say" ||
+			cur.say !== "text" ||
+			!cur.text?.trim() ||
+			prev.type !== "say" ||
+			prev.say !== "text" ||
+			!prev.text?.trim()
+		) {
+			continue;
+		}
+		if (
+			normalizeAssistantBody(cur.text) === normalizeAssistantBody(prev.text)
+		) {
+			hideTs.add(cur.ts);
+		}
+	}
+	return hideTs;
+}
+
 /**
  * Filter messages that should be visible in the chat
  */
 export function filterVisibleMessages(messages: AsiMessage[]): AsiMessage[] {
 	const hideDuplicateTextTs = collectDuplicateTextBeforeCompletion(messages);
+	const hideAdjacentDupTs = collectAdjacentDuplicateTextTs(messages);
 	return messages.filter((message, index, arr) => {
 		if (
 			message.type === "say" &&
 			message.say === "text" &&
-			hideDuplicateTextTs.has(message.ts)
+			(hideDuplicateTextTs.has(message.ts) ||
+				hideAdjacentDupTs.has(message.ts))
 		) {
 			return false;
 		}

@@ -1,16 +1,16 @@
 import { COMMAND_OUTPUT_STRING } from "@shared/combineCommandSequences";
 import {
-	AsiApiReqInfo,
-	AsiAskQuestion,
-	AsiAskUseMcpServer,
-	AsiMessage,
-	AsiPlanModeResponse,
-	AsiSayGenerateExplanation,
-	AsiSayTool,
+	type AsiApiReqInfo,
+	type AsiAskQuestion,
+	type AsiAskUseMcpServer,
+	type AsiMessage,
+	type AsiPlanModeResponse,
+	type AsiSayGenerateExplanation,
+	type AsiSayTool,
 	COMPLETION_RESULT_CHANGES_FLAG,
 } from "@shared/ExtensionMessage";
 import { BooleanRequest, StringRequest } from "@shared/proto/Asi/common";
-import { Mode } from "@shared/storage/types";
+import type { Mode } from "@shared/storage/types";
 import deepEqual from "fast-deep-equal";
 import {
 	ArrowRightIcon,
@@ -36,7 +36,7 @@ import {
 	TriangleAlertIcon,
 } from "lucide-react";
 import {
-	MouseEvent,
+	type MouseEvent,
 	memo,
 	useCallback,
 	useEffect,
@@ -51,16 +51,15 @@ import { WithCopyButton } from "@/components/common/CopyButton";
 import McpResponseDisplay from "@/components/mcp/chat-display/McpResponseDisplay";
 import McpResourceRow from "@/components/mcp/configuration/tabs/installed/server-row/McpResourceRow";
 import McpToolRow from "@/components/mcp/configuration/tabs/installed/server-row/McpToolRow";
-import { AssistantVoiceAutoPlay } from "@/components/voice/AssistantVoiceAutoPlay";
-import { MessageTTSControls } from "@/components/voice/MessageTTSControls";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { cn } from "@/lib/utils";
 import { FileServiceClient, UiServiceClient } from "@/services/grpc-client";
+import { findRetryPrompt } from "@/utils/findRetryPrompt";
 import {
 	findMatchingResourceOrTemplate,
 	getMcpServerDisplayName,
 } from "@/utils/mcp";
-import { findRetryPrompt } from "@/utils/findRetryPrompt";
+import { FetchCoderQuickRevert } from "../checkpoint/FetchCoderQuickRevert";
 import CodeAccordian, { cleanPathPrefix } from "../common/CodeAccordian";
 import { AssistantMessageToolbar } from "./AssistantMessageToolbar";
 import { CommandOutputContent, CommandOutputRow } from "./CommandOutputRow";
@@ -79,7 +78,6 @@ import SearchResultsDisplay from "./SearchResultsDisplay";
 import SubagentStatusRow from "./SubagentStatusRow";
 import { ThinkingRow } from "./ThinkingRow";
 import UserMessage from "./UserMessage";
-import { FetchCoderQuickRevert } from "../checkpoint/FetchCoderQuickRevert";
 
 const HEADER_CLASSNAMES = "flex items-center gap-2.5 mb-3";
 
@@ -216,7 +214,6 @@ export const ChatRowContent = memo(
 		responseStarted,
 	}: ChatRowContentProps) => {
 		const {
-			apiConfiguration,
 			backgroundEditEnabled,
 			mcpServers,
 			mcpMarketplaceCatalog,
@@ -484,7 +481,9 @@ export const ChatRowContent = memo(
 							{mcpServerUse.type === "use_mcp_tool" && mcpServerUse.toolName
 								? `Using tool: ${mcpServerUse.toolName} · `
 								: ""}
-							{mcpServerUse.type === "use_mcp_tool" ? "MCP tool on " : "MCP resource on "}
+							{mcpServerUse.type === "use_mcp_tool"
+								? "MCP tool on "
+								: "MCP resource on "}
 							<code className="break-all">
 								{getMcpServerDisplayName(
 									mcpServerUse.serverName,
@@ -730,7 +729,9 @@ export const ChatRowContent = memo(
 										-90,
 										"This file is outside of your workspace",
 									)}
-								<span className="font-bold">Fetch Coder wants to read this file:</span>
+								<span className="font-bold">
+									Fetch Coder wants to read this file:
+								</span>
 							</div>
 							<div className="bg-code rounded-sm overflow-hidden border border-editor-group-border">
 								<div
@@ -1184,7 +1185,6 @@ export const ChatRowContent = memo(
 							</div>
 						);
 					case "text": {
-						const apiKey = apiConfiguration?.openAiApiKey ?? "";
 						return (
 							<>
 								<div className="group flex w-full flex-col gap-1">
@@ -1212,18 +1212,7 @@ export const ChatRowContent = memo(
 												/>
 											)}
 										</WithCopyButton>
-										<MessageTTSControls
-											apiKey={apiKey}
-											text={message.text || ""}
-										/>
 									</div>
-									<AssistantVoiceAutoPlay
-										apiKey={apiKey}
-										isLast={isLast}
-										messageTs={message.ts}
-										partial={message.partial}
-										text={message.text || ""}
-									/>
 								</div>
 								{!message.partial && (
 									<AssistantMessageToolbar
@@ -1411,11 +1400,11 @@ export const ChatRowContent = memo(
 									</span>
 								</div>
 								<div className="text-foreground opacity-80">
-									Fetch Coder may have trouble viewing the command's output. Please
-									update VSCode (<code>CMD/CTRL + Shift + P</code> → "Update")
-									and make sure you're using a supported shell: zsh, bash, fish,
-									or PowerShell (<code>CMD/CTRL + Shift + P</code> → "Terminal:
-									Select Default Profile").
+									Fetch Coder may have trouble viewing the command's output.
+									Please update VSCode (<code>CMD/CTRL + Shift + P</code> →
+									"Update") and make sure you're using a supported shell: zsh,
+									bash, fish, or PowerShell (<code>CMD/CTRL + Shift + P</code> →
+									"Terminal: Select Default Profile").
 									<a
 										className="px-1"
 										href="https://github.com/gautammanak1/asi1-vs-code/wiki/Troubleshooting-%E2%80%90-Shell-Integration-Unavailable"

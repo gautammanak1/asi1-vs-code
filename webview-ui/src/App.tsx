@@ -3,7 +3,6 @@ import { useCallback, useEffect } from "react";
 import AccountView from "./components/account/AccountView";
 import ChatView from "./components/chat/ChatView";
 import CheckpointPanel from "./components/checkpoint/CheckpointPanel";
-import { CopilotGradientCursor } from "./components/copilot-cursor";
 // Kanban promo modal removed — ASI:One-focused UX.
 import HistoryView from "./components/history/HistoryView";
 import McpView from "./components/mcp/configuration/McpConfigurationView";
@@ -118,7 +117,6 @@ const AppContent = () => {
 const App = () => {
 	return (
 		<Providers>
-			<CopilotGradientCursor trail />
 			<AppContent />
 		</Providers>
 	);

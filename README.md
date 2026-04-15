@@ -10,11 +10,11 @@
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
 [![Powered by asi1.ai](https://img.shields.io/badge/Powered%20by-asi1.ai-0052FF?style=flat-square)](https://asi1.ai)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/fetchai)
-[![Release v0.2.18](https://img.shields.io/badge/release-v0.2.18-0052FF?style=flat-square)](https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.18)
+[![Release v0.2.20](https://img.shields.io/badge/release-v0.2.20-0052FF?style=flat-square)](https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.20)
 
 <p>Write code, debug, edit files, run commands — all conversationally with your AI partner.</p>
 
-<p align="center"><sub>Current extension version: <strong>0.2.18</strong> · Git tag: <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.18"><code>v0.2.18</code></a></sub></p>
+<p align="center"><sub>Current extension version: <strong>0.2.20</strong> · Git tag: <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.20"><code>v0.2.20</code></a></sub></p>
 
 <p align="center"><sub><strong>Marketplace note:</strong> VS Code Marketplace, Open VSX, and Cursor use this <code>README.md</code> from the repo root. Keep it aligned with the <code>description</code> field in <code>package.json</code> so store listings stay consistent.</sub></p>
 

@@ -16,18 +16,25 @@ const McpManagementPanel = () => {
 		remoteConfigSettings.remoteMCPServers.length > 0;
 
 	return (
-		<div className="fc-mcp-panel space-y-4 px-4 py-3">
-			<div className="rounded-[10px] border border-border/80 bg-card/40 p-3 space-y-2">
+		<div className="fc-mcp-panel space-y-4 px-4 py-4">
+			<div className="rounded-xl border border-(--vscode-widget-border) bg-(--vscode-sideBar-background)/80 p-4 shadow-sm space-y-2 ring-1 ring-(--vscode-widget-border)/60">
 				<div className="flex items-center gap-2 text-sm font-semibold text-foreground">
 					<PlugZapIcon className="size-4 text-[var(--color-fetch-lime)]" />
 					MCP servers
 				</div>
-				<p className="text-xs leading-relaxed text-muted-foreground m-0">
+				<p className="text-xs leading-relaxed text-(--vscode-descriptionForeground) m-0">
 					<strong className="text-foreground">Workspace:</strong>{" "}
-					<code className="text-[11px]">.fetch-coder/mcp.json</code> — merged over global{" "}
-					<code className="text-[11px]">Asi_mcp_settings.json</code>. Format:{" "}
-					<code className="text-[11px]">{`{ "mcpServers": { "name": { "command", "args", "env" } } }`}</code>
-					.
+					<code className="rounded bg-(--vscode-textCodeBlock-background) px-1 py-0.5 text-[11px]">
+						.fetch-coder/mcp.json
+					</code>{" "}
+					— merged over global{" "}
+					<code className="rounded bg-(--vscode-textCodeBlock-background) px-1 py-0.5 text-[11px]">
+						Asi_mcp_settings.json
+					</code>
+					. Format:{" "}
+					<code className="block mt-2 whitespace-pre-wrap rounded-md bg-(--vscode-textCodeBlock-background) p-2 text-[11px] leading-snug">
+						{`{ "mcpServers": { "name": { "command", "args", "env" } } }`}
+					</code>
 				</p>
 			</div>
 
@@ -51,10 +58,11 @@ const McpManagementPanel = () => {
 				Edit global MCP JSON
 			</VSCodeButton>
 
-			<p className="text-[11px] text-center text-muted-foreground m-0">
+			<p className="text-[11px] text-center text-(--vscode-descriptionForeground) m-0 leading-relaxed">
 				Connection status shows on each server row; tools load after connect. Use the{" "}
-				<strong className="text-foreground">trash</strong> icon (or expand the row → <strong>Delete Server</strong>)
-				to remove a server from config. Organization-managed servers may not allow delete.
+				<strong className="text-foreground">trash</strong> icon (or expand the row →{" "}
+				<strong>Delete Server</strong>) to remove a server from config. Organization-managed servers may not allow
+				delete.
 			</p>
 		</div>
 	);

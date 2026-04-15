@@ -105,6 +105,7 @@ export const SETTINGS_TABS: SettingsTab[] = [
 		tooltipText: "Voice & speech",
 		headerText: "Voice & speech",
 		icon: Mic,
+		hidden: () => true,
 	},
 	{
 		id: "remote-config",
@@ -173,9 +174,14 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 	const { version, environment, settingsInitialModelTab } = useExtensionState();
 	const { activeOrganization } = useAsiAuth();
 
-	const [activeTab, setActiveTab] = useState<string>(
-		targetSection || SETTINGS_TABS[0].id,
-	);
+	const [activeTab, setActiveTab] = useState<string>(() => {
+		const ts = targetSection || SETTINGS_TABS[0].id;
+		const tab = SETTINGS_TABS.find((t) => t.id === ts);
+		if (tab?.hidden?.({ activeOrganization: null })) {
+			return "api-config";
+		}
+		return ts;
+	});
 
 	// Optimized message handler with early returns
 	const handleMessage = useCallback((event: MessageEvent) => {
@@ -233,9 +239,22 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 	// Update active tab when targetSection changes
 	useEffect(() => {
 		if (targetSection) {
-			setActiveTab(targetSection);
+			const tab = SETTINGS_TABS.find((t) => t.id === targetSection);
+			if (tab?.hidden?.({ activeOrganization })) {
+				setActiveTab("api-config");
+			} else {
+				setActiveTab(targetSection);
+			}
 		}
-	}, [targetSection]);
+	}, [targetSection, activeOrganization]);
+
+	// If current tab becomes hidden (e.g. voice disabled), fall back
+	useEffect(() => {
+		const tab = SETTINGS_TABS.find((t) => t.id === activeTab);
+		if (tab?.hidden?.({ activeOrganization })) {
+			setActiveTab("api-config");
+		}
+	}, [activeTab, activeOrganization]);
 
 	// Memoized tab item renderer
 	const renderTabItem = useCallback(

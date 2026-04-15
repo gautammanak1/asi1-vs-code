@@ -1,4 +1,5 @@
 import React from "react"
+import { FollowUpPromptChips } from "@/components/chat/FollowUpPromptChips"
 import ChatTextArea from "@/components/chat/ChatTextArea"
 import QuotedMessagePreview from "@/components/chat/QuotedMessagePreview"
 import { ChatState, MessageHandlers, ScrollBehavior } from "../../types/chatTypes"
@@ -10,6 +11,9 @@ interface InputSectionProps {
 	placeholderText: string
 	shouldDisableFilesAndImages: boolean
 	selectFilesAndImages: () => Promise<void>
+	/** Last assistant text for contextual follow-up chips */
+	followUpSnippet: string | null
+	followUpVisible: boolean
 }
 
 /**
@@ -22,6 +26,8 @@ export const InputSection: React.FC<InputSectionProps> = ({
 	placeholderText,
 	shouldDisableFilesAndImages,
 	selectFilesAndImages,
+	followUpSnippet,
+	followUpVisible,
 }) => {
 	const {
 		activeQuote,
@@ -51,6 +57,12 @@ export const InputSection: React.FC<InputSectionProps> = ({
 					/>
 				</div>
 			)}
+
+			<FollowUpPromptChips
+				lastAssistantSnippet={followUpSnippet}
+				onPick={(text) => setInputValue((prev) => (prev.trim() ? `${prev}\n\n${text}` : text))}
+				visible={followUpVisible}
+			/>
 
 			<ChatTextArea
 				activeQuote={activeQuote}
