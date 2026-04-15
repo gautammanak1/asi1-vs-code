@@ -14,6 +14,9 @@ import { openExternal } from "@/utils/env";
 import { BannerService } from "../banner/BannerService";
 import { AuthInvalidTokenError, AuthNetworkError } from "../error/ClineError";
 import { featureFlagsService } from "../feature-flags";
+import type { AccountAuthProvider } from "./account-auth-provider";
+// Auth0 disabled for now — re-enable import + selectAccountAuthProvider branch when needed.
+// import { Auth0AuthProvider, isAuth0LoginEnabled } from "./providers/Auth0AuthProvider";
 import { AsiAuthProvider } from "./providers/ClineAuthProvider";
 import { LogoutReason } from "./types";
 
@@ -27,6 +30,10 @@ export interface AsiAuthInfo {
 	 * accessToken
 	 */
 	idToken: string;
+	/**
+	 * OAuth access token (e.g. Auth0) when not using WorkOS-prefixed Asi APIs
+	 */
+	oauthAccessToken?: string;
 	/**
 	 * Short-lived refresh token
 	 */
@@ -69,7 +76,7 @@ export class AuthService {
 	protected static instance: AuthService | null = null;
 	protected _authenticated = false;
 	protected _AsiAuthInfo: AsiAuthInfo | null = null;
-	protected _provider: AsiAuthProvider;
+	protected _provider: AccountAuthProvider;
 	protected _activeAuthStatusUpdateHandlers = new Set<
 		StreamingResponseHandler<AuthState>
 	>();
@@ -85,7 +92,7 @@ export class AuthService {
 	 * @param controller - Optional reference to the Controller instance.
 	 */
 	protected constructor(controller: Controller) {
-		this._provider = new AsiAuthProvider();
+		this._provider = selectAccountAuthProvider();
 		this._controller = controller;
 	}
 
@@ -139,6 +146,9 @@ export class AuthService {
 			// This prevents 401 errors from using expired tokens
 			return null;
 		}
+		// if (this._provider.name === "auth0" && this._AsiAuthInfo?.oauthAccessToken) {
+		// 	return `Bearer ${this._AsiAuthInfo.oauthAccessToken}`;
+		// }
 		return `workos:${token}`;
 	}
 
@@ -165,7 +175,7 @@ export class AuthService {
 	}
 
 	private async internalGetAuthToken(
-		provider: AsiAuthProvider,
+		provider: AccountAuthProvider,
 	): Promise<string | null> {
 		try {
 			let AsiAccountAuthToken = this._AsiAuthInfo?.idToken;
@@ -293,7 +303,7 @@ export class AuthService {
 
 		const callbackUrl = await HostProvider.get().getCallbackUrl("/auth");
 
-		const authUrl = await this._provider.getAuthRequest(callbackUrl);
+		const authUrl = await this._provider.getAuthRequest(callbackUrl, this._controller);
 		const authUrlString = authUrl.toString();
 
 		await openExternal(authUrlString);
@@ -319,12 +329,14 @@ export class AuthService {
 	async handleAuthCallback(
 		authorizationCode: string,
 		provider: string,
+		oauthState?: string,
 	): Promise<void> {
 		try {
 			this._AsiAuthInfo = await this._provider.signIn(
 				this._controller,
 				authorizationCode,
 				provider,
+				oauthState,
 			);
 			this._authenticated = this._AsiAuthInfo?.idToken !== undefined;
 
@@ -488,5 +500,17 @@ export class AuthService {
 	private destroyTokens() {
 		this._controller.stateManager.setSecret("AsiAccountId", undefined);
 		this._controller.stateManager.setSecret("Asi:AsiAccountId", undefined);
+		this._controller.stateManager.setSecret("auth0PkceState", undefined);
 	}
+}
+
+function selectAccountAuthProvider(): AccountAuthProvider {
+	// try {
+	// 	if (isAuth0LoginEnabled()) {
+	// 		return new Auth0AuthProvider();
+	// 	}
+	// } catch {
+	// 	// vscode.workspace may be unavailable in some test contexts
+	// }
+	return new AsiAuthProvider();
 }

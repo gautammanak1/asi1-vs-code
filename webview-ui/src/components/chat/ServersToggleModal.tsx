@@ -86,7 +86,12 @@ const ServersToggleModal: React.FC = () => {
 				>
 					<div className="flex-shrink-0 px-3 pt-2">
 						<div className="flex justify-between items-center mb-2.5">
-							<div className="m-0 text-sm font-medium">MCP Servers</div>
+							<div className="m-0 text-sm font-medium">
+								MCP Servers
+								<span className="block text-[11px] font-normal text-(--vscode-descriptionForeground) mt-0.5">
+									Trash removes from config
+								</span>
+							</div>
 							<VSCodeButton
 								appearance="icon"
 								aria-label="Go to MCP server settings"
@@ -105,7 +110,7 @@ const ServersToggleModal: React.FC = () => {
 						style={{ minHeight: 0 }}
 					>
 						<ServersToggleList
-							hasTrashIcon={false}
+							hasTrashIcon={true}
 							isExpandable={false}
 							listGap="small"
 							servers={mcpServers}

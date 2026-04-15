@@ -3,8 +3,8 @@ import { AsiDefaultTool } from "@/shared/tools"
 import type { AsiToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
 
-const GENERIC: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+const ASI1: AsiToolSpec = {
+	variant: ModelFamily.ASI1,
 	id: AsiDefaultTool.WEB_SEARCH,
 	name: "web_search",
 	description: `Performs a web search and returns relevant results
@@ -40,36 +40,4 @@ const GENERIC: AsiToolSpec = {
 	],
 }
 
-const NATIVE_NEXT_GEN: AsiToolSpec = {
-	variant: ModelFamily.NATIVE_NEXT_GEN,
-	id: AsiDefaultTool.WEB_SEARCH,
-	name: "web_search",
-	description:
-		"Performs a web search and returns relevant results with titles and URLs. IMPORTANT: If an MCP-provided web search tool is available, prefer using that tool instead of this one, as it may have fewer restrictions.",
-	contextRequirements: (context) => context.AsiWebToolsEnabled !== false,
-	parameters: [
-		{
-			name: "query",
-			required: true,
-			instruction: "The search query to use",
-		},
-		{
-			name: "allowed_domains",
-			required: false,
-			instruction: "JSON array of domains to restrict results to",
-		},
-		{
-			name: "blocked_domains",
-			required: false,
-			instruction: "JSON array of domains to exclude from results",
-		},
-		TASK_PROGRESS_PARAMETER,
-	],
-}
-
-const NATIVE_GPT_5: AsiToolSpec = {
-	...NATIVE_NEXT_GEN,
-	variant: ModelFamily.NATIVE_GPT_5,
-}
-
-export const web_search_variants = [GENERIC, NATIVE_GPT_5, NATIVE_NEXT_GEN]
+export const web_search_variants = [ASI1]

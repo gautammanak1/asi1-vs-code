@@ -38,7 +38,7 @@ const McpManagementPanel = () => {
 				</div>
 			)}
 
-			<ServersToggleList hasTrashIcon={false} isExpandable={true} servers={servers} />
+			<ServersToggleList hasTrashIcon={true} isExpandable={true} servers={servers} />
 
 			<VSCodeButton
 				appearance="primary"
@@ -52,8 +52,9 @@ const McpManagementPanel = () => {
 			</VSCodeButton>
 
 			<p className="text-[11px] text-center text-muted-foreground m-0">
-				Connection status shows on each server row; tools load after connect. Use each server&apos;s actions to
-				restart or test.
+				Connection status shows on each server row; tools load after connect. Use the{" "}
+				<strong className="text-foreground">trash</strong> icon (or expand the row → <strong>Delete Server</strong>)
+				to remove a server from config. Organization-managed servers may not allow delete.
 			</p>
 		</div>
 	);

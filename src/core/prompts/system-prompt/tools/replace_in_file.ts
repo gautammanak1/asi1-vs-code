@@ -61,8 +61,8 @@ const diffInstruction = (context: SystemPromptContext) => {
 	return shouldIncludeNotebookInstructions(context) ? BASE_DIFF_INSTRUCTIONS + NOTEBOOK_INSTRUCTIONS : BASE_DIFF_INSTRUCTIONS
 }
 
-const generic: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+const ASI1: AsiToolSpec = {
+	variant: ModelFamily.ASI1,
 	id,
 	name: "replace_in_file",
 	description:
@@ -84,30 +84,4 @@ const generic: AsiToolSpec = {
 	],
 }
 
-const NATIVE_NEXT_GEN: AsiToolSpec = {
-	variant: ModelFamily.NATIVE_NEXT_GEN,
-	id,
-	name: "replace_in_file",
-	description:
-		"[IMPORTANT: Always output the absolutePath first] Request to replace sections of content in an existing file using SEARCH/REPLACE blocks that define exact changes to specific parts of the file. This tool should be used when you need to make targeted changes to specific parts of a file.",
-	parameters: [
-		{
-			name: "absolutePath",
-			required: true,
-			instruction: "The absolute path to the file to write to.",
-		},
-		{
-			name: "diff",
-			required: true,
-			instruction: diffInstruction,
-		},
-		TASK_PROGRESS_PARAMETER,
-	],
-}
-
-const NATIVE_GPT_5: AsiToolSpec = {
-	...NATIVE_NEXT_GEN,
-	variant: ModelFamily.NATIVE_GPT_5,
-}
-
-export const replace_in_file_variants = [generic, NATIVE_NEXT_GEN, NATIVE_GPT_5]
+export const replace_in_file_variants = [ASI1]

@@ -22,7 +22,7 @@ Usage:
 const id = AsiDefaultTool.NEW_TASK
 
 const generic: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+	variant: ModelFamily.ASI1,
 	id,
 	name: "new_task",
 	description: `Request to create a new task with preloaded context covering the conversation with the user up to this point and key information for continuing with the new task. With this tool, you will create a detailed summary of the conversation so far, paying close attention to the user's explicit requests and your previous actions, with a focus on the most relevant information required for the new task.

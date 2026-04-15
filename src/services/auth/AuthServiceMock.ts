@@ -141,6 +141,7 @@ export class AuthServiceMock extends AuthService {
 	override async handleAuthCallback(
 		_token: string,
 		_provider: string,
+		_oauthState?: string,
 	): Promise<void> {
 		try {
 			this._authenticated = true;

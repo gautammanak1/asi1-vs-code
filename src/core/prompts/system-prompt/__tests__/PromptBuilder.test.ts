@@ -44,7 +44,7 @@ describe("PromptBuilder", () => {
 
 	const baseVariant: PromptVariant = {
 		id: "test-model",
-		family: ModelFamily.GENERIC,
+		family: ModelFamily.ASI1,
 		matcher: () => true,
 		version: 1,
 		description: "A test model",
@@ -252,7 +252,7 @@ describe("PromptBuilder", () => {
 
 	describe("VariantBuilder auto-generation", () => {
 		it("should auto-generate baseTemplate from componentOrder when not provided", () => {
-			const config = createVariant(ModelFamily.GENERIC)
+			const config = createVariant(ModelFamily.ASI1)
 				.description("Test variant without explicit template")
 				.version(1)
 				.components(
@@ -294,7 +294,7 @@ describe("PromptBuilder", () => {
 		it("should use explicit baseTemplate when provided", () => {
 			const customTemplate = "Custom template with {{AGENT_ROLE_SECTION}}"
 
-			const config = createVariant(ModelFamily.GENERIC)
+			const config = createVariant(ModelFamily.ASI1)
 				.description("Test variant with explicit template")
 				.version(1)
 				.template(customTemplate)
@@ -308,7 +308,7 @@ describe("PromptBuilder", () => {
 
 		it("should throw error when componentOrder is empty", () => {
 			expect(() => {
-				createVariant(ModelFamily.GENERIC)
+				createVariant(ModelFamily.ASI1)
 					.description("Test variant with empty components")
 					.version(1)
 					.matcher(() => true)

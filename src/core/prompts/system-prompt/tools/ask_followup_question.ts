@@ -3,8 +3,8 @@ import { AsiDefaultTool } from "@/shared/tools"
 import type { AsiToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
 
-const generic: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+const ASI1: AsiToolSpec = {
+	variant: ModelFamily.ASI1,
 	id: AsiDefaultTool.ASK,
 	name: "ask_followup_question",
 	description:
@@ -29,32 +29,4 @@ const generic: AsiToolSpec = {
 	],
 }
 
-const NATIVE_NEXT_GEN: AsiToolSpec = {
-	variant: ModelFamily.NATIVE_NEXT_GEN,
-	id: AsiDefaultTool.ASK,
-	name: "ask_followup_question",
-	description:
-		"Ask user a question for clarifying or gathering information needed to complete the task. For example, ask the user clarifying questions about a key implementation decision. You should only ask one question.",
-	contextRequirements: (context) => !context.yoloModeToggled,
-	parameters: [
-		{
-			name: "question",
-			required: true,
-			instruction: 'The single question to ask the user. E.g. "How can I help you?"',
-		},
-		{
-			name: "options",
-			required: true,
-			instruction:
-				'An array of 2-5 options (e.x: "["Option 1", "Option 2", "Option 3"]") for the user to choose from. Each option should be a string describing a possible answer to the single question. You may not always need to provide options, but it may be helpful in many cases where it can save the user from having to type out a response manually. IMPORTANT: NEVER include an option to toggle to Act mode, as this would be something you need to direct the user to do manually themselves if needed.',
-		},
-		TASK_PROGRESS_PARAMETER,
-	],
-}
-
-const NATIVE_GPT_5: AsiToolSpec = {
-	...NATIVE_NEXT_GEN,
-	variant: ModelFamily.NATIVE_GPT_5,
-}
-
-export const ask_followup_question_variants = [generic, NATIVE_GPT_5, NATIVE_NEXT_GEN]
+export const ask_followup_question_variants = [ASI1]

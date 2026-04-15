@@ -120,7 +120,6 @@ export interface ExtensionState {
 	showFeatureTips?: boolean;
 	banners?: BannerCardData[];
 	welcomeBanners?: BannerCardData[];
-	openAiCodexIsAuthenticated?: boolean;
 }
 
 export interface AsiMessage {

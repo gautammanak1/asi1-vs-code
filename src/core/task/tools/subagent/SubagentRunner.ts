@@ -25,7 +25,7 @@ import { HostRegistryInfo } from "@/registry";
 import { AsiError, AsiErrorType } from "@/services/error";
 import { ApiFormat } from "@/shared/proto/Asi/models";
 import { calculateApiCostAnthropic } from "@/utils/cost";
-import { isNextGenModelFamily } from "@/utils/model-utils";
+import { isAsi1Model } from "@/utils/model-utils";
 import { TaskState } from "../../TaskState";
 import { ToolExecutorCoordinator } from "../ToolExecutorCoordinator";
 import { ToolValidator } from "../ToolValidator";
@@ -957,7 +957,7 @@ export class SubagentRunner {
 			this.baseConfig.services.stateManager.getGlobalSettingsKey(
 				"useAutoCondense",
 			);
-		if (useAutoCondense && isNextGenModelFamily(modelId)) {
+		if (useAutoCondense && isAsi1Model(modelId)) {
 			const autoCondenseThreshold = 0.75;
 			const roundedThreshold = autoCondenseThreshold
 				? Math.floor(contextWindow * autoCondenseThreshold)

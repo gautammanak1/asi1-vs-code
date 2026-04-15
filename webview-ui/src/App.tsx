@@ -1,15 +1,16 @@
 import type { Boolean, EmptyRequest } from "@shared/proto/Asi/common";
 import { useCallback, useEffect } from "react";
+import AccountView from "./components/account/AccountView";
 import ChatView from "./components/chat/ChatView";
+import CheckpointPanel from "./components/checkpoint/CheckpointPanel";
+import { CopilotGradientCursor } from "./components/copilot-cursor";
 // Kanban promo modal removed — ASI:One-focused UX.
 import HistoryView from "./components/history/HistoryView";
 import McpView from "./components/mcp/configuration/McpConfigurationView";
 import OnboardingView from "./components/onboarding/OnboardingView";
 import SettingsView from "./components/settings/SettingsView";
-import AccountView from "./components/account/AccountView";
 import WelcomeView from "./components/welcome/WelcomeView";
 import WorktreesView from "./components/worktrees/WorktreesView";
-import CheckpointPanel from "./components/checkpoint/CheckpointPanel";
 import { useExtensionState } from "./context/ExtensionStateContext";
 import { Providers } from "./Providers";
 import { UiServiceClient } from "./services/grpc-client";
@@ -117,6 +118,7 @@ const AppContent = () => {
 const App = () => {
 	return (
 		<Providers>
+			<CopilotGradientCursor trail />
 			<AppContent />
 		</Providers>
 	);

@@ -2,7 +2,7 @@
 	"name": "fetch-coder",
 	"displayName": "Fetch Coder",
 	"description": "Fetch Coder is an autonomous AI coding agent integrated into VS Code, powered by asi1.ai. It works like having a senior engineer sitting beside you—understanding your codebase, writing code, debugging issues, running commands, and iterating until the job is done.",
-	"version": "0.2.18",
+	"version": "0.2.19",
 	"icon": "assets/icons/icon.png",
 	"galleryBanner": {
 		"color": "#1e1e1e",
@@ -215,8 +215,18 @@
 				"category": "Fetch Coder"
 			},
 			{
+				"command": "Asi.fixWithAsi",
+				"title": "Fix with Fetch Coder",
+				"category": "Fetch Coder"
+			},
+			{
 				"command": "Asi.improveCode",
 				"title": "Improve with Fetch Coder",
+				"category": "Fetch Coder"
+			},
+			{
+				"command": "Asi.refactorCode",
+				"title": "Refactor with Fetch Coder",
 				"category": "Fetch Coder"
 			},
 			{
@@ -411,6 +421,69 @@
 					"default": "asi1",
 					"description": "Model id for Plan and Act modes when using ASI:One settings sync.",
 					"order": 102
+				},
+				"fetchCoder.quickActionPrompts": {
+					"type": "object",
+					"markdownDescription": "Optional overrides for quick-action prompts (Explain, Fix, Improve, Refactor). Placeholders: `{{fileMention}}`, `{{language}}`, `{{selectedText}}`, `{{problemsString}}`.",
+					"properties": {
+						"explain": {
+							"type": "string"
+						},
+						"fix": {
+							"type": "string"
+						},
+						"improve": {
+							"type": "string"
+						},
+						"improveNotebook": {
+							"type": "string"
+						},
+						"refactor": {
+							"type": "string"
+						},
+						"refactorNotebook": {
+							"type": "string"
+						}
+					},
+					"additionalProperties": false,
+					"order": 200
+				},
+				"fetchCoder.quickActionsIncludeFileContext": {
+					"type": "boolean",
+					"default": false,
+					"description": "Append truncated current file content to quick-action prompts when the editor matches the active file.",
+					"order": 201
+				},
+				"fetchCoder.contextMaxFileChars": {
+					"type": "number",
+					"default": 20000,
+					"minimum": 1000,
+					"description": "Maximum characters of file text to include when file context is enabled.",
+					"order": 202
+				},
+				"fetchCoder.auth0.enabled": {
+					"type": "boolean",
+					"default": false,
+					"description": "Use Auth0 for account sign-in (profile/email). LLM calls still use your API keys / ASI:One settings — not Auth0.",
+					"order": 203
+				},
+				"fetchCoder.auth0.domain": {
+					"type": "string",
+					"default": "",
+					"description": "Auth0 tenant domain (e.g. dev-xxx.us.auth0.com). In Auth0: Application → Native, add the exact redirect URI from the extension (vscode:// or cursor:// … /auth).",
+					"order": 204
+				},
+				"fetchCoder.auth0.clientId": {
+					"type": "string",
+					"default": "",
+					"description": "Auth0 Native application Client ID.",
+					"order": 205
+				},
+				"fetchCoder.auth0.audience": {
+					"type": "string",
+					"default": "",
+					"description": "Optional Auth0 API audience if you use an API identifier for tokens.",
+					"order": 206
 				}
 			}
 		}

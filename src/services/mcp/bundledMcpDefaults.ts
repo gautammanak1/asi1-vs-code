@@ -3,8 +3,14 @@ import type { McpMarketplaceItem } from "@shared/mcp"
 /** Remote MCP endpoint (Streamable HTTP) — same shape as Cline’s MCP settings example. */
 export const COMPOSIO_MCP_URL = "https://connect.composio.dev/mcp"
 
-/** Sentry hosted MCP (Streamable HTTP) — see https://github.com/getsentry/sentry-mcp */
-export const SENTRY_HOSTED_MCP_URL = "https://mcp.sentry.dev"
+/** GitHub Copilot–compatible hosted MCP (Streamable HTTP). Auth in browser when connecting. */
+export const GITHUB_COPILOT_MCP_URL = "https://api.githubcopilot.com/mcp/"
+
+/** Sentry hosted MCP (Streamable HTTP) — path `/mcp` per Sentry docs. */
+export const SENTRY_HOSTED_MCP_URL = "https://mcp.sentry.dev/mcp"
+
+/** Fetch Agentverse MCP (SSE). Anyone can add; authenticate per Agentverse. */
+export const AGENTVERSE_MCP_SSE_URL = "https://mcp.agentverse.ai/sse"
 
 /**
  * Default remote servers merged into `Asi_mcp_settings.json` when missing (first run or legacy empty config).
@@ -14,6 +20,21 @@ export const BUNDLED_REMOTE_MCP_SERVER_ENTRIES: Record<string, Record<string, un
 	composio: {
 		url: COMPOSIO_MCP_URL,
 		type: "streamableHttp",
+		disabled: false,
+	},
+	github: {
+		url: GITHUB_COPILOT_MCP_URL,
+		type: "streamableHttp",
+		disabled: false,
+	},
+	sentry: {
+		url: SENTRY_HOSTED_MCP_URL,
+		type: "streamableHttp",
+		disabled: false,
+	},
+	agentverse: {
+		url: AGENTVERSE_MCP_SSE_URL,
+		type: "sse",
 		disabled: false,
 	},
 }
@@ -57,6 +78,29 @@ export function getBundledMcpMarketplaceItems(): McpMarketplaceItem[] {
 			lastGithubSync: now,
 		},
 		{
+			mcpId: "github",
+			githubUrl: "https://github.com/features/copilot",
+			name: "GitHub Copilot MCP",
+			author: "GitHub",
+			description:
+				"Hosted MCP at api.githubcopilot.com (Streamable HTTP). Connect and complete GitHub auth in the browser — same pattern as Composio.",
+			codiconIcon: "github",
+			logoUrl: "",
+			category: "Developer tools",
+			tags: ["github", "copilot", "streamableHttp", "remote", "oauth"],
+			requiresApiKey: false,
+			readmeContent:
+				"Adds a remote entry pointing at https://api.githubcopilot.com/mcp/ . Sign in with GitHub when prompted so tools can access resources you authorize.",
+			llmsInstallationContent:
+				"After install, open MCP Configure and ensure the server shows connected (green). Use Edit global MCP JSON if you need static headers.",
+			isRecommended: true,
+			githubStars: 0,
+			downloadCount: 0,
+			createdAt: now,
+			updatedAt: now,
+			lastGithubSync: now,
+		},
+		{
 			mcpId: "github-mcp-official",
 			githubUrl: "https://github.com/github/github-mcp-server",
 			name: "GitHub (official MCP)",
@@ -80,12 +124,12 @@ export function getBundledMcpMarketplaceItems(): McpMarketplaceItem[] {
 			lastGithubSync: now,
 		},
 		{
-			mcpId: "sentry-mcp",
+			mcpId: "sentry",
 			githubUrl: "https://github.com/getsentry/sentry-mcp",
 			name: "Sentry MCP",
 			author: "Sentry",
 			description:
-				"Sentry hosted MCP (Streamable HTTP). Connects to https://mcp.sentry.dev — complete auth in the browser when prompted. For stdio/self-hosted, see the GitHub README.",
+				"Sentry hosted MCP (Streamable HTTP) at https://mcp.sentry.dev/mcp — complete auth in the browser when prompted.",
 			codiconIcon: "bug",
 			logoUrl: "",
 			category: "Observability",
@@ -103,22 +147,22 @@ export function getBundledMcpMarketplaceItems(): McpMarketplaceItem[] {
 			lastGithubSync: now,
 		},
 		{
-			mcpId: "fetch-agentverse-mcp",
+			mcpId: "agentverse",
 			githubUrl: "https://github.com/fetchai/uAgents",
-			name: "Fetch / Agentverse (uAgents)",
+			name: "Agentverse MCP",
 			author: "Fetch.ai",
 			description:
-				"Agentverse and uAgents ecosystem helpers. Use alongside ASI:One for agent workflows; see Fetch docs for MCP endpoints and authentication.",
+				"SSE endpoint at https://mcp.agentverse.ai/sse — add like Composio; authenticate via Agentverse / Fetch when prompted.",
 			codiconIcon: "globe",
 			logoUrl: "",
 			category: "Agents",
-			tags: ["fetch", "agentverse", "uagents", "agents"],
+			tags: ["fetch", "agentverse", "sse", "agents"],
 			requiresApiKey: false,
 			readmeContent:
-				"Agentverse exposes hosted agents and Almanac registration. For MCP, follow Fetch.ai documentation for the current recommended server or HTTP bridge: https://fetch.ai/docs and Agentverse console. This card is a pinned shortcut—configure tokens per Fetch’s latest guide.",
+				"Public SSE MCP URL for Agentverse. Complete authentication in the browser or via headers per Fetch.ai docs. uAgents: https://github.com/fetchai/uAgents",
 			llmsInstallationContent:
-				"No default public streamable URL is bundled; use Fetch docs to point `streamableHttp` or stdio at the MCP server they document for your account.",
-			isRecommended: false,
+				"Uses transport type `sse` in Asi_mcp_settings.json. Anyone can add this server; only authorized sessions get tool access.",
+			isRecommended: true,
 			githubStars: 0,
 			downloadCount: 0,
 			createdAt: now,

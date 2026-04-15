@@ -29,8 +29,6 @@ import type { FolderLockWithRetryResult } from "@/core/locks/types";
 import { HostProvider } from "@/hosts/host-provider";
 import { ExtensionRegistryInfo } from "@/registry";
 import { AuthService } from "@/services/auth/AuthService";
-import { OcaAuthService } from "@/services/auth/oca/OcaAuthService";
-import { LogoutReason } from "@/services/auth/types";
 import { BannerService } from "@/services/banner/BannerService";
 import { featureFlagsService } from "@/services/feature-flags";
 import { getDistinctId } from "@/services/logging/distinctId";
@@ -76,7 +74,6 @@ export class Controller {
 	mcpHub: McpHub;
 	accountService: AsiAccountService;
 	authService: AuthService;
-	ocaAuthService: OcaAuthService;
 	readonly stateManager: StateManager;
 
 	// NEW: Add workspace manager (optional initially)
@@ -146,7 +143,6 @@ export class Controller {
 			},
 		});
 		this.authService = AuthService.getInstance(this);
-		this.ocaAuthService = OcaAuthService.initialize(this);
 		this.accountService = AsiAccountService.getInstance();
 		BannerService.initialize(this);
 
@@ -222,23 +218,6 @@ export class Controller {
 			HostProvider.window.showMessage({
 				type: ShowMessageType.INFORMATION,
 				message: "Logout failed",
-			});
-		}
-	}
-
-	// Oca Auth methods
-	async handleOcaSignOut() {
-		try {
-			await this.ocaAuthService.handleDeauth(LogoutReason.USER_INITIATED);
-			await this.postStateToWebview();
-			HostProvider.window.showMessage({
-				type: ShowMessageType.INFORMATION,
-				message: "Successfully logged out of OCA",
-			});
-		} catch (_error) {
-			HostProvider.window.showMessage({
-				type: ShowMessageType.INFORMATION,
-				message: "OCA Logout failed",
 			});
 		}
 	}
@@ -579,12 +558,21 @@ export class Controller {
 	async handleAuthCallback(
 		customToken: string,
 		provider: string | null = null,
+		oauthState?: string | null,
 	) {
 		try {
 			await this.authService.handleAuthCallback(
 				customToken,
 				provider ? provider : "google",
+				oauthState ?? undefined,
 			);
+
+			// Auth0 path disabled — see AuthService.selectAccountAuthProvider.
+			// if (this.authService.getProviderName() === "auth0") {
+			// 	await fetchRemoteConfig(this);
+			// 	await this.postStateToWebview();
+			// 	return;
+			// }
 
 			const AsiProvider: ApiProvider = "Asi";
 
@@ -632,62 +620,7 @@ export class Controller {
 			Logger.error("Failed to handle auth callback:", error);
 			HostProvider.window.showMessage({
 				type: ShowMessageType.ERROR,
-				message: "Failed to log in to Asi",
-			});
-			// Even on login failure, we preserve any existing tokens
-			// Only clear tokens on explicit logout
-		}
-	}
-
-	async handleOcaAuthCallback(code: string, state: string) {
-		try {
-			await this.ocaAuthService.handleAuthCallback(code, state);
-
-			const ocaProvider: ApiProvider = "oca";
-
-			// Get current settings to determine how to update providers
-			const planActSeparateModelsSetting =
-				this.stateManager.getGlobalSettingsKey("planActSeparateModelsSetting");
-
-			const currentMode = this.stateManager.getGlobalSettingsKey("mode");
-
-			// Get current API configuration from cache
-			const currentApiConfiguration = this.stateManager.getApiConfiguration();
-
-			const updatedConfig = { ...currentApiConfiguration };
-
-			if (planActSeparateModelsSetting) {
-				// Only update the current mode's provider
-				if (currentMode === "plan") {
-					updatedConfig.planModeApiProvider = ocaProvider;
-				} else {
-					updatedConfig.actModeApiProvider = ocaProvider;
-				}
-			} else {
-				// Update both modes to keep them in sync
-				updatedConfig.planModeApiProvider = ocaProvider;
-				updatedConfig.actModeApiProvider = ocaProvider;
-			}
-
-			// Update the API configuration through cache service
-			this.stateManager.setApiConfiguration(updatedConfig);
-
-			// Mark welcome view as completed since user has successfully logged in
-			this.stateManager.setGlobalState("welcomeViewCompleted", true);
-
-			if (this.task) {
-				this.task.api = buildApiHandler(
-					{ ...updatedConfig, ulid: this.task.ulid },
-					currentMode,
-				);
-			}
-
-			await this.postStateToWebview();
-		} catch (error) {
-			Logger.error("Failed to handle auth callback:", error);
-			HostProvider.window.showMessage({
-				type: ShowMessageType.ERROR,
-				message: "Failed to log in to OCA",
+				message: "Failed to complete sign-in",
 			});
 			// Even on login failure, we preserve any existing tokens
 			// Only clear tokens on explicit logout
@@ -1134,13 +1067,6 @@ export class Controller {
 		const banners = BannerService.get().getActiveBanners() ?? [];
 		const welcomeBanners = BannerService.get().getWelcomeBanners() ?? [];
 
-		// Check OpenAI Codex authentication status
-		const { openAiCodexOAuthManager } = await import(
-			"@/integrations/openai-codex/oauth"
-		);
-		const openAiCodexIsAuthenticated =
-			await openAiCodexOAuthManager.isAuthenticated();
-
 		return {
 			version,
 			apiConfiguration,
@@ -1235,7 +1161,6 @@ export class Controller {
 			showFeatureTips,
 			banners,
 			welcomeBanners,
-			openAiCodexIsAuthenticated,
 		};
 	}
 

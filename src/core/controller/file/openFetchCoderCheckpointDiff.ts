@@ -1,5 +1,4 @@
 import * as path from "node:path";
-import { getCheckpointService } from "@core/checkpoint/CheckpointService";
 import { Empty, StringRequest } from "@shared/proto/Asi/common";
 import * as vscode from "vscode";
 import type { Controller } from "..";

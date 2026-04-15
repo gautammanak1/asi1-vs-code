@@ -33,25 +33,12 @@ const READ_FILE_PARAMETERS: AsiToolSpec["parameters"] = [
 	TASK_PROGRESS_PARAMETER,
 ]
 
-const generic: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+const ASI1: AsiToolSpec = {
+	variant: ModelFamily.ASI1,
 	id,
 	name: "read_file",
 	description: READ_FILE_DESCRIPTION,
 	parameters: READ_FILE_PARAMETERS,
 }
 
-const NATIVE_GPT_5: AsiToolSpec = {
-	variant: ModelFamily.NATIVE_GPT_5,
-	id,
-	name: "read_file",
-	description: READ_FILE_DESCRIPTION,
-	parameters: READ_FILE_PARAMETERS,
-}
-
-const NATIVE_NEXT_GEN: AsiToolSpec = {
-	...NATIVE_GPT_5,
-	variant: ModelFamily.NATIVE_NEXT_GEN,
-}
-
-export const read_file_variants = [generic, NATIVE_NEXT_GEN, NATIVE_GPT_5]
+export const read_file_variants = [ASI1]

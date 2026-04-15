@@ -187,9 +187,6 @@ export type TemplateLiteral = string & { __brand: "TemplateLiteral" }
  */
 export interface VariantFactory {
 	create(family: ModelFamily): VariantBuilder
-	createGeneric(): VariantBuilder
-	createNextGen(): VariantBuilder
-	createXs(): VariantBuilder
 }
 
 /**

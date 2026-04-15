@@ -346,7 +346,7 @@ function convertApiProviderToProto(
 		case "nousResearch":
 			return ProtoApiProvider.NOUSRESEARCH;
 		case "openai-codex":
-			return ProtoApiProvider.OPENAI_CODEX;
+			return ProtoApiProvider.OPENAI;
 		default:
 			return ProtoApiProvider.ANTHROPIC;
 	}
@@ -440,7 +440,7 @@ export function convertProtoToApiProvider(
 		case ProtoApiProvider.NOUSRESEARCH:
 			return "nousResearch";
 		case ProtoApiProvider.OPENAI_CODEX:
-			return "openai-codex";
+			return "openai";
 		default:
 			return "anthropic";
 	}

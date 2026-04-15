@@ -52,32 +52,19 @@ describe("PromptRegistry", () => {
 			const registry = PromptRegistry.getInstance()
 			await registry.load()
 			const testCases = [
-				{ id: "claude-3-5-sonnet", expected: ModelFamily.GENERIC },
-				{ id: "gpt-4-turbo", expected: ModelFamily.GENERIC },
-				{ id: "gemini-pro", expected: ModelFamily.GENERIC },
-				{ id: "qwen-max", provider: "lmstudio", expected: ModelFamily.XS },
-				{ id: "anthropic/claude-3", expected: ModelFamily.GENERIC },
-				{ id: "openai/gpt-4", expected: ModelFamily.GENERIC },
-				{ id: "google/gemini", expected: ModelFamily.GENERIC },
-				{ id: "claude-sonnet-4", expected: ModelFamily.NEXT_GEN },
-				{ id: "gpt-5", provider: "Asi", expected: ModelFamily.NATIVE_GPT_5, useNativeTools: true },
-				{ id: "gpt-5", provider: "openai-native", expected: ModelFamily.NATIVE_GPT_5, useNativeTools: true },
-				{ id: "gpt-oss-120b", provider: "openai-compatible", expected: ModelFamily.NATIVE_GPT_5, useNativeTools: true },
-				{ id: "gpt-5", provider: "Asi", expected: ModelFamily.GPT_5, useNativeTools: false },
-				{ id: "gpt-5-1", provider: "openai-native", expected: ModelFamily.NATIVE_GPT_5_1, useNativeTools: true },
-				{ id: "openai/gpt-5", expected: ModelFamily.NEXT_GEN },
-				{ id: "gemini3", provider: "vertex", expected: ModelFamily.GEMINI_3, useNativeTools: true },
-				{ id: "unknown-model", expected: ModelFamily.GENERIC },
+				{ id: "claude-3-5-sonnet", expected: ModelFamily.ASI1 },
+				{ id: "asi1-mini", expected: ModelFamily.ASI1 },
+				{ id: "gpt-5", provider: "Asi", expected: ModelFamily.ASI1 },
+				{ id: "unknown-model", expected: ModelFamily.ASI1 },
 			]
 
-			for (const { id, expected, provider, useNativeTools } of testCases) {
+			for (const { id, expected, provider } of testCases) {
 				const providerId = provider ?? "random"
-				const customPrompt = provider === "lmstudio" ? "compact" : undefined
-				const providerInfo = { ...mockProviderInfo, providerId, model: { ...mockProviderInfo.model, id }, customPrompt }
+				const providerInfo = { ...mockProviderInfo, providerId, model: { ...mockProviderInfo.model, id } }
 				const result = registry.getModelFamily({
 					...mockContext,
 					providerInfo,
-					enableNativeToolCalls: useNativeTools ?? false,
+					enableNativeToolCalls: false,
 				})
 				expect(result).to.equal(expected, `Failed for model ${id} with provider ${providerId}`)
 			}

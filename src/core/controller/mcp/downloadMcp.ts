@@ -4,7 +4,9 @@ import { McpDownloadResponse } from "@shared/proto/Asi/mcp";
 import axios from "axios";
 import { AsiEnv } from "@/config";
 import {
+	AGENTVERSE_MCP_SSE_URL,
 	COMPOSIO_MCP_URL,
+	GITHUB_COPILOT_MCP_URL,
 	SENTRY_HOSTED_MCP_URL,
 } from "@/services/mcp/bundledMcpDefaults";
 import { getAxiosSettings } from "@/shared/net";
@@ -61,6 +63,26 @@ export async function downloadMcp(
 			});
 		}
 
+		if (mcpId === "github") {
+			await controller.mcpHub.addRemoteServer(
+				"github",
+				GITHUB_COPILOT_MCP_URL,
+				"streamableHttp",
+			);
+			await controller.postStateToWebview();
+			return McpDownloadResponse.create({
+				mcpId: "github",
+				githubUrl: "https://github.com/features/copilot",
+				name: "GitHub Copilot MCP",
+				author: "GitHub",
+				description: "GitHub Copilot MCP (Streamable HTTP)",
+				readmeContent:
+					"Added https://api.githubcopilot.com/mcp/ — complete GitHub authentication when connecting. Edit Asi_mcp_settings.json if you need static headers.",
+				llmsInstallationContent: "",
+				requiresApiKey: false,
+			});
+		}
+
 		if (mcpId === "github-mcp-official") {
 			await controller.mcpHub.addStdioServer("github-mcp", {
 				command: "npx",
@@ -72,7 +94,8 @@ export async function downloadMcp(
 				githubUrl: "https://github.com/github/github-mcp-server",
 				name: "GitHub (official MCP)",
 				author: "GitHub",
-				description: "GitHub MCP via @modelcontextprotocol/server-github (stdio)",
+				description:
+					"GitHub MCP via @modelcontextprotocol/server-github (stdio)",
 				readmeContent:
 					"Set GITHUB_PERSONAL_ACCESS_TOKEN in the MCP server env in Asi_mcp_settings.json (or your environment). See https://github.com/github/github-mcp-server",
 				llmsInstallationContent: "",
@@ -80,7 +103,7 @@ export async function downloadMcp(
 			});
 		}
 
-		if (mcpId === "sentry-mcp") {
+		if (mcpId === "sentry") {
 			await controller.mcpHub.addRemoteServer(
 				"sentry",
 				SENTRY_HOSTED_MCP_URL,
@@ -88,30 +111,34 @@ export async function downloadMcp(
 			);
 			await controller.postStateToWebview();
 			return McpDownloadResponse.create({
-				mcpId: "sentry-mcp",
+				mcpId: "sentry",
 				githubUrl: "https://github.com/getsentry/sentry-mcp",
 				name: "Sentry MCP",
 				author: "Sentry",
 				description: "Sentry hosted MCP (Streamable HTTP)",
 				readmeContent:
-					"Connected to Sentry’s hosted MCP. Complete authentication in the browser when the extension prompts you. Docs: https://github.com/getsentry/sentry-mcp",
+					"Connected to https://mcp.sentry.dev/mcp . Complete authentication in the browser when prompted. Docs: https://github.com/getsentry/sentry-mcp",
 				llmsInstallationContent: "",
 				requiresApiKey: false,
 			});
 		}
 
-		if (mcpId === "fetch-agentverse-mcp") {
+		if (mcpId === "agentverse") {
+			await controller.mcpHub.addRemoteServer(
+				"agentverse",
+				AGENTVERSE_MCP_SSE_URL,
+				"sse",
+			);
 			await controller.postStateToWebview();
 			return McpDownloadResponse.create({
-				mcpId: "fetch-agentverse-mcp",
+				mcpId: "agentverse",
 				githubUrl: "https://github.com/fetchai/uAgents",
-				name: "Fetch / Agentverse (uAgents)",
+				name: "Agentverse MCP",
 				author: "Fetch.ai",
-				description: "Pinned shortcut — configure Agentverse/uAgents MCP per Fetch docs",
+				description: "Agentverse MCP (SSE)",
 				readmeContent:
-					"Agentverse endpoints are account- and deployment-specific. Follow the latest Fetch.ai / Agentverse documentation to add a streamable HTTP or stdio MCP entry to Asi_mcp_settings.json. Start here: https://fetch.ai/docs and the uAgents repo: https://github.com/fetchai/uAgents",
-				llmsInstallationContent:
-					"No default public URL is bundled. Add your MCP server block manually after reading Fetch’s current guide.",
+					"Added https://mcp.agentverse.ai/sse (SSE). Authenticate via Agentverse / Fetch as required. Docs: https://fetch.ai/docs",
+				llmsInstallationContent: "",
 				requiresApiKey: false,
 			});
 		}

@@ -26,6 +26,8 @@ import { addToAsi } from "./core/controller/commands/addToCline"
 import { explainWithAsi } from "./core/controller/commands/explainWithCline"
 import { fixWithAsi } from "./core/controller/commands/fixWithCline"
 import { improveWithAsi } from "./core/controller/commands/improveWithCline"
+import { refactorWithAsi } from "./core/controller/commands/refactorWithCline"
+import { buildEditorQuickActionContext } from "./extension/ai/context/EditorContextBuilder"
 import { sendAddToInputEvent } from "./core/controller/ui/subscribeToAddToInput"
 import { sendShowWebviewEvent } from "./core/controller/ui/subscribeToShowWebview"
 import { HookDiscoveryCache } from "./core/hooks/HookDiscoveryCache"
@@ -55,8 +57,8 @@ import { VscodeWebviewProvider } from "./hosts/vscode/VscodeWebviewProvider"
 import { exportVSCodeStorageToSharedFiles } from "./hosts/vscode/vscode-to-file-migration"
 import { getCheckpointService } from "./core/checkpoint/CheckpointService"
 import {
-	notifyFetchCoderCheckpointCreated,
-	setFetchCoderRevertInProgress,
+    notifyFetchCoderCheckpointCreated,
+    setFetchCoderRevertInProgress,
 } from "./core/checkpoint/checkpointUiBridge"
 import { clearFetchCoderCheckpoints } from "./core/controller/file/clearFetchCoderCheckpoints"
 import { getCheckpointWorkspaceRoot } from "./core/controller/file/fetchCoderCheckpointUtils"
@@ -222,29 +224,38 @@ async function activateFetchCoderExtensionBody(
 	)
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.FixWithAsi, async (range: vscode.Range, diagnostics: vscode.Diagnostic[]) => {
-			const context = await getContextForCommand(range, diagnostics)
+			const context = await buildEditorQuickActionContext(range, diagnostics)
 			if (!context) {
 				return
 			}
-			await fixWithAsi(context.controller, context.commandContext)
+			await fixWithAsi(context.controller, context.snapshot.commandContext, context.snapshot)
 		}),
 	)
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.ExplainCode, async (range: vscode.Range) => {
-			const context = await getContextForCommand(range)
+			const context = await buildEditorQuickActionContext(range)
 			if (!context) {
 				return
 			}
-			await explainWithAsi(context.controller, context.commandContext)
+			await explainWithAsi(context.controller, context.snapshot.commandContext, undefined, context.snapshot)
 		}),
 	)
 	context.subscriptions.push(
 		vscode.commands.registerCommand(commands.ImproveCode, async (range: vscode.Range) => {
-			const context = await getContextForCommand(range)
+			const context = await buildEditorQuickActionContext(range)
 			if (!context) {
 				return
 			}
-			await improveWithAsi(context.controller, context.commandContext)
+			await improveWithAsi(context.controller, context.snapshot.commandContext, undefined, context.snapshot)
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.RefactorCode, async (range: vscode.Range) => {
+			const context = await buildEditorQuickActionContext(range)
+			if (!context) {
+				return
+			}
+			await refactorWithAsi(context.controller, context.snapshot.commandContext, undefined, context.snapshot)
 		}),
 	)
 

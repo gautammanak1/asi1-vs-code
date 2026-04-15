@@ -2,9 +2,9 @@ import { setTimeout as setTimeoutPromise } from "node:timers/promises";
 import { ApiHandler, ApiProviderInfo, buildApiHandler } from "@core/api";
 import { ApiStream } from "@core/api/transform/stream";
 import {
-	AssistantMessageContent,
-	parseAssistantMessageV2,
-	ToolUse,
+    AssistantMessageContent,
+    parseAssistantMessageV2,
+    ToolUse,
 } from "@core/assistant-message";
 import { ContextManager } from "@core/context/context-management/ContextManager";
 import { checkContextWindowExceededError } from "@core/context/context-management/context-error-handling";
@@ -13,24 +13,24 @@ import { EnvironmentContextTracker } from "@core/context/context-tracking/Enviro
 import { FileContextTracker } from "@core/context/context-tracking/FileContextTracker";
 import { ModelContextTracker } from "@core/context/context-tracking/ModelContextTracker";
 import {
-	getGlobalAsiRules,
-	getLocalAsiRules,
-	refreshAsiRulesToggles,
+    getGlobalAsiRules,
+    getLocalAsiRules,
+    refreshAsiRulesToggles,
 } from "@core/context/instructions/user-instructions/asi-rules";
 import {
-	getLocalAgentsRules,
-	getLocalCursorRules,
-	getLocalWindsurfRules,
-	refreshExternalRulesToggles,
+    getLocalAgentsRules,
+    getLocalCursorRules,
+    getLocalWindsurfRules,
+    refreshExternalRulesToggles,
 } from "@core/context/instructions/user-instructions/external-rules";
 import { sendPartialMessageEvent } from "@core/controller/ui/subscribeToPartialMessage";
 import { getHookModelContext } from "@core/hooks/hook-model-context";
 import { getHooksEnabledSafe } from "@core/hooks/hooks-utils";
 import * as NotificationHook from "@core/hooks/notification-hook";
 import {
-	executePreCompactHookWithCleanup,
-	HookCancellationError,
-	HookExecution,
+    executePreCompactHookWithCleanup,
+    HookCancellationError,
+    HookExecution,
 } from "@core/hooks/precompact-executor";
 import { ClineIgnoreController } from "@core/ignore/ClineIgnoreController";
 import { readFetchCoderWorkspaceMemorySummary } from "@core/memory/fetchCoderWorkspaceMemory";
@@ -40,18 +40,18 @@ import { summarizeTask } from "@core/prompts/contextManagement";
 import { formatResponse } from "@core/prompts/responses";
 import { parseSlashCommands } from "@core/slash-commands";
 import {
-	ensureRulesDirectoryExists,
-	ensureTaskDirectoryExists,
-	GlobalFileNames,
-	getSavedApiConversationHistory,
-	getSavedAsiMessages,
+    ensureRulesDirectoryExists,
+    ensureTaskDirectoryExists,
+    GlobalFileNames,
+    getSavedApiConversationHistory,
+    getSavedAsiMessages,
 } from "@core/storage/disk";
 import { releaseTaskLock } from "@core/task/TaskLockUtils";
 import { isMultiRootEnabled } from "@core/workspace/multi-root-utils";
 import { WorkspaceRootManager } from "@core/workspace/WorkspaceRootManager";
 import {
-	buildCheckpointManager,
-	shouldUseMultiRoot,
+    buildCheckpointManager,
+    shouldUseMultiRoot,
 } from "@integrations/checkpoints/factory";
 import { ensureCheckpointInitialized } from "@integrations/checkpoints/initializer";
 import { ICheckpointManager } from "@integrations/checkpoints/types";
@@ -70,29 +70,23 @@ import { findLast, findLastIndex } from "@shared/array";
 import { combineApiRequests } from "@shared/combineApiRequests";
 import { combineCommandSequences } from "@shared/combineCommandSequences";
 import {
-	AsiApiReqCancelReason,
-	AsiApiReqInfo,
-	AsiAsk,
-	AsiMessage,
-	AsiSay,
+    AsiApiReqCancelReason,
+    AsiApiReqInfo,
+    AsiAsk,
+    AsiMessage,
+    AsiSay,
 } from "@shared/ExtensionMessage";
 import { HistoryItem } from "@shared/HistoryItem";
 import {
-	DEFAULT_LANGUAGE_SETTINGS,
-	getLanguageKey,
-	LanguageDisplay,
+    DEFAULT_LANGUAGE_SETTINGS,
+    getLanguageKey,
+    LanguageDisplay,
 } from "@shared/Languages";
 import { USER_CONTENT_TAGS } from "@shared/messages/constants";
 import { convertAsiMessageToProto } from "@shared/proto-conversions/cline-message";
 import { AsiDefaultTool, READ_ONLY_TOOLS } from "@shared/tools";
 import { AsiAskResponse } from "@shared/WebviewMessage";
-import {
-	isClaude4PlusModelFamily,
-	isGPT5ModelFamily,
-	isLocalModel,
-	isNextGenModelFamily,
-	isParallelToolCallingEnabled,
-} from "@utils/model-utils";
+import { isAsi1Model, isLocalModel, isParallelToolCallingEnabled } from "@utils/model-utils";
 import { arePathsEqual, getDesktopDir } from "@utils/path";
 import { filterExistingFiles } from "@utils/tabFiltering";
 import cloneDeep from "clone-deep";
@@ -106,24 +100,24 @@ import { getSystemPrompt } from "@/core/prompts/system-prompt";
 import { HostProvider } from "@/hosts/host-provider";
 import { FileEditProvider } from "@/integrations/editor/FileEditProvider";
 import {
-	type CommandExecutionOptions,
-	CommandExecutor,
-	CommandExecutorCallbacks,
-	FullCommandExecutorConfig,
-	StandaloneTerminalManager,
+    type CommandExecutionOptions,
+    CommandExecutor,
+    CommandExecutorCallbacks,
+    FullCommandExecutorConfig,
+    StandaloneTerminalManager,
 } from "@/integrations/terminal";
 import { AsiError, AsiErrorType, ErrorService } from "@/services/error";
 import { telemetryService } from "@/services/telemetry";
 import { AsiClient } from "@/shared/asi";
 import {
-	AsiAssistantContent,
-	AsiContent,
-	AsiImageContentBlock,
-	AsiMessageModelInfo,
-	AsiStorageMessage,
-	AsiTextContentBlock,
-	AsiToolResponseContent,
-	AsiUserContent,
+    AsiAssistantContent,
+    AsiContent,
+    AsiImageContentBlock,
+    AsiMessageModelInfo,
+    AsiStorageMessage,
+    AsiTextContentBlock,
+    AsiToolResponseContent,
+    AsiUserContent,
 } from "@/shared/messages";
 import { ApiFormat } from "@/shared/proto/Asi/models";
 import { ShowMessageType } from "@/shared/proto/index.host";
@@ -132,8 +126,8 @@ import { Session } from "@/shared/services/Session";
 import { RuleContextBuilder } from "../context/instructions/user-instructions/RuleContextBuilder";
 import { ensureLocalAsiDirExists } from "../context/instructions/user-instructions/rule-helpers";
 import {
-	discoverSkills,
-	getAvailableSkills,
+    discoverSkills,
+    getAvailableSkills,
 } from "../context/instructions/user-instructions/skills";
 import { refreshWorkflowToggles } from "../context/instructions/user-instructions/workflows";
 import { Controller } from "../controller";
@@ -141,10 +135,10 @@ import { executeHook } from "../hooks/hook-executor";
 import { StateManager } from "../storage/StateManager";
 import { FocusChainManager } from "./focus-chain";
 import {
-	getPresentationCadenceMs,
-	isPresentationSchedulingDisabled,
-	isRemoteWorkspaceEnvironment,
-	type TaskLatencyTrigger,
+    getPresentationCadenceMs,
+    isPresentationSchedulingDisabled,
+    isRemoteWorkspaceEnvironment,
+    type TaskLatencyTrigger,
 } from "./latency";
 import { MessageStateHandler } from "./message-state";
 import type { PresentationPriority } from "./presentation-types";
@@ -154,9 +148,9 @@ import { TaskPresentationScheduler } from "./TaskPresentationScheduler";
 import { TaskState } from "./TaskState";
 import { ToolExecutor } from "./ToolExecutor";
 import {
-	detectAvailableCliTools,
-	extractProviderDomainFromUrl,
-	updateApiReqMsg,
+    detectAvailableCliTools,
+    extractProviderDomainFromUrl,
+    updateApiReqMsg,
 } from "./utils";
 import { buildUserFeedbackContent } from "./utils/buildUserFeedbackContent";
 
@@ -2351,7 +2345,7 @@ export class Task {
 				previousApiReqIndex,
 				await ensureTaskDirectoryExists(this.taskId),
 				this.stateManager.getGlobalSettingsKey("useAutoCondense") &&
-					isNextGenModelFamily(this.api.getModel().id),
+					isAsi1Model(this.api.getModel().id),
 			);
 
 		if (contextManagementMetadata.updatedConversationHistoryDeletedRange) {
@@ -2931,7 +2925,7 @@ export class Task {
 		const useAutoCondense =
 			this.stateManager.getGlobalSettingsKey("useAutoCondense");
 
-		if (useAutoCondense && isNextGenModelFamily(this.api.getModel().id)) {
+		if (useAutoCondense && isAsi1Model(this.api.getModel().id)) {
 			// When we initially trigger context cleanup, we increase the context window size, so we need state `currentlySummarizing`
 			// to track if we've already started the context summarization flow. After summarizing, we increment
 			// conversationHistoryDeletedRange to mask out the summarization-trigger user & assistant response messages
@@ -4368,9 +4362,7 @@ export class Task {
 
 		// Determine if context window info should be displayed
 		const currentModelId = this.api.getModel().id;
-		const isNextGenModel =
-			isClaude4PlusModelFamily(currentModelId) ||
-			isGPT5ModelFamily(currentModelId);
+		const isNextGenModel = isAsi1Model(currentModelId);
 
 		let shouldShowContextWindow = true;
 		// For next-gen models, only show context window usage if it exceeds a certain threshold

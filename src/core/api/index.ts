@@ -3,7 +3,7 @@ import { Mode } from "@shared/storage/types"
 import { AsiStorageMessage } from "@/shared/messages/content"
 import { Logger } from "@/shared/services/Logger"
 import { AsiTool } from "@/shared/tools"
-import { OpenAiHandler } from "./providers/openai"
+import { OpenAiHandler } from "./asi1Client"
 import { ApiStream, ApiStreamUsageChunk } from "./transform/stream"
 
 export type CommonApiHandlerOptions = {

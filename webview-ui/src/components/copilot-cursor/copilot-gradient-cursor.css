@@ -1,0 +1,145 @@
+/**
+ * GitHub Copilot–inspired animated gradient cursor.
+ * Glow only (no offset shadows); 3s continuous rotation.
+ * Mask URL is applied inline from `copilotArrowMaskSvg.ts`.
+ */
+
+@keyframes copilot-cursor-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes copilot-cursor-trail-fade {
+	to {
+		opacity: 0;
+		transform: scale(0.65);
+	}
+}
+
+.copilot-gradient-cursor {
+	--copilot-cursor-cyan: #00d9ff;
+	--copilot-cursor-white: #ffffff;
+	--copilot-cursor-glow-blur: 12px;
+	--copilot-cursor-glow-opacity: 0.6;
+	--copilot-cursor-duration: 3s;
+	--copilot-cursor-ease: cubic-bezier(0.4, 0, 0.2, 1);
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 24px;
+	height: 24px;
+	pointer-events: none;
+	z-index: 2147483646;
+	will-change: transform;
+	transition:
+		opacity 0.35s var(--copilot-cursor-ease),
+		filter 0.35s var(--copilot-cursor-ease);
+}
+
+.copilot-gradient-cursor[data-hidden="true"] {
+	opacity: 0;
+}
+
+.copilot-gradient-cursor__glow {
+	position: absolute;
+	inset: -4px;
+	border-radius: 4px;
+	background: conic-gradient(
+		from 0deg,
+		var(--copilot-cursor-white),
+		var(--copilot-cursor-cyan),
+		color-mix(
+			in srgb,
+			var(--copilot-cursor-cyan) 40%,
+			var(--copilot-cursor-white)
+		),
+		var(--copilot-cursor-white)
+	);
+	animation: copilot-cursor-spin var(--copilot-cursor-duration) linear infinite;
+	filter: blur(var(--copilot-cursor-glow-blur));
+	opacity: var(--copilot-cursor-glow-opacity);
+	mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center;
+	-webkit-mask-size: contain;
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+}
+
+.copilot-gradient-cursor__body {
+	position: absolute;
+	inset: 0;
+	border-radius: 2px;
+	overflow: hidden;
+	mask-size: contain;
+	mask-repeat: no-repeat;
+	mask-position: center;
+	-webkit-mask-size: contain;
+	-webkit-mask-repeat: no-repeat;
+	-webkit-mask-position: center;
+}
+
+.copilot-gradient-cursor__gradient {
+	position: absolute;
+	inset: -50%;
+	background: conic-gradient(
+		from 0deg at 50% 50%,
+		var(--copilot-cursor-white),
+		var(--copilot-cursor-cyan),
+		color-mix(in srgb, var(--copilot-cursor-cyan) 55%, white),
+		var(--copilot-cursor-white)
+	);
+	animation: copilot-cursor-spin var(--copilot-cursor-duration) linear infinite;
+}
+
+.copilot-gradient-cursor[data-bright="true"]
+	.copilot-gradient-cursor__gradient {
+	filter: brightness(1.14) saturate(1.08);
+}
+
+.copilot-gradient-cursor[data-bright="true"] .copilot-gradient-cursor__glow {
+	filter: blur(var(--copilot-cursor-glow-blur)) brightness(1.12);
+	opacity: 0.72;
+}
+
+.copilot-gradient-cursor-trail {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 24px;
+	height: 24px;
+	pointer-events: none;
+	z-index: 2147483645;
+}
+
+.copilot-gradient-cursor-trail__dot {
+	position: absolute;
+	width: 24px;
+	height: 24px;
+	margin-left: -12px;
+	margin-top: -12px;
+	border-radius: 9999px;
+	background: radial-gradient(
+		circle,
+		color-mix(in srgb, var(--copilot-cursor-cyan) 55%, transparent) 0%,
+		color-mix(in srgb, var(--copilot-cursor-white) 35%, transparent) 45%,
+		transparent 70%
+	);
+	filter: blur(6px);
+	opacity: 0.35;
+	animation: copilot-cursor-trail-fade 0.55s cubic-bezier(0.4, 0, 0.2, 1)
+		forwards;
+}
+
+.copilot-cursor-scope {
+	cursor: none;
+}
+
+.copilot-cursor-scope input:not([type="checkbox"]):not([type="radio"]),
+.copilot-cursor-scope textarea,
+.copilot-cursor-scope [contenteditable="true"],
+.copilot-cursor-scope .cm-editor,
+.copilot-cursor-scope [role="textbox"] {
+	cursor: text;
+}

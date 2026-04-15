@@ -22,7 +22,7 @@ const ConfigureServersView = () => {
 				>
 					MCP servers
 				</VSCodeLink>{" "}
-				to extend Fetch Coder with external tools, APIs, and data sources.{" "}
+				to extend Fetch Coder with external tools, APIs, and data sources. Remove a server with the trash icon (or open the row → Delete Server).{" "}
 				<VSCodeLink
 					href="https://innovationlab.fetch.ai/resources/docs/mcp-integration/what-is-mcp"
 					style={{ display: "inline" }}

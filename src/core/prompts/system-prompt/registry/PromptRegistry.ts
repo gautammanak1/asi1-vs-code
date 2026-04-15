@@ -53,13 +53,13 @@ export class PromptRegistry {
 		}
 		// Fallback to generic variant if no match found
 		const modelId = context.providerInfo?.model?.id ?? "unknown"
-		Logger.log(`[Prompt variant] No matching variant found for model: ${modelId}, falling back to generic`)
-		return ModelFamily.GENERIC
+		Logger.log(`[Prompt variant] No matching variant found for model: ${modelId}, falling back to ASI:One`)
+		return ModelFamily.ASI1
 	}
 
 	getVariant(context: SystemPromptContext): PromptVariant {
 		const family = this.getModelFamily(context)
-		const variant = this.variants.get(family) || this.variants.get(ModelFamily.GENERIC)
+		const variant = this.variants.get(family) || this.variants.get(ModelFamily.ASI1)
 		if (!variant) {
 			// Enhanced error with debugging information
 			const availableVariants = Array.from(this.variants.keys())
@@ -73,7 +73,7 @@ export class PromptRegistry {
 			Logger.error("Prompt variant lookup failed:", errorDetails)
 
 			throw new Error(
-				`No prompt variant found for model '${context.providerInfo.model.id}' and no generic fallback available. ` +
+				`No prompt variant found for model '${context.providerInfo.model.id}' and no ASI:One fallback available. ` +
 					`Available variants: [${availableVariants.join(", ")}]. ` +
 					`Registry state: variants=${this.variants.size}, components=${Object.keys(this.components).length}`,
 			)
@@ -100,17 +100,8 @@ export class PromptRegistry {
 		modelId: string,
 		version: number,
 		context: SystemPromptContext,
-		isNextGenModelFamily?: boolean,
+		_isNextGenModelFamily?: boolean,
 	): Promise<string> {
-		// If isNextGenModelFamily is true, prioritize next-gen variant with the specified version
-		if (isNextGenModelFamily) {
-			const nextGenVariant = this.variants.get(ModelFamily.NEXT_GEN)
-			if (nextGenVariant && nextGenVariant.version === version) {
-				const builder = new PromptBuilder(nextGenVariant, context, this.components)
-				return await builder.build()
-			}
-		}
-
 		// Find variant with specific version
 		const variantKey = `${modelId}@${version}`
 		let variant = this.variants.get(variantKey)
@@ -141,26 +132,13 @@ export class PromptRegistry {
 		tag?: string,
 		label?: string,
 		context?: SystemPromptContext,
-		isNextGenModelFamily?: boolean,
+		_isNextGenModelFamily?: boolean,
 	): Promise<string> {
 		if (!context) {
 			throw new Error("Context is required for prompt building")
 		}
 
 		let variant: PromptVariant | undefined
-
-		// If isNextGenModelFamily is true, prioritize next-gen variant with matching tag/label
-		if (isNextGenModelFamily) {
-			const nextGenVariant = this.variants.get(ModelFamily.NEXT_GEN)
-			if (nextGenVariant) {
-				// Check if next-gen variant matches the criteria
-				const matchesLabel = label && nextGenVariant.labels[label] !== undefined
-				const matchesTag = tag && nextGenVariant.tags.includes(tag)
-				if (matchesLabel || matchesTag) {
-					variant = nextGenVariant
-				}
-			}
-		}
 
 		// Find by label first (more specific)
 		if (!variant && label) {
@@ -226,30 +204,23 @@ export class PromptRegistry {
 				this.variants.set(id, { ...config, id })
 			}
 
-			// Ensure generic variant is always available as a safety fallback
-			this.ensureGenericFallback()
+			// Ensure ASI:One variant is always available as a safety fallback
+			this.ensureAsi1Fallback()
 		} catch (error) {
 			Logger.warn("Warning: Could not load variants:", error)
-			// Even if variant loading fails completely, create a minimal generic fallback
-			this.createMinimalGenericFallback()
+			this.createMinimalAsi1Fallback()
 		}
 	}
 
-	/**
-	 * Ensure generic variant is available, create minimal one if missing
-	 */
-	private ensureGenericFallback(): void {
-		if (!this.variants.has(ModelFamily.GENERIC)) {
-			Logger.warn("Generic variant not found, creating minimal fallback")
-			this.createMinimalGenericFallback()
+	private ensureAsi1Fallback(): void {
+		if (!this.variants.has(ModelFamily.ASI1)) {
+			Logger.warn("ASI:One variant not found, creating minimal fallback")
+			this.createMinimalAsi1Fallback()
 		}
 	}
 
-	/**
-	 * Create a minimal generic variant as absolute fallback
-	 */
-	private createMinimalGenericFallback(): void {
-		this.loadVariantFromConfig(ModelFamily.GENERIC, genericConfig)
+	private createMinimalAsi1Fallback(): void {
+		this.loadVariantFromConfig(ModelFamily.ASI1, genericConfig)
 	}
 
 	/**

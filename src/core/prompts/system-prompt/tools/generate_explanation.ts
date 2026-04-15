@@ -4,8 +4,8 @@ import type { AsiToolSpec } from "../spec"
 
 const id = AsiDefaultTool.GENERATE_EXPLANATION
 
-const GENERIC: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+const ASI1: AsiToolSpec = {
+	variant: ModelFamily.ASI1,
 	id,
 	name: "generate_explanation",
 	description:
@@ -36,4 +36,4 @@ const GENERIC: AsiToolSpec = {
 	],
 }
 
-export const generate_explanation_variants = [GENERIC]
+export const generate_explanation_variants = [ASI1]

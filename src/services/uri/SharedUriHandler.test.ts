@@ -77,14 +77,14 @@ describe("SharedUriHandler", () => {
 				const result = await SharedUriHandler.handleUri("vscode://Asi.Asi/auth?idToken=jwt123&provider=google")
 
 				expect(result).to.be.true
-				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt123", "google")
+				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt123", "google", null)
 			})
 
 			it("should successfully handle auth callback without provider", async () => {
 				const result = await SharedUriHandler.handleUri("vscode://Asi.Asi/auth?idToken=jwt123")
 
 				expect(result).to.be.true
-				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt123", null)
+				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt123", null, null)
 			})
 
 			it("should return false when idToken is missing", async () => {
@@ -130,7 +130,7 @@ describe("SharedUriHandler", () => {
 				)
 
 				expect(result).to.be.true
-				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt123", "github")
+				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt123", "github", null)
 			})
 
 			it("should handle URL-encoded parameters", async () => {
@@ -140,7 +140,7 @@ describe("SharedUriHandler", () => {
 
 				expect(result).to.be.true
 				// URLSearchParams should decode %20 to spaces
-				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt with spaces", "google")
+				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt with spaces", "google", null)
 			})
 
 			it("should handle empty query string", async () => {
@@ -164,7 +164,16 @@ describe("SharedUriHandler", () => {
 				const result = await SharedUriHandler.handleUri("https://example.com/auth?idToken=jwt123&provider=github")
 
 				expect(result).to.be.true
-				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt123", "github")
+				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "jwt123", "github", null)
+			})
+
+			it("should pass OAuth state for PKCE callbacks", async () => {
+				const result = await SharedUriHandler.handleUri(
+					"https://example.com/auth?code=abc&state=xyz123&provider=auth0",
+				)
+
+				expect(result).to.be.true
+				sinon.assert.calledOnceWithExactly(handleAuthCallbackStub, "abc", "auth0", "xyz123")
 			})
 		})
 	})

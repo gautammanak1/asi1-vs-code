@@ -30,7 +30,7 @@ export class AsiToolSet {
 
 	public static getTools(variant: ModelFamily): AsiToolSet[] {
 		const toolsSet = AsiToolSet.variants.get(variant) || new Set()
-		const defaultSet = AsiToolSet.variants.get(ModelFamily.GENERIC) || new Set()
+		const defaultSet = AsiToolSet.variants.get(ModelFamily.ASI1) || new Set()
 
 		return toolsSet ? Array.from(toolsSet) : Array.from(defaultSet)
 	}
@@ -44,7 +44,7 @@ export class AsiToolSet {
 		return tools.find((tool) => tool.config.id === toolName)
 	}
 
-	// Return a tool by name with fallback to GENERIC and then any other variant where it exists
+	// Return a tool by name with fallback to ASI1 and then any other variant where it exists
 	public static getToolByNameWithFallback(toolName: string, variant: ModelFamily): AsiToolSet | undefined {
 		// Try exact variant first
 		const exact = AsiToolSet.getToolByName(toolName, variant)
@@ -52,10 +52,9 @@ export class AsiToolSet {
 			return exact
 		}
 
-		// Fallback to GENERIC
-		const generic = AsiToolSet.getToolByName(toolName, ModelFamily.GENERIC)
-		if (generic) {
-			return generic
+		const asi1 = AsiToolSet.getToolByName(toolName, ModelFamily.ASI1)
+		if (asi1) {
+			return asi1
 		}
 
 		// Final fallback: search across all registered variants
@@ -69,7 +68,7 @@ export class AsiToolSet {
 		return undefined
 	}
 
-	// Build a list of tools for a variant using requested ids, falling back to GENERIC when missing
+	// Build a list of tools for a variant using requested ids, falling back to ASI1 when missing
 	public static getToolsForVariantWithFallback(variant: ModelFamily, requestedIds: string[]): AsiToolSet[] {
 		const resolved: AsiToolSet[] = []
 		for (const id of requestedIds) {

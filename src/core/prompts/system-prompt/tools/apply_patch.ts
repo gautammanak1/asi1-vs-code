@@ -1,23 +1,7 @@
 import { ModelFamily } from "@/shared/prompts"
 import { AsiDefaultTool } from "@/shared/tools"
-import { isGptOssModelFamily, isGPT5ModelFamily } from "@/utils/model-utils"
 import type { AsiToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
-
-// {
-//     "name": "apply_patch",
-//     "description": APPLY_PATCH_TOOL_DESC,
-//     "parameters": {
-//         "type": "object",
-//         "properties": {
-//             "input": {
-//                 "type": "string",
-//                 "description": " The apply_patch command that you wish to execute.",
-//             }
-//         },
-//         "required": ["input"],
-//     },
-// }
 
 const APPLY_PATCH_TOOL_DESC = `This is a custom utility that makes it more convenient to add, remove, move, or edit code in a single file. \`apply_patch\` effectively allows you to execute a diff/patch against a file, but the format of the diff specification is unique to this task, so pay careful attention to these instructions. To use the \`apply_patch\` command, you should pass a message of the following structure as "input":
 
@@ -76,13 +60,11 @@ apply_patch <<"EOF"
 *** End Patch
 EOF`
 
-const NATIVE_GPT_5: AsiToolSpec = {
-	variant: ModelFamily.NATIVE_GPT_5,
+const ASI1: AsiToolSpec = {
+	variant: ModelFamily.ASI1,
 	id: AsiDefaultTool.APPLY_PATCH,
 	name: "apply_patch",
 	description: APPLY_PATCH_TOOL_DESC,
-	contextRequirements: (context) =>
-		isGPT5ModelFamily(context.providerInfo.model.id) || isGptOssModelFamily(context.providerInfo.model.id),
 	parameters: [
 		{
 			name: "input",
@@ -93,8 +75,4 @@ const NATIVE_GPT_5: AsiToolSpec = {
 	],
 }
 
-const GPT_5: AsiToolSpec = {
-	...NATIVE_GPT_5,
-	variant: ModelFamily.GPT_5,
-}
-export const apply_patch_variants = [NATIVE_GPT_5, GPT_5]
+export const apply_patch_variants = [ASI1]

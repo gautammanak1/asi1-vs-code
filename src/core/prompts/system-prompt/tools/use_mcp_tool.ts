@@ -32,7 +32,7 @@ Checklist here (optional)
  */
 
 const generic: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+	variant: ModelFamily.ASI1,
 	id: AsiDefaultTool.MCP_USE,
 	name: "use_mcp_tool",
 	description:

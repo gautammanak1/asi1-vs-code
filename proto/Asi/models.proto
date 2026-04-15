@@ -49,8 +49,6 @@ service ModelsService {
   rpc refreshBasetenModelsRpc(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
   // Fetches available models from SAP AI Core
   rpc getSapAiCoreModels(SapAiCoreModelsRequest) returns (SapAiCoreModelsResponse);
-  // Fetches available models from OCA
-  rpc refreshOcaModels(StringRequest) returns (OcaCompatibleModelInfo);
   // Fetches available models from AIhubmix
   rpc getAihubmixModels(EmptyRequest) returns (OpenRouterCompatibleModelInfo);
   // Refreshes and returns Vercel AI Gateway models

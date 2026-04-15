@@ -28,34 +28,24 @@ const toolNamesFrom = (tools: Awaited<ReturnType<typeof getSystemPrompt>>["tools
 		.map((tool: any) => tool?.function?.name ?? tool?.name)
 		.filter((name): name is string => typeof name === "string")
 
-describe("OpenAI-compatible gpt-oss native tools smoke test", () => {
+describe("ASI:One / generic prompt variant (native tools)", () => {
 	beforeEach(() => {
 		PromptRegistry.dispose()
 	})
 
-	it("uses the NATIVE_GPT_5 prompt family for gpt-oss when native tools are enabled", async () => {
+	it("resolves to the single generic model family", async () => {
 		const registry = PromptRegistry.getInstance()
 		await registry.load()
-		const family = registry.getModelFamily(makeContext("gpt-oss-120b"))
-
-		expect(family).to.equal(ModelFamily.NATIVE_GPT_5)
+		const family = registry.getModelFamily(makeContext("asi1-mini"))
+		expect(family).to.equal(ModelFamily.ASI1)
 	})
 
-	it("exposes apply_patch for gpt-oss-120b so file editing remains native", async () => {
-		const { tools } = await getSystemPrompt(makeContext("gpt-oss-120b"))
+	it("exposes core tools for OpenAI-compatible ASI models", async () => {
+		const { tools } = await getSystemPrompt(makeContext("asi1-mini"))
 		const toolNames = toolNamesFrom(tools)
 
 		expect(toolNames).to.include(AsiDefaultTool.BASH)
 		expect(toolNames).to.include(AsiDefaultTool.FILE_READ)
-		expect(toolNames).to.include(AsiDefaultTool.APPLY_PATCH)
-		expect(toolNames).to.not.include(AsiDefaultTool.FILE_NEW)
-		expect(toolNames).to.not.include(AsiDefaultTool.FILE_EDIT)
-	})
-
-	it("control: gpt-5-codex still receives apply_patch", async () => {
-		const { tools } = await getSystemPrompt(makeContext("gpt-5-codex"))
-		const toolNames = toolNamesFrom(tools)
-
-		expect(toolNames).to.include(AsiDefaultTool.APPLY_PATCH)
+		expect(toolNames.length).to.be.greaterThan(0)
 	})
 })

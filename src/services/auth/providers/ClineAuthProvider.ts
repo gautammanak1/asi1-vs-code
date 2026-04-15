@@ -1,7 +1,7 @@
 import axios from "axios"
 import { type JwtPayload } from "jwt-decode"
 import { AsiEnv, EnvironmentConfig } from "@/config"
-import { Controller } from "@/core/controller"
+import type { Controller } from "@/core/controller"
 import { HostProvider } from "@/hosts/host-provider"
 import { buildBasicAsiHeaders } from "@/services/EnvUtils"
 import { AuthInvalidTokenError, AuthNetworkError } from "@/services/error/ClineError"
@@ -10,7 +10,7 @@ import { Asi_API_ENDPOINT } from "@/shared/asi/api"
 import { fetch, getAxiosSettings } from "@/shared/net"
 import { Logger } from "@/shared/services/Logger"
 import { type AsiAccountUserInfo, type AsiAuthInfo } from "../AuthService"
-import { parseJwtPayload } from "../oca/utils/utils"
+import { parseJwtPayload } from "../jwtPayload"
 
 interface AsiAuthApiUser {
 	subject: string | null
@@ -62,7 +62,7 @@ export interface AsiAuthApiTokenRefreshResponse {
 }
 
 export class AsiAuthProvider {
-	readonly name = "Asi"
+	readonly name = "asi1"
 	private refreshRetryCount = 0
 	private lastRefreshAttempt = 0
 	private readonly MAX_REFRESH_RETRIES = 3
@@ -342,7 +342,7 @@ export class AsiAuthProvider {
 		}
 	}
 
-	async getAuthRequest(callbackUrl: string): Promise<string> {
+	async getAuthRequest(callbackUrl: string, _controller?: Controller): Promise<string> {
 		const authUrl = new URL(Asi_API_ENDPOINT.AUTH, this.config.apiBaseUrl)
 		authUrl.searchParams.set("client_type", "extension")
 		authUrl.searchParams.set("callback_url", callbackUrl)
@@ -384,7 +384,12 @@ export class AsiAuthProvider {
 		}
 	}
 
-	async signIn(controller: Controller, authorizationCode: string, provider: string): Promise<AsiAuthInfo | null> {
+	async signIn(
+		controller: Controller,
+		authorizationCode: string,
+		provider: string,
+		_oauthState?: string,
+	): Promise<AsiAuthInfo | null> {
 		try {
 			// Get the callback URL that was used during the initial auth request
 			const callbackUrl = await HostProvider.get().getCallbackUrl("/auth")

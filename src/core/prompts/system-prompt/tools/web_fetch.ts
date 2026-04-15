@@ -3,8 +3,8 @@ import { AsiDefaultTool } from "@/shared/tools"
 import type { AsiToolSpec } from "../spec"
 import { TASK_PROGRESS_PARAMETER } from "../types"
 
-const GENERIC: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+const ASI1: AsiToolSpec = {
+	variant: ModelFamily.ASI1,
 	id: AsiDefaultTool.WEB_FETCH,
 	name: "web_fetch",
 	description: `Fetches content from a specified URL and analyzes it using your prompt
@@ -34,31 +34,4 @@ const GENERIC: AsiToolSpec = {
 	],
 }
 
-const NATIVE_NEXT_GEN: AsiToolSpec = {
-	variant: ModelFamily.NATIVE_NEXT_GEN,
-	id: AsiDefaultTool.WEB_FETCH,
-	name: "web_fetch",
-	description:
-		"Fetches and analyzes content from a specified URL. IMPORTANT: If an MCP-provided web fetch tool is available, prefer using that tool instead of this one, as it may have fewer restrictions.",
-	contextRequirements: (context) => context.AsiWebToolsEnabled !== false,
-	parameters: [
-		{
-			name: "url",
-			required: true,
-			instruction: "The URL to fetch content from",
-		},
-		{
-			name: "prompt",
-			required: true,
-			instruction: "Prompt for analyzing the webpage content",
-		},
-		TASK_PROGRESS_PARAMETER,
-	],
-}
-
-const NATIVE_GPT_5: AsiToolSpec = {
-	...NATIVE_NEXT_GEN,
-	variant: ModelFamily.NATIVE_GPT_5,
-}
-
-export const web_fetch_variants = [GENERIC, NATIVE_GPT_5, NATIVE_NEXT_GEN]
+export const web_fetch_variants = [ASI1]

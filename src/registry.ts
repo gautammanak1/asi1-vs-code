@@ -1,39 +1,42 @@
 import { name, publisher, version } from "../package.json";
 import { HostProvider } from "./hosts/host-provider";
 
-const prefix = name === "claude-dev" || name === "fetch-coder" ? "Asi" : name;
+/**
+ * VS Code command IDs contributed in package.json use the fixed prefix `Asi.` (e.g. `Asi.openAiChat`).
+ * Registration must use the same prefix even when package `name` is renamed; otherwise keybindings and
+ * the command palette resolve `Asi.*` but the extension registers `<name>.*` → "command not found".
+ */
+const COMMAND_PREFIX = "Asi";
 
 /**
- * List of commands with the name of the extension they are registered under.
- * These should match the command IDs defined in package.json.
- * For Nightly build, the publish script has updated all the commands to use the extension name as prefix.
- * In production, all commands are registered under "Asi" for consistency.
+ * List of commands — must match `contributes.commands` in package.json.
  */
 const AsiCommands = {
-	PlusButton: prefix + ".plusButtonClicked",
-	McpButton: prefix + ".mcpButtonClicked",
-	SettingsButton: prefix + ".settingsButtonClicked",
-	HistoryButton: prefix + ".historyButtonClicked",
-	WorktreesButton: prefix + ".worktreesButtonClicked",
-	TerminalOutput: prefix + ".addTerminalOutputToChat",
-	AddToChat: prefix + ".addToChat",
-	FixWithAsi: prefix + ".fixWithAsi",
-	ExplainCode: prefix + ".explainCode",
-	ImproveCode: prefix + ".improveCode",
-	FocusChatInput: prefix + ".focusChatInput",
-	OpenAiChat: prefix + ".openAiChat",
-	Walkthrough: prefix + ".openWalkthrough",
-	GenerateCommit: prefix + ".generateGitCommitMessage",
-	AbortCommit: prefix + ".abortGitCommitMessage",
-	ReconstructTaskHistory: prefix + ".reconstructTaskHistory",
+	PlusButton: COMMAND_PREFIX + ".plusButtonClicked",
+	McpButton: COMMAND_PREFIX + ".mcpButtonClicked",
+	SettingsButton: COMMAND_PREFIX + ".settingsButtonClicked",
+	HistoryButton: COMMAND_PREFIX + ".historyButtonClicked",
+	WorktreesButton: COMMAND_PREFIX + ".worktreesButtonClicked",
+	TerminalOutput: COMMAND_PREFIX + ".addTerminalOutputToChat",
+	AddToChat: COMMAND_PREFIX + ".addToChat",
+	FixWithAsi: COMMAND_PREFIX + ".fixWithAsi",
+	ExplainCode: COMMAND_PREFIX + ".explainCode",
+	ImproveCode: COMMAND_PREFIX + ".improveCode",
+	RefactorCode: COMMAND_PREFIX + ".refactorCode",
+	FocusChatInput: COMMAND_PREFIX + ".focusChatInput",
+	OpenAiChat: COMMAND_PREFIX + ".openAiChat",
+	Walkthrough: COMMAND_PREFIX + ".openWalkthrough",
+	GenerateCommit: COMMAND_PREFIX + ".generateGitCommitMessage",
+	AbortCommit: COMMAND_PREFIX + ".abortGitCommitMessage",
+	ReconstructTaskHistory: COMMAND_PREFIX + ".reconstructTaskHistory",
 	// Jupyter Notebook commands
-	JupyterGenerateCell: prefix + ".jupyterGenerateCell",
-	JupyterExplainCell: prefix + ".jupyterExplainCell",
-	JupyterImproveCell: prefix + ".jupyterImproveCell",
-	OpenCheckpoints: prefix + ".openCheckpoints",
-	SaveCheckpoint: prefix + ".saveCheckpoint",
-	RevertLast: prefix + ".revertLast",
-	ClearCheckpoints: prefix + ".clearCheckpoints",
+	JupyterGenerateCell: COMMAND_PREFIX + ".jupyterGenerateCell",
+	JupyterExplainCell: COMMAND_PREFIX + ".jupyterExplainCell",
+	JupyterImproveCell: COMMAND_PREFIX + ".jupyterImproveCell",
+	OpenCheckpoints: COMMAND_PREFIX + ".openCheckpoints",
+	SaveCheckpoint: COMMAND_PREFIX + ".saveCheckpoint",
+	RevertLast: COMMAND_PREFIX + ".revertLast",
+	ClearCheckpoints: COMMAND_PREFIX + ".clearCheckpoints",
 };
 
 /**

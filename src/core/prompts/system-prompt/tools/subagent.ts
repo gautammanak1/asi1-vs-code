@@ -5,7 +5,7 @@ import type { AsiToolSpec } from "../spec"
 const id = AsiDefaultTool.USE_SUBAGENTS
 
 const generic: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+	variant: ModelFamily.ASI1,
 	id,
 	name: "use_subagents",
 	description:

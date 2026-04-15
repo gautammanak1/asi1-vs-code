@@ -21,7 +21,7 @@ import { createVariant } from "./variant-builder"
 import { validateVariant } from "./variant-validator"
 
 // Type-safe variant configuration using the builder pattern
-export const config: Omit<PromptVariant, "id"> = createVariant(ModelFamily.GENERIC) // Change to your target model family
+export const config: Omit<PromptVariant, "id"> = createVariant(ModelFamily.ASI1)
 	.description("Brief description of this variant and its intended use case")
 	.version(1)
 	.tags("production", "stable") // Add relevant tags

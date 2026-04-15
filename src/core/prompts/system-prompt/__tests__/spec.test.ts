@@ -18,7 +18,7 @@ const mockContext: SystemPromptContext = {
 }
 
 const makeTool = (overrides?: Partial<AsiToolSpec>): AsiToolSpec => ({
-	variant: ModelFamily.GENERIC,
+	variant: ModelFamily.ASI1,
 	id: AsiDefaultTool.FILE_READ,
 	name: "read_file",
 	description: "Read a file",

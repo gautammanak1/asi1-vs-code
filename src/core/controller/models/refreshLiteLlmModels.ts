@@ -1,10 +1,69 @@
 import type { ModelInfo } from "@shared/api";
 import { OpenRouterCompatibleModelInfo } from "@shared/proto/Asi/models";
-import { fetchLiteLlmModelsInfo } from "@/core/api/providers/litellm";
+import { buildExternalBasicHeaders } from "@/services/EnvUtils";
 import { StateManager } from "@/core/storage/StateManager";
 import { toProtobufModels } from "@/shared/proto-conversions/models/typeConversion";
 import { Logger } from "@/shared/services/Logger";
 import { sendLiteLlmModelsEvent } from "./subscribeToLiteLlmModels";
+import { fetch } from "@/shared/net";
+
+/** LiteLLM /v1/model/info response shape (optional feature; not used for ASI:One chat). */
+interface LiteLlmModelInfoResponse {
+	data: Array<{
+		model_name: string;
+		litellm_params: { model: string; [key: string]: unknown };
+		model_info: {
+			input_cost_per_token: number;
+			output_cost_per_token: number;
+			max_output_tokens?: number;
+			max_tokens?: number;
+			max_input_tokens?: number;
+			supports_vision?: boolean;
+			supports_prompt_caching?: boolean;
+			supports_reasoning?: boolean;
+			cache_creation_input_token_cost?: number;
+			cache_read_input_token_cost?: number;
+			[key: string]: unknown;
+		};
+	}>;
+}
+
+async function fetchLiteLlmModelsInfo(
+	baseUrl: string,
+	apiKey: string,
+): Promise<LiteLlmModelInfoResponse | undefined> {
+	const normalizedBaseUrl = baseUrl.endsWith("/v1") ? baseUrl : `${baseUrl}/v1`;
+	const url = `${normalizedBaseUrl}/model/info`;
+	try {
+		const response = await fetch(url, {
+			method: "GET",
+			headers: {
+				accept: "application/json",
+				"x-litellm-api-key": apiKey,
+				...buildExternalBasicHeaders(),
+			},
+		});
+		if (response.ok) {
+			return (await response.json()) as LiteLlmModelInfoResponse;
+		}
+		const retryResponse = await fetch(url, {
+			method: "GET",
+			headers: {
+				accept: "application/json",
+				Authorization: `Bearer ${apiKey}`,
+				...buildExternalBasicHeaders(),
+			},
+		});
+		if (retryResponse.ok) {
+			return (await retryResponse.json()) as LiteLlmModelInfoResponse;
+		}
+		throw new Error(
+			`Failed to fetch LiteLLM model info: ${retryResponse.statusText}`,
+		);
+	} catch (error) {
+		throw error;
+	}
+}
 
 /**
  * Core function: Refreshes the LiteLLM models and returns application types

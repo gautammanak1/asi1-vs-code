@@ -22,7 +22,7 @@ describe("new_task tool contextRequirements", () => {
 		PromptRegistry.getInstance()
 	})
 
-	const genericVariant = new_task_variants.find((v) => v.variant === ModelFamily.GENERIC)
+	const genericVariant = new_task_variants.find((v) => v.variant === ModelFamily.ASI1)
 
 	it("should have a contextRequirements function defined", () => {
 		expect(genericVariant).to.exist
@@ -45,8 +45,8 @@ describe("new_task tool contextRequirements", () => {
 	})
 
 	it("should follow the same pattern as ask_followup_question", () => {
-		const newTaskTool = AsiToolSet.getToolByNameWithFallback(AsiDefaultTool.NEW_TASK, ModelFamily.GENERIC)
-		const askTool = AsiToolSet.getToolByNameWithFallback(AsiDefaultTool.ASK, ModelFamily.GENERIC)
+		const newTaskTool = AsiToolSet.getToolByNameWithFallback(AsiDefaultTool.NEW_TASK, ModelFamily.ASI1)
+		const askTool = AsiToolSet.getToolByNameWithFallback(AsiDefaultTool.ASK, ModelFamily.ASI1)
 
 		expect(newTaskTool).to.exist
 		expect(askTool).to.exist

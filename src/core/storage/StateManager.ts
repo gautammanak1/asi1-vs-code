@@ -920,6 +920,12 @@ export class StateManager {
 			secrets.liteLlmApiKey = remoteLiteLlmApiKey
 		}
 
+		// ASI:One: optional env fallback (matches asi1Client error hint) when no key in secrets/UI
+		const envAsiKey = process.env.ASI_ONE_API_KEY?.trim()
+		if (envAsiKey && !secrets.openAiApiKey?.trim()) {
+			secrets.openAiApiKey = envAsiKey
+		}
+
 		// Build API handler settings object with task override support
 		const settings = Object.fromEntries(ApiHandlerSettingsKeys.map((key) => [key, this.getSettingWithOverride(key)]))
 

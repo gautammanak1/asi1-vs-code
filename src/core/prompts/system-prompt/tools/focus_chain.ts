@@ -4,7 +4,7 @@ import type { AsiToolSpec } from "../spec"
 
 // HACK: Placeholder to act as tool dependency
 const generic: AsiToolSpec = {
-	variant: ModelFamily.GENERIC,
+	variant: ModelFamily.ASI1,
 	id: AsiDefaultTool.TODO,
 	name: "focus_chain",
 	description: "",

@@ -153,9 +153,6 @@ const baseContext: SystemPromptContext = {
 	enableNativeToolCalls: false,
 }
 
-const isNativeToolsFamily = (family: ModelFamily) =>
-	[ModelFamily.NATIVE_NEXT_GEN, ModelFamily.NATIVE_GPT_5, ModelFamily.NATIVE_GPT_5_1, ModelFamily.GEMINI_3].includes(family)
-
 type TestRunner = Mocha.Context & { skip(): void; timeout(ms: number): void }
 
 async function runPromptTest(
@@ -189,21 +186,10 @@ const contextVariations: Array<{ name: string; override: Partial<SystemPromptCon
 	{ name: "no-focus-chain", override: { focusChainSettings: { enabled: false, remindAsiInterval: 0 } } },
 ]
 
+/** ASI:One-only product: single prompt variant; snapshots use one model row. */
 const modelTestCases = [
-	{ family: ModelFamily.GENERIC, modelId: "gpt-3", providerId: "openai" },
-	{ family: ModelFamily.GLM, modelId: "glm-4.6", providerId: "zai" },
-	{ family: ModelFamily.HERMES, modelId: "hermes-4", providerId: "test" },
-	{ family: ModelFamily.DEVSTRAL, modelId: "devstral", providerId: "Asi" },
-	{ family: ModelFamily.NEXT_GEN, modelId: "claude-sonnet-4", providerId: "anthropic" },
-	{ family: ModelFamily.XS, modelId: "qwen3_coder", providerId: "lmstudio" },
-	{ family: ModelFamily.NATIVE_NEXT_GEN, modelId: "claude-4-5-sonnet", providerId: "Asi" },
-	{ family: ModelFamily.GPT_5, modelId: "gpt-5", providerId: "openai" },
-	{ family: ModelFamily.NATIVE_GPT_5, modelId: "gpt-5-codex", providerId: "openai" },
-	{ family: ModelFamily.NATIVE_GPT_5_1, modelId: "gpt-5-1", providerId: "openai" },
-	{ family: ModelFamily.GEMINI_3, modelId: "gemini-3", providerId: "vertex" },
-	{ family: ModelFamily.TRINITY, modelId: "arcee-ai/trinity-large-preview", providerId: "openrouter" },
+	{ family: ModelFamily.ASI1, modelId: "asi1-mini", providerId: "openai", enableNativeToolCalls: false },
 ]
-const gemini3ModelTestCases = modelTestCases.filter(({ family }) => family === ModelFamily.GEMINI_3)
 
 // ============================================================================
 // Tests
@@ -216,9 +202,8 @@ describe("Prompt System Integration Tests", () => {
 	})
 
 	describe("Snapshot Testing", () => {
-		for (const { family, modelId, providerId } of modelTestCases) {
+		for (const { family, modelId, providerId, enableNativeToolCalls } of modelTestCases) {
 			describe(`${family} Model Group`, () => {
-				const enableNativeToolCalls = isNativeToolsFamily(family)
 
 				it(`should generate consistent native tools object when enabled`, async function () {
 					const context: SystemPromptContext = {
@@ -281,27 +266,6 @@ describe("Prompt System Integration Tests", () => {
 			})
 		}
 
-		describe("Gemini 3 Specific", () => {
-			for (const { family, modelId, providerId } of gemini3ModelTestCases) {
-				const enableNativeToolCalls = isNativeToolsFamily(family)
-				it(`should include parallel tool-calling guidance for ${providerId}/${modelId} when enabled`, async function () {
-					const context: SystemPromptContext = {
-						...baseContext,
-						providerInfo: makeProviderInfo(modelId, providerId),
-						enableNativeToolCalls,
-						enableParallelToolCalling: true,
-					}
-
-					await runPromptTest(this, context, modelId, async ({ systemPrompt }) => {
-						expect(systemPrompt).to.include(
-							"- When multiple operations are independent (for example reading several files or searching in multiple directories), call multiple tools in a single response rather than one at a time.",
-						)
-						const snapshotName = `${providerId}_${modelId.replace(/[^a-zA-Z0-9]/g, "_")}-parallel-tools.snap`
-						await assertSnapshot(snapshotName, systemPrompt)
-					})
-				})
-			}
-		})
 	})
 
 	describe("Context-Specific Features", () => {

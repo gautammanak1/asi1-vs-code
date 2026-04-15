@@ -1,15 +1,23 @@
-import { getFileMentionFromPath } from "@/core/mentions";
+import {
+	appendToActiveNotebookTask,
+	startNewAssistantTask,
+} from "@/extension/ai/api/assistantTaskClient";
+import type { EditorContextSnapshot } from "@/extension/ai/context/EditorContextBuilder";
+import { maybeAppendFileContextBlock } from "@/extension/ai/context/EditorContextBuilder";
+import { buildQuickActionTemplateVars } from "@/extension/ai/prompts/buildTemplateVars";
+import { resolveQuickActionPrompt } from "@/extension/ai/prompts/PromptManager";
 import { HostProvider } from "@/hosts/host-provider";
 import { telemetryService } from "@/services/telemetry";
-import { CommandContext, Empty } from "@/shared/proto/index.Asi";
+import type { CommandContext, Empty } from "@/shared/proto/index.Asi";
 import { ShowMessageType } from "@/shared/proto/index.host";
 import { Logger } from "@/shared/services/Logger";
-import { Controller } from "../index";
+import type { Controller } from "../index";
 
 export async function improveWithAsi(
 	controller: Controller,
 	request: CommandContext,
 	notebookContext?: string,
+	editorSnapshot?: EditorContextSnapshot,
 ): Promise<Empty> {
 	if (!request.selectedText?.trim() && !notebookContext) {
 		Logger.log("❌ No text selected and no notebook context");
@@ -19,25 +27,32 @@ export async function improveWithAsi(
 		});
 		return {};
 	}
-	const filePath = request.filePath || "";
-	const fileMention = await getFileMentionFromPath(filePath);
+
+	const vars = await buildQuickActionTemplateVars(request);
 	const hasSelectedText = request.selectedText?.trim();
 
-	// Build prompt
-	let prompt = hasSelectedText
-		? `Improve the following code from ${fileMention} (e.g., suggest refactorings, optimizations, or better practices):\n\`\`\`${request.language}\n${request.selectedText}\n\`\`\``
-		: `Improve the current code in the current notebook cell from ${fileMention}. Suggest refactorings, optimizations, or better practices based on the cell context.`;
+	let prompt: string;
+	if (hasSelectedText) {
+		prompt = resolveQuickActionPrompt("improve", vars);
+		if (editorSnapshot) {
+			prompt += maybeAppendFileContextBlock(
+				editorSnapshot,
+				request.language || "text",
+			);
+		}
+	} else {
+		prompt = resolveQuickActionPrompt("improveNotebook", vars);
+	}
 
 	if (notebookContext) {
 		Logger.log("Adding notebook context to improveWithAsi task");
 		prompt += `\n${notebookContext}`;
 	}
 
-	// Send: notebooks go to existing task if available, non-notebooks always create new task
 	if (notebookContext && controller.task) {
-		await controller.task.handleWebviewAskResponse("messageResponse", prompt);
+		await appendToActiveNotebookTask(controller, prompt);
 	} else {
-		await controller.initTask(prompt);
+		await startNewAssistantTask(controller, prompt);
 	}
 
 	telemetryService.captureButtonClick(
