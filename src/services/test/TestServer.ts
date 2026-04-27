@@ -211,7 +211,7 @@ export async function createTestServer(controller: Controller): Promise<http.Ser
 						// Update API configuration with API key
 						const updatedConfig = {
 							...apiConfiguration,
-							apiProvider: "Asi" as ApiProvider,
+							apiProvider: "asi:one" as ApiProvider,
 							AsiAccountId: apiKey,
 						}
 
@@ -224,8 +224,8 @@ export async function createTestServer(controller: Controller): Promise<http.Ser
 						const currentConfig = visibleWebview.controller.stateManager.getApiConfiguration()
 						visibleWebview.controller.stateManager.setApiConfiguration({
 							...currentConfig,
-							planModeApiProvider: "Asi",
-							actModeApiProvider: "Asi",
+							planModeApiProvider: "asi:one",
+							actModeApiProvider: "asi:one",
 						})
 
 						// Post state to webview to reflect changes

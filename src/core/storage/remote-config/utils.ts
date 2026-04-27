@@ -169,9 +169,9 @@ export function transformRemoteConfigToStateShape(remoteConfig: RemoteConfig): P
 
 	const AsiSettings = remoteConfig.providerSettings?.Asi
 	if (AsiSettings) {
-		transformed.planModeApiProvider = "Asi"
-		transformed.actModeApiProvider = "Asi"
-		providers.push("Asi")
+		transformed.planModeApiProvider = "asi:one"
+		transformed.actModeApiProvider = "asi:one"
+		providers.push("asi:one")
 	}
 
 	// Map LiteLLM provider settings

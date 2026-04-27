@@ -30,7 +30,7 @@ describe("parsePrice", () => {
 describe("isLocalModel", () => {
 	it("detects local providers", () => {
 		isLocalModel({ providerId: "ollama", model: { id: "x", info: {} as any } } as ApiProviderInfo).should.equal(true)
-		isLocalModel({ providerId: "Asi", model: { id: "asi1-mini", info: {} as any } } as ApiProviderInfo).should.equal(
+		isLocalModel({ providerId: "asi:one", model: { id: "asi1-mini", info: {} as any } } as ApiProviderInfo).should.equal(
 			false,
 		)
 	})

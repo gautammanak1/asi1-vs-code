@@ -13,7 +13,7 @@ export function isAsi1Model(modelId: string): boolean {
 
 export function isNextGenModelProvider(providerInfo: ApiProviderInfo): boolean {
 	const providerId = normalize(providerInfo.providerId)
-	return ["Asi", "openai", "openai-compatible"].includes(providerId)
+	return ["asi:one", "openai", "openai-compatible"].includes(providerId)
 }
 
 export function modelDoesntSupportWebp(_apiHandlerModel: ApiHandlerModel): boolean {

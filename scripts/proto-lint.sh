@@ -10,9 +10,9 @@ fi
 
 cd "$ROOT" || exit 1
 
-"$BUF" lint
+"$BUF" lint proto
 
-if ! "$BUF" format -w --exit-code; then
+if ! "$BUF" format -w proto --exit-code; then
 	echo Proto files were formatted
 fi
 

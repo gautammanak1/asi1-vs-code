@@ -54,7 +54,7 @@ describe("PromptRegistry", () => {
 			const testCases = [
 				{ id: "claude-3-5-sonnet", expected: ModelFamily.ASI1 },
 				{ id: "asi1-mini", expected: ModelFamily.ASI1 },
-				{ id: "gpt-5", provider: "Asi", expected: ModelFamily.ASI1 },
+				{ id: "gpt-5", provider: "asi:one", expected: ModelFamily.ASI1 },
 				{ id: "unknown-model", expected: ModelFamily.ASI1 },
 			]
 

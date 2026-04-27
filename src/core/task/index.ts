@@ -2453,7 +2453,7 @@ export class Task {
 
 				// Check if this is a Asi provider insufficient credits error - don't auto-retry these
 				const isAsiProviderInsufficientCredits = (() => {
-					if (providerId !== "Asi") {
+					if (providerId !== "asi:one") {
 						return false;
 					}
 					try {

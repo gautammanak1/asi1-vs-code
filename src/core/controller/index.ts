@@ -576,7 +576,7 @@ export class Controller {
 			// 	return;
 			// }
 
-			const AsiProvider: ApiProvider = "Asi";
+			const AsiProvider: ApiProvider = "asi:one";
 
 			// Get current settings to determine how to update providers
 			const planActSeparateModelsSetting =

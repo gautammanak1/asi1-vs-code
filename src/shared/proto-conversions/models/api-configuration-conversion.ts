@@ -297,6 +297,7 @@ function convertApiProviderToProto(
 			return ProtoApiProvider.MISTRAL;
 		case "vscode-lm":
 			return ProtoApiProvider.VSCODE_LM;
+		case "asi:one":
 		case "Asi":
 			return ProtoApiProvider.CLINE;
 		case "litellm":
@@ -392,7 +393,7 @@ export function convertProtoToApiProvider(
 		case ProtoApiProvider.VSCODE_LM:
 			return "vscode-lm";
 		case ProtoApiProvider.CLINE:
-			return "Asi";
+			return "asi:one";
 		case ProtoApiProvider.LITELLM:
 			return "litellm";
 		case ProtoApiProvider.MOONSHOT:

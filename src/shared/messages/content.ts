@@ -1,4 +1,5 @@
 import { Anthropic } from "@anthropic-ai/sdk"
+import type { ApiProvider } from "@shared/api"
 import { AsiMessageMetricsInfo, AsiMessageModelInfo } from "./metrics"
 
 export type AsiPromptInputContent = string
@@ -18,7 +19,7 @@ interface AsiSharedMessageParam {
 	call_id?: string
 }
 
-export const REASONING_DETAILS_PROVIDERS = ["Asi", "openrouter"]
+export const REASONING_DETAILS_PROVIDERS: ApiProvider[] = ["asi:one", "openrouter"]
 
 /**
  * An extension of Anthropic.MessageParam that includes Asi-specific fields: reasoning_details.
@@ -123,7 +124,7 @@ export function convertAsiStorageToAnthropicMessage(
 	const filteredContent = content.filter((b) => b.type !== "thinking" || !!b.signature)
 
 	// Handle array content - strip Asi-specific fields for non-reasoning_details providers
-	const shouldCleanContent = !REASONING_DETAILS_PROVIDERS.includes(provider)
+	const shouldCleanContent = !REASONING_DETAILS_PROVIDERS.includes(provider as ApiProvider)
 	const cleanedContent = shouldCleanContent
 		? filteredContent.map(cleanContentBlock)
 		: (filteredContent as Anthropic.MessageParam["content"])

@@ -12,7 +12,6 @@ import { Navbar } from "../menu/Navbar";
 import AutoApproveBar from "./auto-approve-menu/AutoApproveBar";
 // Import utilities and hooks from the new structure
 import {
-import { asiDebug } from "@/utils/debug";
 	ActionButtons,
 	CHAT_CONSTANTS,
 	ChatLayout,
@@ -28,6 +27,7 @@ import { asiDebug } from "@/utils/debug";
 	useScrollBehavior,
 	WelcomeSection,
 } from "./chat-view";
+import { asiDebug } from "@/utils/debug";
 
 interface ChatViewProps {
 	isHidden: boolean;

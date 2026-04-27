@@ -1011,11 +1011,11 @@ export const ExtensionStateContextProvider: React.FC<{
 			);
 	}, []);
 
-	// Auto-refresh Asi models when provider is Asi
+	// Auto-refresh Asi models when provider is ASI:One
 	useEffect(() => {
 		const hasAsiProvider =
-			state.apiConfiguration?.actModeApiProvider === "Asi" ||
-			state.apiConfiguration?.planModeApiProvider === "Asi";
+			state.apiConfiguration?.actModeApiProvider === "asi:one" ||
+			state.apiConfiguration?.planModeApiProvider === "asi:one";
 		if (hasAsiProvider && AsiModels === null) {
 			refreshClineModels();
 		}

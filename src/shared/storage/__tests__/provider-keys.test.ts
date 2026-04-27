@@ -18,8 +18,8 @@ describe("Provider key mapping", () => {
 		expect(getProviderModelIdKey("openrouter", "plan")).to.equal("planModeOpenRouterModelId")
 	})
 
-	it("uses provider-specific model key behavior for Asi", () => {
-		expect(getProviderModelIdKey("Asi", "act")).to.equal("actModeAsiModelId")
-		expect(getProviderModelIdKey("Asi", "plan")).to.equal("planModeAsiModelId")
+	it("uses provider-specific model key behavior for ASI:One", () => {
+		expect(getProviderModelIdKey("asi:one", "act")).to.equal("actModeAsiModelId")
+		expect(getProviderModelIdKey("asi:one", "plan")).to.equal("planModeAsiModelId")
 	})
 })

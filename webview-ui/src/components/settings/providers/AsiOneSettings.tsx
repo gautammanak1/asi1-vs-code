@@ -133,7 +133,7 @@ export const AsiOneSettings = ({
 					id="asi1-model-id"
 					key={valueForUi}
 					onChange={(e) => {
-						const el = e.target as { value: string };
+						const el = e.target as unknown as { value: string };
 						const id = (el.value || ASI_ONE_DEFAULT_MODEL_ID) as
 							| "asi1-ultra"
 							| "asi1"

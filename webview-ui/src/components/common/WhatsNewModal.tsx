@@ -26,8 +26,8 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({ open, onClose, ver
 			// Switch to Asi provider first so the model picker tab works
 			// Optionally also set the model if provided
 			const updates: Record<string, any> = {
-				planModeApiProvider: "Asi",
-				actModeApiProvider: "Asi",
+				planModeApiProvider: "asi:one",
+				actModeApiProvider: "asi:one",
 			}
 			if (modelId) {
 				updates.planModeOpenRouterModelId = modelId

@@ -7,11 +7,11 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FileServiceClient } from "@/services/grpc-client";
 import {
-import { asiDebug } from "@/utils/debug";
 	getIconByToolName,
 	getToolsNotInCurrentActivities,
 	isLowStakesTool,
 } from "../../utils/messageUtils";
+import { asiDebug } from "@/utils/debug";
 
 interface ToolGroupRendererProps {
 	messages: AsiMessage[];

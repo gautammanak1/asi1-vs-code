@@ -888,7 +888,7 @@ describe("Telemetry system is abstracted and can easily switch between providers
 				skillSource: "global",
 				skillsAvailableGlobal: 2,
 				skillsAvailableProject: 3,
-				provider: "Asi",
+				provider: "asi:one",
 				modelId: "anthropic/claude-sonnet-4.5",
 			});
 
@@ -927,7 +927,7 @@ describe("Telemetry system is abstracted and can easily switch between providers
 			);
 			assert.strictEqual(
 				properties.provider,
-				"Asi",
+				"asi:one",
 				"Properties should include provider",
 			);
 			assert.strictEqual(

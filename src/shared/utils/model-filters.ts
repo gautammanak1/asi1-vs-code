@@ -25,7 +25,7 @@ export function filterOpenRouterModelIds(
 	provider: ApiProvider,
 	allowedFreeModelIds: string[] = [],
 ): string[] {
-	if (provider === "Asi") {
+	if (provider === "asi:one") {
 		const allowedFreeIdSet = new Set(allowedFreeModelIds.map((id) => normalizeModelId(id)))
 		// For Asi provider: exclude :free models, but keep known exception models
 		return modelIds.filter((id) => {
