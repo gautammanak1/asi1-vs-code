@@ -39,7 +39,7 @@ async function checkHealthOnce(client: any): Promise<boolean> {
 	return new Promise<boolean>((resolve) => {
 		client.check({ service: "" }, (err: unknown, resp: any) => {
 			if (err) {
-				console.debug(err.toString())
+				log("health check error:", err instanceof Error ? err.message : String(err))
 				return resolve(false)
 			}
 			return resolve(resp?.status === SERVING_STATUS)

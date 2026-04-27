@@ -10,6 +10,7 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { FileServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 function isWin32Path(filePath: string): boolean {
 	return /^[a-zA-Z]:\\/.test(filePath);
@@ -135,7 +136,7 @@ const RuleRow: React.FC<{
 			? `${REMOTE_URI_SCHEME}${ruleType === "workflow" ? "workflow" : "rule"}/${rulePath}`
 			: rulePath;
 		FileServiceClient.openFile(StringRequest.create({ value: filePath })).catch(
-			(err) => console.error("Failed to open file:", err),
+			(err) => asiDebug.error("Failed to open file:", err),
 		);
 	};
 
@@ -148,7 +149,7 @@ const RuleRow: React.FC<{
 				}),
 			)
 				.then(() => onDeleteSkill?.())
-				.catch((err) => console.error("Failed to delete skill:", err));
+				.catch((err) => asiDebug.error("Failed to delete skill:", err));
 		} else {
 			FileServiceClient.deleteRuleFile(
 				RuleFileRequest.create({
@@ -156,7 +157,7 @@ const RuleRow: React.FC<{
 					isGlobal,
 					type: ruleType || "Asi",
 				}),
-			).catch((err) => console.error("Failed to delete rule file:", err));
+			).catch((err) => asiDebug.error("Failed to delete rule file:", err));
 		}
 	};
 

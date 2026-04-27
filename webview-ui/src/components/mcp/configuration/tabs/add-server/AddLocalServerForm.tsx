@@ -3,6 +3,7 @@ import { VSCodeButton, VSCodeLink } from "@vscode/webview-ui-toolkit/react";
 import styled from "styled-components";
 import { LINKS } from "@/constants";
 import { McpServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 type AddLocalServerFormProps = {
 	onServerAdded: () => void;
@@ -29,7 +30,7 @@ const AddLocalServerForm = ({}: AddLocalServerFormProps) => {
 				onClick={() => {
 					McpServiceClient.openMcpSettings(EmptyRequest.create({})).catch(
 						(error) => {
-							console.error("Error opening MCP settings:", error);
+							asiDebug.error("Error opening MCP settings:", error);
 						},
 					);
 				}}

@@ -31,6 +31,7 @@ import { getMcpServerDisplayName } from "@/utils/mcp";
 import McpPromptRow from "./McpPromptRow";
 import McpResourceRow from "./McpResourceRow";
 import McpToolRow from "./McpToolRow";
+import { asiDebug } from "@/utils/debug";
 
 // constant JSX.Elements
 const TimeoutOptions = [
@@ -119,7 +120,7 @@ const ServerRow = ({
 				setMcpServers(mcpServers);
 			})
 			.catch((error) => {
-				console.error("Error updating MCP server timeout", error);
+				asiDebug.error("Error updating MCP server timeout", error);
 			});
 	};
 
@@ -142,7 +143,7 @@ const ServerRow = ({
 			.catch((error) => {
 				// Reset the restarting state
 				setIsRestarting(false);
-				console.error("Error restarting MCP server", error);
+				asiDebug.error("Error restarting MCP server", error);
 			});
 	};
 
@@ -159,7 +160,7 @@ const ServerRow = ({
 				setIsDeleting(false);
 			})
 			.catch((error) => {
-				console.error("Error deleting MCP server", error);
+				asiDebug.error("Error deleting MCP server", error);
 				setIsDeleting(false);
 			});
 	};
@@ -183,7 +184,7 @@ const ServerRow = ({
 				setMcpServers(mcpServers);
 			})
 			.catch((error) => {
-				console.error("Error toggling all tools auto-approve", error);
+				asiDebug.error("Error toggling all tools auto-approve", error);
 			});
 	};
 
@@ -201,7 +202,7 @@ const ServerRow = ({
 				setMcpServers(mcpServers);
 			})
 			.catch((error) => {
-				console.error("Error toggling MCP server", error);
+				asiDebug.error("Error toggling MCP server", error);
 			});
 	};
 

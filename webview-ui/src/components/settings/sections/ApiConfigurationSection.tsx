@@ -10,6 +10,7 @@ import Section from "../Section";
 import { settingsUi } from "../settingsUi";
 import { syncModeConfigurations } from "../utils/providerUtils";
 import { useApiConfigurationHandlers } from "../utils/useApiConfigurationHandlers";
+import { asiDebug } from "@/utils/debug";
 
 interface ApiConfigurationSectionProps {
 	renderSectionHeader?: (tabId: string) => JSX.Element | null;
@@ -87,7 +88,7 @@ const ApiConfigurationSection = ({
 									}),
 								);
 							} catch (error) {
-								console.error(
+								asiDebug.error(
 									"Failed to update separate models setting:",
 									error,
 								);

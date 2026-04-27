@@ -1,4 +1,5 @@
 import React, { forwardRef, HTMLAttributes, useCallback } from "react"
+import { asiDebug } from "@/utils/debug";
 
 type TabProps = HTMLAttributes<HTMLDivElement>
 
@@ -42,7 +43,7 @@ export const TabList = forwardRef<
 >(({ children, className, value, onValueChange, ...props }, ref) => {
 	const handleTabSelect = useCallback(
 		(tabValue: string) => {
-			console.log("Tab selected:", tabValue)
+			asiDebug.info("Tab selected:", tabValue)
 			onValueChange(tabValue)
 		},
 		[onValueChange],

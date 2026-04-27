@@ -10,6 +10,7 @@ import ViewHeader from "../../common/ViewHeader";
 import AddRemoteServerForm from "./tabs/add-server/AddRemoteServerForm";
 import ConfigureServersView from "./tabs/installed/ConfigureServersView";
 import McpMarketplaceView from "./tabs/marketplace/McpMarketplaceView";
+import { asiDebug } from "@/utils/debug";
 
 type McpViewProps = {
 	onDone: () => void;
@@ -51,7 +52,7 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 					setMcpMarketplaceCatalog(response);
 				})
 				.catch((error) => {
-					console.error("Error refreshing MCP marketplace:", error);
+					asiDebug.error("Error refreshing MCP marketplace:", error);
 				});
 
 			McpServiceClient.getLatestMcpServers(EmptyRequest.create({}))
@@ -64,7 +65,7 @@ const McpConfigurationView = ({ onDone, initialTab }: McpViewProps) => {
 					}
 				})
 				.catch((error) => {
-					console.error("Failed to fetch MCP servers:", error);
+					asiDebug.error("Failed to fetch MCP servers:", error);
 				});
 		}
 	}, [showMarketplace]);

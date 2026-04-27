@@ -19,6 +19,7 @@ const AsiCommands = {
 	WorktreesButton: COMMAND_PREFIX + ".worktreesButtonClicked",
 	TerminalOutput: COMMAND_PREFIX + ".addTerminalOutputToChat",
 	AddToChat: COMMAND_PREFIX + ".addToChat",
+	AttachFileToChat: COMMAND_PREFIX + ".attachFileToChat",
 	FixWithAsi: COMMAND_PREFIX + ".fixWithAsi",
 	ExplainCode: COMMAND_PREFIX + ".explainCode",
 	ImproveCode: COMMAND_PREFIX + ".improveCode",

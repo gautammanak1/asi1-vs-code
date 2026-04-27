@@ -20,7 +20,7 @@ export type ApiProvider =
 	| "doubao"
 	| "mistral"
 	| "vscode-lm"
-	| "Asi"
+	| "asi:one"
 	| "litellm"
 	| "moonshot"
 	| "nebius"

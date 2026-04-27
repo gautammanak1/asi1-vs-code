@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { cn } from "@/lib/utils";
 import { CheckpointsServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface CheckmarkControlProps {
 	messageTs?: number;
@@ -114,7 +115,7 @@ export const CheckmarkControl = ({
 				}),
 			);
 		} catch (err) {
-			console.error("Checkpoint restore task error:", err);
+			asiDebug.error("Checkpoint restore task error:", err);
 		} finally {
 			setRestoreTaskDisabled(false);
 		}
@@ -131,7 +132,7 @@ export const CheckmarkControl = ({
 				}),
 			);
 		} catch (err) {
-			console.error("Checkpoint restore workspace error:", err);
+			asiDebug.error("Checkpoint restore workspace error:", err);
 		} finally {
 			setRestoreWorkspaceDisabled(false);
 		}
@@ -148,7 +149,7 @@ export const CheckmarkControl = ({
 				}),
 			);
 		} catch (err) {
-			console.error("Checkpoint restore both error:", err);
+			asiDebug.error("Checkpoint restore both error:", err);
 		} finally {
 			setRestoreBothDisabled(false);
 		}
@@ -208,7 +209,7 @@ export const CheckmarkControl = ({
 									}),
 								);
 							} catch (err) {
-								console.error("CheckpointDiff error:", err);
+								asiDebug.error("CheckpointDiff error:", err);
 							} finally {
 								setCompareDisabled(false);
 							}

@@ -8,6 +8,7 @@ import {
 import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { FileServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface Patch {
 	action: string;
@@ -130,7 +131,7 @@ const FileBlock = memo<{
 			if (file.path) {
 				FileServiceClient.openFileRelativePath(
 					StringRequest.create({ value: file.path }),
-				).catch((err) => console.error("Failed to open file:", err));
+				).catch((err) => asiDebug.error("Failed to open file:", err));
 			}
 		};
 

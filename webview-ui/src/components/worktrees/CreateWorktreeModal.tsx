@@ -10,6 +10,7 @@ import {
 import { AlertCircle, AlertTriangle, Loader2, X } from "lucide-react";
 import { memo, useCallback, useEffect, useState } from "react";
 import { WorktreeServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface CreateWorktreeModalProps {
 	open: boolean;
@@ -47,7 +48,7 @@ const CreateWorktreeModal = ({
 			setNewWorktreePath(defaults.suggestedPath);
 			setHasWorktreeInclude(includeStatus.exists);
 		} catch (err) {
-			console.error("Failed to load worktree defaults:", err);
+			asiDebug.error("Failed to load worktree defaults:", err);
 		} finally {
 			setIsLoadingDefaults(false);
 		}

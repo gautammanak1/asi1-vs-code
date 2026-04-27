@@ -103,6 +103,9 @@ export class VscodeWebviewProvider
 					if (e?.affectsConfiguration("Asi.mcpMarketplace.enabled")) {
 						await this.controller.postStateToWebview();
 					}
+					if (e?.affectsConfiguration("fetchCoder")) {
+						await this.controller.postStateToWebview();
+					}
 				},
 				undefined,
 				this.extensionDisposables,
@@ -130,39 +133,59 @@ export class VscodeWebviewProvider
 		const postMessageToWebview = (response: ExtensionMessage) =>
 			this.postMessageToWebview(response);
 
-		switch (message.type) {
-			case "grpc_request": {
-				if (message.grpc_request) {
-					await handleGrpcRequest(
-						this.controller,
-						postMessageToWebview,
-						message.grpc_request,
+		try {
+			switch (message.type) {
+				case "grpc_request": {
+					if (message.grpc_request) {
+						await handleGrpcRequest(
+							this.controller,
+							postMessageToWebview,
+							message.grpc_request,
+						);
+					}
+					break;
+				}
+				case "grpc_request_cancel": {
+					if (message.grpc_request_cancel) {
+						await handleGrpcRequestCancel(
+							postMessageToWebview,
+							message.grpc_request_cancel,
+						);
+					}
+					break;
+				}
+				default: {
+					Logger.error(
+						"Received unhandled WebviewMessage type:",
+						JSON.stringify(message),
 					);
 				}
-				break;
 			}
-			case "grpc_request_cancel": {
-				if (message.grpc_request_cancel) {
-					await handleGrpcRequestCancel(
-						postMessageToWebview,
-						message.grpc_request_cancel,
-					);
-				}
-				break;
-			}
-			default: {
-				Logger.error(
-					"Received unhandled WebviewMessage type:",
-					JSON.stringify(message),
-				);
-			}
+		} catch (e) {
+			const msg = e instanceof Error ? e.message : String(e);
+			Logger.error("[VscodeWebviewProvider] handleWebviewMessage failed:", e);
+			void vscode.window.showErrorMessage(
+				`Fetch Coder encountered an internal error: ${msg}`,
+			);
 		}
 	}
 
 	private async postMessageToWebview(
 		message: ExtensionMessage,
 	): Promise<boolean | undefined> {
-		return this.webviewView?.webview.postMessage(message);
+		const w = this.webviewView?.webview;
+		if (!w) {
+			Logger.warn(
+				"[VscodeWebviewProvider] postMessage skipped: webview not available",
+			);
+			return undefined;
+		}
+		try {
+			return await w.postMessage(message);
+		} catch (e) {
+			Logger.warn("[VscodeWebviewProvider] postMessage threw:", e);
+			return undefined;
+		}
 	}
 
 	override async dispose() {

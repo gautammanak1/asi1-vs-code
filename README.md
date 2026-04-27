@@ -2,29 +2,31 @@
 
 ![Fetch Coder](assets/fetch-coder-banner.png)
 
-# 🚀 Fetch Coder
+# 🚀 Fetch Coder for Cursor
 
-**Your autonomous AI coding partner — right inside VS Code**
+**Autonomous AI coding in Cursor or VS Code — powered by ASI:One**
 
 [![VS Marketplace](https://img.shields.io/badge/VS%20Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
 [![Powered by asi1.ai](https://img.shields.io/badge/Powered%20by-asi1.ai-0052FF?style=flat-square)](https://asi1.ai)
 [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/fetchai)
-[![Release v0.2.20](https://img.shields.io/badge/release-v0.2.20-0052FF?style=flat-square)](https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.20)
+[![Release v0.2.21](https://img.shields.io/badge/release-v0.2.21-0052FF?style=flat-square)](https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.21)
 
-<p>Write code, debug, edit files, run commands — all conversationally with your AI partner.</p>
+<p>Install from the **VS Code Marketplace** or **Open VSX**; the same VSIX and marketplace listing work in <strong>Cursor</strong> (Anysphere) because Cursor loads standard VS Code extensions. Use the Activity Bar or <strong>View → Extensions</strong> to find <strong>Fetch Coder for Cursor</strong>.</p>
 
-<p align="center"><sub>Current extension version: <strong>0.2.20</strong> · Git tag: <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.20"><code>v0.2.20</code></a></sub></p>
+<p align="center"><sub>Current extension version: <strong>0.2.21</strong> · Git tag: <a href="https://github.com/gautammanak1/asi1-vs-code/releases/tag/v0.2.21"><code>v0.2.21</code></a></sub></p>
 
 <p align="center"><sub><strong>Marketplace note:</strong> VS Code Marketplace, Open VSX, and Cursor use this <code>README.md</code> from the repo root. Keep it aligned with the <code>description</code> field in <code>package.json</code> so store listings stay consistent.</sub></p>
 
 </div>
 
+**Contents** · [What is Fetch Coder?](#what-is-fetch-coder) · [Quick start](#quick-start) · [Features](#features) · [Configuration](#configuration) · [Keyboard shortcuts](#keyboard-shortcuts) · [Toolbar guide](#toolbar-guide) · [Install from source](#installation-from-source) · [Documentation](#documentation) · [Resources](#resources) · [Store listings and releases](#store-listings-and-releases) · [License](#license)
+
 ---
 
 ## 🎯 What is Fetch Coder?
 
-Fetch Coder is an **autonomous AI coding agent** integrated into VS Code, powered by **asi1.ai**. It works like having a senior engineer sitting beside you—understanding your codebase, writing code, debugging issues, running commands, and iterating until the job is done.
+Fetch Coder is an **autonomous AI coding agent** for **VS Code and Cursor**, powered by **ASI:One** (OpenAI-compatible API at `https://api.asi1.ai/v1`). It plans and executes changes in your repo: read files, run terminal commands, and iterate until the task is done.
 
 ### Perfect for:
 - 🏗️ Building full-stack applications from scratch
@@ -40,7 +42,7 @@ Fetch Coder is an **autonomous AI coding agent** integrated into VS Code, powere
 
 ### 1️⃣ Install
 
-Search **"Fetch Coder"** in VS Code Extensions, or [install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder).
+Search **"Fetch Coder"** in the Extensions view (**Cursor** or **VS Code**), or [install from VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=gautammanak2.fetch-coder).
 
 ### 2️⃣ Get API Access
 
@@ -134,6 +136,15 @@ Automated testing and interaction:
 
 ## 🛠️ Configuration
 
+### **Branding (optional Cursor-style accents)**
+
+- Settings → search **`fetchCoder.brandTheme`**: **`cursor-accent`** (default) uses blue/cyan marketing accents; **`host`** uses the classic ASI blue/lime. Editor colors still follow your theme via VS Code tokens.
+- Optional: **`fetchCoder.hostApp`**: **`auto`** (use `vscode.env.appName`), **`vscode`**, or **`cursor`** to fix wrong host detection for placeholders and welcome copy. This does not integrate with the editor’s native chat.
+
+### **Extra system instructions**
+
+- Settings → **`fetchCoder.extraSystemPrompt`**: optional text appended to the built-in system prompt on every model request (max length enforced in the extension).
+
 ### API Key Setup (Choose one)
 
 **Option 1: Welcome Screen** (Recommended)
@@ -141,31 +152,34 @@ Automated testing and interaction:
 
 **Option 2: Command Palette**
 ```
-Cmd+Shift+P → "Fetch Coder: Set API Key"
+Cmd+Shift+P → "Fetch Coder: Set ASI:One API Key & Base URL" (or "ASI: Set API Key")
 ```
 
-**Option 3: VS Code Settings**
+**Option 3: VS Code Settings (synced to ASI:One)**
 ```json
 {
-  "fetchCoder.apiKey": "your-api-key-here"
+  "asiAssistant.apiKey": "your-api-key-here",
+  "asiAssistant.baseUrl": "https://api.asi1.ai/v1",
+  "asiAssistant.model": "asi1"
 }
 ```
 
-**Option 4: Environment Variable**
+**Option 4: Environment variable**
 ```bash
 export ASI_ONE_API_KEY="your-api-key-here"
 ```
 
-### Model & Endpoint
-- **Model**: `asi1`
-- **Endpoint**: `https://api.asi1.ai/v1`
-- **Auto-configured**: No manual setup needed
+### Model & endpoint (ASI:One)
 
-### Privacy & Security
-- Your code stays on your machine
-- API calls go directly to asi1.ai
-- No telemetry or tracking
-- All settings encrypted
+- **Base URL** (one OpenAI-compatible endpoint for chat): `https://api.asi1.ai/v1` — override with `asiAssistant.baseUrl` if your deployment differs.
+- **Model** (dropdown in the extension, synced from `asiAssistant.model`): `asi1-ultra`, `asi1`, or `asi1-mini` (default: `asi1`).
+
+### Privacy & security
+
+- Your project files are processed locally; API requests for completions are sent to the ASI:One endpoint you configure.
+- **Optional telemetry** — In **Fetch Coder → Settings → General**, **Allow error and usage reporting** toggles aggregated usage and diagnostics. When unchecked, reporting is suppressed. The in-extension description lists what may be collected; **code, prompts, and personal information are not sent** in that stream.
+- **Editor telemetry** — VS Code’s **Telemetry: Telemetry Level** (or Cursor’s equivalent) can also disable client-side reporting that extensions depend on.
+- For extension log output, use **View → Output** and choose the **`Asi`** channel in the dropdown.
 
 ---
 
@@ -173,10 +187,17 @@ export ASI_ONE_API_KEY="your-api-key-here"
 
 | Shortcut | Action |
 |----------|--------|
-| `Cmd + '` | Add selected code to chat / Focus chat |
-| `Cmd + Shift + A` | Toggle Plan/Act mode |
-| `Cmd + K` | Search history |
-| `Cmd + Shift + P` | Open Command Palette |
+| **Cmd+`** (Mac) / **Ctrl+`** (Win/Linux) | **Add selection to chat** when text is selected; **focus chat** when there is no selection |
+| **Cmd+Shift+A** (Mac) / **Ctrl+Shift+A** (Win/Linux) | **Focus chat** (no selection) — secondary chord alongside **Cmd+'** |
+| **Cmd+Shift+Z** (Mac) / **Ctrl+Shift+Z** (Win/Linux) | **Revert last change** (Fetch Coder / Asi) |
+| **Enter** (when a Fetch Coder **AI review** comment box is focused) | Submit the **Reply** in that review thread |
+| **Command Palette** → `Fetch Coder: Attach File to Fetch Coder Chat` | Pick a file; path + contents (truncated) are inserted into the input |
+
+Use **View → Open View… → Fetch Coder** or the Activity Bar icon to open the sidebar. **Plan/Act** is toggled in the chat UI (no default keybinding for it).
+
+### Not on the roadmap (yet)
+
+The extension **does not** sync threads with Cursor’s built-in chat, hook Cursor’s inline `/` commands, or replace the host’s gRPC streaming stack with a raw webview `fetch` client — those would need official APIs and/or a larger product decision. The sidebar agent remains the integration surface.
 
 ---
 
@@ -202,9 +223,8 @@ export ASI_ONE_API_KEY="your-api-key-here"
 git clone https://github.com/gautammanak1/asi1-vs-code.git
 cd asi1-vs-code
 
-# Install dependencies
-npm install
-cd webview-ui && npm install && cd ..
+# Install dependencies (root + webview-ui)
+npm run install:all
 
 # Build
 npm run protos
@@ -214,6 +234,21 @@ npm run compile
 # Launch (press F5)
 # Opens VS Code Extension Development Host
 ```
+
+---
+
+## 📚 Documentation
+
+Project guides (beyond this README):
+
+| Guide | Description |
+|-------|-------------|
+| [Installation](docs/INSTALLATION.md) | Marketplace, VSIX install, clone/build from source |
+| [Configuration reference](docs/CONFIGURATION.md) | `asiAssistant.*` and `fetchCoder.*` keys from package.json |
+| [API overview](docs/API.md) | ASI:One pointers and upstream docs ([docs.asi1.ai](https://docs.asi1.ai)) |
+| [Architecture](docs/ARCHITECTURE.md) | High-level host ↔ webview map and deeper reading |
+| [Security & privacy](docs/SECURITY.md) | Keys, telemetry, vulnerability reporting |
+| [Contributing](CONTRIBUTING.md) | PR workflow, setup, testing — read before submitting code |
 
 ---
 
@@ -231,6 +266,23 @@ npm run compile
 
 ---
 
+## Store listings and releases
+
+**VS Code Marketplace:** The published extension’s **long description** is this root **README**. The storefront **name**, **short summary**, and **version** come from [`package.json`](package.json) (`displayName`, `description`, `version`).
+
+**Open VSX:** If you publish the same `.vsix` to Open VSX, the same README and `package.json` fields apply once the registry has ingested your upload.
+
+**Cursor:** Cursor installs standard VS Code extensions (**View → Extensions**). Listing text reflects the package you publish. This extension’s chat runs in the **sidebar webview**; it does **not** integrate with Cursor’s built-in chat—see **[Not on the roadmap (yet)](#not-on-the-roadmap-yet)**.
+
+### Release checklist (maintainers)
+
+- Bump **`version`** in `package.json` and refresh README **release** badges and the “Current extension version” subtitle if they pin a specific SemVer string.
+- Keep **`description`** in `package.json` aligned with the one-line summary shown in marketplace search results (this README is the long description below it).
+- Add an entry in [CHANGELOG.md](CHANGELOG.md) for the release.
+- Run your usual `npm` build and publish flow (VS Code Marketplace publisher and Open VSX, if applicable). After publishing, verify the storefronts show the updated short summary and README.
+
+---
+
 ## 📄 License
 
 Apache License 2.0 — see [LICENSE](LICENSE) for details.
@@ -243,6 +295,6 @@ Apache License 2.0 — see [LICENSE](LICENSE) for details.
 
 **Powered by [asi1.ai](https://asi1.ai) — The future of autonomous coding**
 
-[⬆ Back to top](#-fetch-coder)
+[⬆ Back to top](#fetch-coder-for-cursor)
 
 </div>

@@ -1,7 +1,13 @@
-/* Editor theme mapping — brand aligned with asi.ai (blue + lime accents) */
+/* Editor theme + Fetch Coder brand tokens — default ASI; optional Cursor accent in cursor-accent.css */
 @theme {
 	--color-Asi: #0052ff;
 	--color-fetch-lime: #7ce074;
+	--color-cursor-primary: var(--color-Asi);
+	--color-cursor-accent: var(--color-fetch-lime);
+	--color-cursor-success: #10b981;
+	--color-cursor-warning: #f59e0b;
+	--color-cursor-error: #ef4444;
+	--color-cursor-muted: #6b7280;
 	--color-background: var(--vscode-sideBar-background);
 	--color-border: var(--vscode-focusBorder);
 	--color-border-panel: var(--vscode-panel-border);

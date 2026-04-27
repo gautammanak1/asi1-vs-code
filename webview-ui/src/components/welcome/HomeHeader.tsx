@@ -1,6 +1,7 @@
 import { EmptyRequest } from "@shared/proto/Asi/common";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { UiServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface HomeHeaderProps {
 	shouldShowQuickWins?: boolean;
@@ -8,13 +9,14 @@ interface HomeHeaderProps {
 
 /** Minimal welcome header — no hero icons, gradients, or motion (avoids webview overlap glitches). */
 const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
-	const { lazyTeammateModeEnabled, navigateToSettings } = useExtensionState();
+	const { lazyTeammateModeEnabled, navigateToSettings, hostAppKind } =
+		useExtensionState();
 
 	const handleTakeATour = async () => {
 		try {
 			await UiServiceClient.openWalkthrough(EmptyRequest.create());
 		} catch (error) {
-			console.error("Error opening walkthrough:", error);
+			asiDebug.error("Error opening walkthrough:", error);
 		}
 	};
 
@@ -28,11 +30,17 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 				<div>
 					<h2
 						className="m-0 text-6xl font-bold tracking-tight sm:text-8xl"
-						style={{ color: "#85F47C" }}
+						style={{ color: "var(--color-cursor-primary, var(--color-Asi))" }}
 					>
 						Fetch Coder
 					</h2>
-					<p className="m-0 mt-1 text-xs text-muted-foreground">by asi1.ai</p>
+					<p className="m-0 mt-1 text-xs text-muted-foreground">
+						{hostAppKind === "cursor"
+							? "for Cursor · Powered by ASI:One"
+							: hostAppKind === "vscode"
+								? "for VS Code · Powered by ASI:One"
+								: "Powered by ASI:One"}
+					</p>
 				</div>
 
 				<div className="space-y-2">
@@ -40,8 +48,8 @@ const HomeHeader = ({ shouldShowQuickWins = false }: HomeHeaderProps) => {
 						{headingText}
 					</h1>
 					<p className="m-0 max-w-md text-sm leading-relaxed text-muted-foreground">
-						Your AI coding partner for this workspace — edit, run, and ship tasks with
-						you.
+						Your AI coding partner for this workspace — optimized for the sidebar in Cursor
+						and VS Code, with Plan/Act and full project context.
 					</p>
 				</div>
 

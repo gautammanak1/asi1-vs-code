@@ -6,6 +6,7 @@ import { useExtensionState } from "@/context/ExtensionStateContext";
 import { SlashServiceClient, TaskServiceClient } from "@/services/grpc-client";
 import type { ButtonActionType } from "../shared/buttonConfig";
 import type { ChatState, MessageHandlers } from "../types/chatTypes";
+import { asiDebug } from "@/utils/debug";
 
 /**
  * Custom hook for managing message handlers
@@ -44,7 +45,7 @@ export function useMessageHandlers(
 			}
 
 			if (hasContent) {
-				console.log(
+				asiDebug.info(
 					"[ChatView] handleSendMessage - Sending message:",
 					messageToSend,
 				);
@@ -278,7 +279,7 @@ export function useMessageHandlers(
 							await TaskServiceClient.cancelBackgroundCommand(
 								EmptyRequest.create({}),
 							).catch((err) =>
-								console.error("Failed to cancel background command:", err),
+								asiDebug.error("Failed to cancel background command:", err),
 							);
 						}
 						await TaskServiceClient.cancelTask(EmptyRequest.create({}));
@@ -296,12 +297,12 @@ export function useMessageHandlers(
 						case "condense":
 							await SlashServiceClient.condense(
 								StringRequest.create({ value: lastMessage?.text }),
-							).catch((err) => console.error(err));
+							).catch((err) => asiDebug.error(err));
 							break;
 						case "report_bug":
 							await SlashServiceClient.reportBug(
 								StringRequest.create({ value: lastMessage?.text }),
-							).catch((err) => console.error(err));
+							).catch((err) => asiDebug.error(err));
 							break;
 					}
 					break;

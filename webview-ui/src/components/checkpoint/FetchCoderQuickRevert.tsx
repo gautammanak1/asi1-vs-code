@@ -4,6 +4,7 @@ import { Undo2Icon, EyeIcon } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { FileServiceClient } from "@/services/grpc-client";
 import { RevertConfirmDialog } from "./RevertConfirmDialog";
+import { asiDebug } from "@/utils/debug";
 
 function parseRevertResult(raw: string) {
 	try {
@@ -130,7 +131,7 @@ export function FetchCoderQuickRevert({
 						type="button"
 						className="inline-flex items-center gap-1.5 rounded border border-[var(--vscode-panel-border)] bg-[var(--vscode-button-secondaryBackground)] px-3 py-1.5 text-sm text-[var(--vscode-button-secondaryForeground)] hover:bg-[var(--vscode-list-hoverBackground)] disabled:opacity-50"
 						disabled={status === "working"}
-						onClick={() => openDiffs().catch(console.error)}
+						onClick={() => openDiffs().catch(asiDebug.error)}
 					>
 						<EyeIcon className="size-3.5" />
 						See changes

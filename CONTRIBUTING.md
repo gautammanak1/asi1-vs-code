@@ -1,10 +1,10 @@
-# Contributing to Asi
+# Contributing to Fetch Coder
 
-We're thrilled you're interested in contributing to Asi. Whether you're fixing a bug, adding a feature, or improving our docs, every contribution makes Asi smarter! To keep our community vibrant and welcoming, all members must adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
+We're thrilled you're interested in contributing to **Fetch Coder**. Whether you're fixing a bug, adding a feature, or improving our docs, every contribution matters. To keep our community vibrant and welcoming, all members must adhere to our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Reporting Bugs or Issues
 
-Bug reports help make Asi better for everyone! Before creating a new issue, please [search existing ones](https://github.com/gautammanak1/asi1-vs-code/issues) to avoid duplicates. When you're ready to report a bug, head over to our [issues page](https://github.com/gautammanak1/asi1-vs-code/issues/new/choose) where you'll find a template to help you with filling out the relevant information.
+Bug reports help make **Fetch Coder** better for everyone! Before creating a new issue, please [search existing ones](https://github.com/gautammanak1/asi1-vs-code/issues) to avoid duplicates. When you're ready to report a bug, head over to our [issues page](https://github.com/gautammanak1/asi1-vs-code/issues/new/choose) where you'll find a template to help you with filling out the relevant information.
 
 <blockquote class='warning-note'>
      🔐 <b>Important:</b> If you discover a security vulnerability, please use the <a href="https://github.com/gautammanak1/asi1-vs-code/security/advisories/new">Github security tool to report it privately</a>.
@@ -27,7 +27,7 @@ All contributions must begin with a GitHub Issue, unless the change is for small
 
 Looking for a good first contribution? Check out issues labeled ["good first issue"](https://github.com/gautammanak1/asi1-vs-code/labels/good%20first%20issue) or ["help wanted"](https://github.com/gautammanak1/asi1-vs-code/labels/help%20wanted). These are specifically curated for new contributors and areas where we'd love some help!
 
-We also welcome contributions to our [documentation](https://github.com/gautammanak1/asi1-vs-code/tree/main/docs)! Whether it's fixing typos, improving existing guides, or creating new educational content - we'd love to build a community-driven repository of resources that helps everyone get the most out of Asi. You can start by diving into `/docs` and looking for areas that need improvement.
+We also welcome contributions to our [documentation](https://github.com/gautammanak1/asi1-vs-code/tree/main/docs)! Whether it's fixing typos, improving existing guides, or creating new educational content - we'd love to build a community-driven repository of resources that helps everyone get the most out of Fetch Coder. You can start by diving into `/docs` and looking for areas that need improvement.
 
 ## Development Setup
 
@@ -38,10 +38,13 @@ We also welcome contributions to our [documentation](https://github.com/gautamma
     ```bash
     git clone https://github.com/gautammanak1/asi1-vs-code.git
     ```
-2. Open the project in VSCode:
+2. Open the project in VS Code (from the cloned folder):
+
     ```bash
-    code Asi
+    cd asi1-vs-code
+    code .
     ```
+
 3. Install the necessary dependencies for the extension and webview-gui:
     ```bash
     npm run install:all
@@ -125,7 +128,7 @@ We also welcome contributions to our [documentation](https://github.com/gautamma
 
 ## Writing and Submitting Code
 
-Anyone can contribute code to Asi, but we ask that you follow these guidelines to ensure your contributions can be smoothly integrated:
+Anyone can contribute code to Fetch Coder, but we ask that you follow these guidelines to ensure your contributions can be smoothly integrated:
 
 1. **Keep Pull Requests Focused**
 
@@ -150,7 +153,7 @@ Anyone can contribute code to Asi, but we ask that you follow these guidelines t
 
     **End-to-End (E2E) Testing**
     
-    Asi includes comprehensive E2E tests using Playwright that simulate real user interactions with the extension in VS Code:
+    Fetch Coder includes comprehensive E2E tests using Playwright that simulate real user interactions with the extension in VS Code:
     
     - **Running E2E tests:**
       ```bash
@@ -173,7 +176,7 @@ Anyone can contribute code to Asi, but we ask that you follow these guidelines t
       - Element inspection and selector validation
     
     - **Test environment:**
-      - Automated VS Code setup with Asi extension loaded
+      - Automated VS Code setup with Fetch Coder loaded as the extension under test
       - Mock API server for backend testing
       - Temporary workspaces with test fixtures
       - Video recording for failed tests
@@ -206,4 +209,4 @@ Anyone can contribute code to Asi, but we ask that you follow these guidelines t
 
 By submitting a pull request, you agree that your contributions will be licensed under the same license as the project ([Apache 2.0](LICENSE)).
 
-Remember: Contributing to Asi isn't just about writing code - it's about being part of a community that's shaping the future of AI-assisted development. Let's build something amazing together! 🚀
+Remember: Contributing to Fetch Coder isn't just about writing code - it's about being part of a community that's shaping the future of AI-assisted development. Let's build something amazing together! 🚀

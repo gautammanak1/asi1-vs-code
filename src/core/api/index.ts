@@ -37,12 +37,16 @@ function createHandlerForProvider(
 	options: Omit<ApiConfiguration, "apiProvider">,
 	mode: Mode,
 ): ApiHandler {
+	const openAiModelId =
+		mode === "plan"
+			? (options.planModeOpenAiModelId || "asi1")
+			: (options.actModeOpenAiModelId || "asi1")
 	return new OpenAiHandler({
 		onRetryAttempt: options.onRetryAttempt,
 		openAiApiKey: options.openAiApiKey,
 		openAiBaseUrl: options.openAiBaseUrl || "https://api.asi1.ai/v1",
 		openAiHeaders: options.openAiHeaders,
-		openAiModelId: "asi1",
+		openAiModelId,
 		openAiModelInfo: mode === "plan" ? options.planModeOpenAiModelInfo : options.actModeOpenAiModelInfo,
 		reasoningEffort: mode === "plan" ? options.planModeReasoningEffort : options.actModeReasoningEffort,
 		webSearchEnabled: options.webSearchEnabled,

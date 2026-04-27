@@ -24,6 +24,7 @@ import { TaskServiceClient } from "@/services/grpc-client";
 import { formatSize } from "@/utils/format";
 import ViewHeader from "../common/ViewHeader";
 import HistoryViewItem from "./HistoryViewItem";
+import { asiDebug } from "@/utils/debug";
 
 type HistoryViewProps = {
 	onDone: () => void;
@@ -80,7 +81,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 			);
 			setTasks(response.tasks || []);
 		} catch (error) {
-			console.error("Error loading task history:", error);
+			asiDebug.error("Error loading task history:", error);
 		}
 	}, [
 		showFavoritesOnly,
@@ -121,7 +122,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 					loadTaskHistory();
 				}
 			} catch (err) {
-				console.error(`[FAVORITE_TOGGLE_UI] Error for task ${taskId}:`, err);
+				asiDebug.error(`[FAVORITE_TOGGLE_UI] Error for task ${taskId}:`, err);
 				// Revert optimistic update
 				setPendingFavoriteToggles((prev) => {
 					const updated = { ...prev };
@@ -160,7 +161,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 				setTotalTasksSize?.(response.value || 0);
 			}
 		} catch (error) {
-			console.error("Error getting total tasks size:", error);
+			asiDebug.error("Error getting total tasks size:", error);
 		}
 	}, [setTotalTasksSize]);
 
@@ -202,7 +203,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 				StringArrayRequest.create({ value: [id] }),
 			)
 				.then(() => fetchTotalTasksSize())
-				.catch((error) => console.error("Error deleting task:", error));
+				.catch((error) => asiDebug.error("Error deleting task:", error));
 		},
 		[fetchTotalTasksSize],
 	);
@@ -214,7 +215,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 					StringArrayRequest.create({ value: ids }),
 				)
 					.then(() => fetchTotalTasksSize())
-					.catch((error) => console.error("Error deleting tasks:", error));
+					.catch((error) => asiDebug.error("Error deleting tasks:", error));
 				setSelectedItems([]);
 			}
 		},
@@ -497,7 +498,7 @@ const HistoryView = ({ onDone }: HistoryViewProps) => {
 							TaskServiceClient.deleteAllTaskHistory(BooleanRequest.create({}))
 								.then(() => fetchTotalTasksSize())
 								.catch((error) =>
-									console.error("Error deleting task history:", error),
+									asiDebug.error("Error deleting task history:", error),
 								)
 								.finally(() => setDeleteAllDisabled(false));
 						}}

@@ -2,6 +2,7 @@ import { CheckCheckIcon, CopyIcon } from "lucide-react"
 import { forwardRef, useCallback, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { asiDebug } from "@/utils/debug";
 
 interface CopyButtonProps {
 	textToCopy?: string
@@ -47,7 +48,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ textToCopy, onCopy, clas
 				setCopied(true)
 				setTimeout(() => setCopied(false), COPIED_TIMEOUT)
 			})
-			.catch((err) => console.error("Copy failed", err))
+			.catch((err) => asiDebug.error("Copy failed", err))
 	}, [textToCopy, onCopy])
 
 	return (

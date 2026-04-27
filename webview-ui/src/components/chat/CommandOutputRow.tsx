@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { FileServiceClient } from "@/services/grpc-client";
 import CodeBlock from "../common/CodeBlock";
 import ExpandHandle from "./ExpandHandle";
+import { asiDebug } from "@/utils/debug";
 
 export const CommandOutputContent = memo(
 	({
@@ -88,7 +89,7 @@ export const CommandOutputContent = memo(
 						onClick={() => {
 							FileServiceClient.openFile(
 								StringRequest.create({ value: logFilePath }),
-							).catch((err) => console.error("Failed to open log file:", err));
+							).catch((err) => asiDebug.error("Failed to open log file:", err));
 						}}
 						title={`Click to open: ${logFilePath}`}
 					>

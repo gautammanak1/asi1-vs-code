@@ -2,6 +2,7 @@ import { StringRequest } from "@shared/proto/Asi/common";
 import { memo } from "react";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { TaskServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 type HistoryPreviewProps = {
 	showHistoryView: () => void;
@@ -11,7 +12,7 @@ const HistoryPreview = ({ showHistoryView }: HistoryPreviewProps) => {
 	const { taskHistory } = useExtensionState();
 	const handleHistorySelect = (id: string) => {
 		TaskServiceClient.showTaskWithId(StringRequest.create({ value: id })).catch(
-			(error) => console.error("Error showing task:", error),
+			(error) => asiDebug.error("Error showing task:", error),
 		);
 	};
 

@@ -57,10 +57,12 @@ import {
 import { Task } from "../task";
 import { sendMcpMarketplaceCatalogEvent } from "./mcp/subscribeToMcpMarketplaceCatalog";
 import { getClineOnboardingModels } from "./models/getClineOnboardingModels";
+import { resolveHostAppKind } from "@/hosts/detectHostAppKind";
 import { appendAsiStealthModels } from "./models/refreshOpenRouterModels";
 import { checkCliInstallation } from "./state/checkCliInstallation";
 import { sendStateUpdate } from "./state/subscribeToState";
 import { sendChatButtonClickedEvent } from "./ui/subscribeToChatButtonClicked";
+import * as vscode from "vscode";
 
 /*
 https://github.com/microsoft/vscode-webview-ui-toolkit-samples/blob/main/default/weather-webview/src/providers/WeatherViewProvider.ts
@@ -1067,6 +1069,17 @@ export class Controller {
 		const banners = BannerService.get().getActiveBanners() ?? [];
 		const welcomeBanners = BannerService.get().getWelcomeBanners() ?? [];
 
+		const brandThemeRaw = vscode.workspace
+			.getConfiguration("fetchCoder")
+			.get<string>("brandTheme");
+		const brandTheme: "host" | "cursor-accent" =
+			brandThemeRaw === "host" ? "host" : "cursor-accent";
+
+		const hostAppRaw = vscode.workspace
+			.getConfiguration("fetchCoder")
+			.get<string>("hostApp");
+		const hostAppKind = resolveHostAppKind(hostAppRaw, vscode.env.appName);
+
 		return {
 			version,
 			apiConfiguration,
@@ -1161,6 +1174,8 @@ export class Controller {
 			showFeatureTips,
 			banners,
 			welcomeBanners,
+			brandTheme,
+			hostAppKind,
 		};
 	}
 

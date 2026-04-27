@@ -1,5 +1,6 @@
 import { McpDisplayMode, UpdateSettingsRequest } from "@shared/proto/Asi/state";
 import { StateServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 /**
  * Converts values to their corresponding proto format
@@ -45,6 +46,6 @@ export const updateSetting = (
 	StateServiceClient.updateSettings(
 		UpdateSettingsRequest.create(updateRequest),
 	).catch((error) => {
-		console.error(`Failed to update setting ${field}:`, error);
+		asiDebug.error(`Failed to update setting ${field}:`, error);
 	});
 };

@@ -1,5 +1,6 @@
 import { NewTaskRequest } from "@shared/proto/Asi/task";
 import React from "react";
+import { useExtensionState } from "@/context/ExtensionStateContext";
 import { TaskServiceClient } from "@/services/grpc-client";
 import QuickWinCard from "./QuickWinCard";
 import { QuickWinTask, quickWinTasks } from "./quickWinTasks";
@@ -7,6 +8,7 @@ import { QuickWinTask, quickWinTasks } from "./quickWinTasks";
 export const SuggestedTasks: React.FC<{ shouldShowQuickWins: boolean }> = ({
 	shouldShowQuickWins,
 }) => {
+	const { hostAppKind } = useExtensionState();
 	const handleExecuteQuickWin = async (prompt: string) => {
 		await TaskServiceClient.newTask(
 			NewTaskRequest.create({ text: prompt, images: [] }),
@@ -20,8 +22,10 @@ export const SuggestedTasks: React.FC<{ shouldShowQuickWins: boolean }> = ({
 					className="text-sm font-medium mb-3 text-center"
 					style={{ fontFamily: "'Lexend', sans-serif", color: "#71717a" }}
 				>
-					Get Started with{" "}
-					<span style={{ color: "#85F47C" }}>fetch code</span>
+					Get started with{" "}
+					<span style={{ color: "var(--color-cursor-primary, var(--color-Asi))" }}>
+						{hostAppKind === "cursor" ? "Fetch Coder for Cursor" : "Fetch Coder"}
+					</span>
 				</h2>
 				<div className="flex flex-col space-y-1">
 					{quickWinTasks.map((task: QuickWinTask, i: number) => (

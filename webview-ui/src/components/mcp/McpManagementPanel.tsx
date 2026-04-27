@@ -4,6 +4,7 @@ import { PlugZapIcon } from "lucide-react";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { McpServiceClient } from "@/services/grpc-client";
 import ServersToggleList from "./configuration/tabs/installed/ServersToggleList";
+import { asiDebug } from "@/utils/debug";
 
 /**
  * Workspace `.fetch-coder/mcp.json` merges over global MCP settings (extension host).
@@ -50,7 +51,7 @@ const McpManagementPanel = () => {
 			<VSCodeButton
 				appearance="primary"
 				onClick={() => {
-					McpServiceClient.openMcpSettings(EmptyRequest.create({})).catch(console.error);
+					McpServiceClient.openMcpSettings(EmptyRequest.create({})).catch(asiDebug.error);
 				}}
 				style={{ width: "100%" }}
 			>

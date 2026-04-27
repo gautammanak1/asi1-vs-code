@@ -38,6 +38,7 @@ import {
 import { getEnvironmentColor } from "@/utils/environmentColors";
 import CreateWorktreeModal from "./CreateWorktreeModal";
 import DeleteWorktreeModal from "./DeleteWorktreeModal";
+import { asiDebug } from "@/utils/debug";
 
 type WorktreesViewProps = {
 	onDone: () => void;
@@ -130,7 +131,7 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 			setHasGitignore(status.hasGitignore);
 			setGitignoreContent(status.gitignoreContent);
 		} catch (err) {
-			console.error("Failed to load worktree include status:", err);
+			asiDebug.error("Failed to load worktree include status:", err);
 		}
 	}, []);
 
@@ -211,7 +212,7 @@ const WorktreesView = ({ onDone }: WorktreesViewProps) => {
 					}),
 				);
 			} catch (err) {
-				console.error("Failed to switch worktree:", err);
+				asiDebug.error("Failed to switch worktree:", err);
 			}
 		},
 		[],

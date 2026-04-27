@@ -4,6 +4,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { TaskServiceClient } from "@/services/grpc-client"
 import { cn } from "@/lib/utils"
 import { useExtensionState } from "../../context/ExtensionStateContext"
+import { asiDebug } from "@/utils/debug";
 
 type NavTab = {
 	id: string
@@ -24,7 +25,7 @@ export const Navbar = () => {
 				navigate: () => {
 					TaskServiceClient.clearTask({})
 						.catch((error) => {
-							console.error("Failed to clear task:", error)
+							asiDebug.error("Failed to clear task:", error)
 						})
 						.finally(() => navigateToChat())
 				},

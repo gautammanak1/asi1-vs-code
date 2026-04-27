@@ -4,6 +4,7 @@ import React from "react";
 import ChatErrorBoundary from "@/components/chat/ChatErrorBoundary";
 import { WebServiceClient } from "@/services/grpc-client";
 import { getSafeHostname, normalizeRelativeUrl } from "./utils/mcpRichUtil";
+import { asiDebug } from "@/utils/debug";
 
 interface OpenGraphData {
 	title?: string;
@@ -258,7 +259,7 @@ class LinkPreview extends React.Component<LinkPreviewProps, LinkPreviewState> {
 								}),
 							);
 						} catch (err) {
-							console.error("Error opening URL in browser:", err);
+							asiDebug.error("Error opening URL in browser:", err);
 						}
 					}}
 					style={{
@@ -314,7 +315,7 @@ class LinkPreview extends React.Component<LinkPreviewProps, LinkPreviewState> {
 							}),
 						);
 					} catch (err) {
-						console.error("Error opening URL in browser:", err);
+						asiDebug.error("Error opening URL in browser:", err);
 					}
 				}}
 				style={{
@@ -336,7 +337,7 @@ class LinkPreview extends React.Component<LinkPreviewProps, LinkPreviewState> {
 						<img
 							alt=""
 							onError={(e) => {
-								console.log(`Image could not be loaded: ${data.image}`);
+								asiDebug.info(`Image could not be loaded: ${data.image}`);
 								// Hide the broken image
 								(e.target as HTMLImageElement).style.display = "none";
 							}}

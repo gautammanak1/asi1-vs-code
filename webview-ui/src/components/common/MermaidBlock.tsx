@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { FileServiceClient } from "@/services/grpc-client";
 import { useDebounceEffect } from "@/utils/useDebounceEffect";
+import { asiDebug } from "@/utils/debug";
 
 const MERMAID_THEME = {
 	background: "#1e1e1e", // VS Code dark theme background
@@ -111,7 +112,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 					}
 				})
 				.catch((err) => {
-					console.warn("Mermaid parse/render failed:", err);
+					asiDebug.warn("Mermaid parse/render failed:", err);
 					containerRef.current!.innerHTML = code
 						.replace(/</g, "&lt;")
 						.replace(/>/g, "&gt;");
@@ -141,9 +142,9 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 			const pngDataUrl = await svgToPng(svgEl);
 			FileServiceClient.openImage(
 				StringRequest.create({ value: pngDataUrl }),
-			).catch((err) => console.error("Failed to open image:", err));
+			).catch((err) => asiDebug.error("Failed to open image:", err));
 		} catch (err) {
-			console.error("Error converting SVG to PNG:", err);
+			asiDebug.error("Error converting SVG to PNG:", err);
 		}
 	};
 
@@ -151,7 +152,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 		try {
 			await navigator.clipboard.writeText(code);
 		} catch (err) {
-			console.error("Copy failed", err);
+			asiDebug.error("Copy failed", err);
 		}
 	};
 
@@ -179,7 +180,7 @@ export default function MermaidBlock({ code }: MermaidBlockProps) {
 }
 
 async function svgToPng(svgEl: SVGElement): Promise<string> {
-	console.log("svgToPng function called");
+	asiDebug.info("svgToPng function called");
 	// Clone the SVG to avoid modifying the original
 	const svgClone = svgEl.cloneNode(true) as SVGElement;
 

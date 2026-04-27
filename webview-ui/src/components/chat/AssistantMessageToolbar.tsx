@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TaskServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface AssistantMessageToolbarProps {
 	/** Plain text to copy (assistant reply). */
@@ -50,7 +51,7 @@ export function AssistantMessageToolbar({
 		try {
 			await navigator.clipboard.writeText(t);
 		} catch (e) {
-			console.error("Copy failed", e);
+			asiDebug.error("Copy failed", e);
 		}
 	}, [messageText]);
 
@@ -72,7 +73,7 @@ export function AssistantMessageToolbar({
 				// ignore
 			}
 		} catch (e) {
-			console.error("taskFeedback failed", e);
+			asiDebug.error("taskFeedback failed", e);
 			setFeedback(null);
 		}
 	}, [feedback, isFromHistory, messageTs, shouldShowFeedback]);

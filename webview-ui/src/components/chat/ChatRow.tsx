@@ -78,6 +78,7 @@ import SearchResultsDisplay from "./SearchResultsDisplay";
 import SubagentStatusRow from "./SubagentStatusRow";
 import { ThinkingRow } from "./ThinkingRow";
 import UserMessage from "./UserMessage";
+import { asiDebug } from "@/utils/debug";
 
 const HEADER_CLASSNAMES = "flex items-center gap-2.5 mb-3";
 
@@ -746,7 +747,7 @@ export const ChatRowContent = memo(
 											FileServiceClient.openFile(
 												StringRequest.create({ value: tool.content }),
 											).catch((err) =>
-												console.error("Failed to open file:", err),
+												asiDebug.error("Failed to open file:", err),
 											);
 										}
 									}}
@@ -943,7 +944,7 @@ export const ChatRowContent = memo(
 										UiServiceClient.openUrl(
 											StringRequest.create({ value: tool.path }),
 										).catch((err) => {
-											console.error("Failed to open URL:", err);
+											asiDebug.error("Failed to open URL:", err);
 										});
 									}
 								}}
@@ -995,7 +996,7 @@ export const ChatRowContent = memo(
 										UiServiceClient.openUrl(
 											StringRequest.create({ value: tool.path }),
 										).catch((err) => {
-											console.error("Failed to open URL:", err);
+											asiDebug.error("Failed to open URL:", err);
 										});
 									}
 								}}
@@ -1521,7 +1522,7 @@ export const ChatRowContent = memo(
 												BooleanRequest.create({ value: true }),
 											);
 										} catch (error) {
-											console.error(
+											asiDebug.error(
 												"Failed to enable background terminal:",
 												error,
 											);

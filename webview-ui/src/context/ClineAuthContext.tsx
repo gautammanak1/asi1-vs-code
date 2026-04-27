@@ -11,6 +11,7 @@ import {
 	useState,
 } from "react";
 import { AccountServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 // Define User type (you may need to adjust this based on your actual User type)
 export interface AsiUser {
@@ -52,7 +53,7 @@ export const AsiAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 				return old;
 			});
 		} catch (error) {
-			console.error("Failed to fetch user organizations:", error);
+			asiDebug.error("Failed to fetch user organizations:", error);
 		}
 	}, []);
 
@@ -61,7 +62,7 @@ export const AsiAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 	}, [userOrganizations]);
 
 	useEffect(() => {
-		console.log("Extension: AsiAuthContext: user updated:", user?.uid);
+		asiDebug.info("Extension: AsiAuthContext: user updated:", user?.uid);
 	}, [user?.uid]);
 
 	// Handle auth status update events
@@ -87,10 +88,10 @@ export const AsiAuthProvider: React.FC<{ children: React.ReactNode }> = ({
 					});
 				},
 				onError: (error: Error) => {
-					console.error("Error in auth callback subscription:", error);
+					asiDebug.error("Error in auth callback subscription:", error);
 				},
 				onComplete: () => {
-					console.log("Auth callback subscription completed");
+					asiDebug.info("Auth callback subscription completed");
 				},
 			},
 		);
@@ -130,12 +131,12 @@ export const useAsiSignIn = () => {
 			setIsLoading(true);
 
 			AccountServiceClient.accountLoginClicked(EmptyRequest.create())
-				.catch((err) => console.error("Failed to get login URL:", err))
+				.catch((err) => asiDebug.error("Failed to get login URL:", err))
 				.finally(() => {
 					setIsLoading(false);
 				});
 		} catch (error) {
-			console.error("Error signing in:", error);
+			asiDebug.error("Error signing in:", error);
 		}
 	}, []);
 
@@ -149,9 +150,9 @@ export const handleSignOut = async () => {
 	try {
 		await AccountServiceClient.accountLogoutClicked(
 			EmptyRequest.create(),
-		).catch((err) => console.error("Failed to logout:", err));
+		).catch((err) => asiDebug.error("Failed to logout:", err));
 	} catch (error) {
-		console.error("Error signing out:", error);
+		asiDebug.error("Error signing out:", error);
 		throw error;
 	}
 };

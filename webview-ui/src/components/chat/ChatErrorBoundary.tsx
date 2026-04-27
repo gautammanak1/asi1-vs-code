@@ -1,4 +1,5 @@
 import React from "react"
+import { asiDebug } from "@/utils/debug";
 
 interface ChatErrorBoundaryProps {
 	children: React.ReactNode
@@ -27,8 +28,8 @@ export class ChatErrorBoundary extends React.Component<ChatErrorBoundaryProps, C
 	}
 
 	componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-		console.error("Error in ChatErrorBoundary:", error.message)
-		console.error("Component stack:", errorInfo.componentStack)
+		asiDebug.error("Error in ChatErrorBoundary:", error.message)
+		asiDebug.error("Component stack:", errorInfo.componentStack)
 	}
 
 	render() {

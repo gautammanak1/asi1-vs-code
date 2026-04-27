@@ -26,6 +26,7 @@ import CodeBlock, { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { cn } from "@/lib/utils";
 import { FileServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface BrowserSessionRowProps {
 	messages: AsiMessage[];
@@ -469,7 +470,7 @@ const BrowserSessionRow = memo((props: BrowserSessionRowProps) => {
 							onClick={() =>
 								FileServiceClient.openImage(
 									StringRequest.create({ value: displayState.screenshot }),
-								).catch((err) => console.error("Failed to open image:", err))
+								).catch((err) => asiDebug.error("Failed to open image:", err))
 							}
 							src={displayState.screenshot}
 							style={imgScreenshotStyle}

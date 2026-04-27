@@ -4,9 +4,10 @@ import ApiOptions from "@/components/settings/ApiOptions";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { StateServiceClient } from "@/services/grpc-client";
 import { validateApiConfiguration } from "@/utils/validate";
+import { asiDebug } from "@/utils/debug";
 
 const WelcomeView = memo(() => {
-	const { apiConfiguration, mode } = useExtensionState();
+	const { apiConfiguration, mode, hostAppKind } = useExtensionState();
 	const [apiErrorMessage, setApiErrorMessage] = useState<string | undefined>(
 		undefined,
 	);
@@ -19,7 +20,7 @@ const WelcomeView = memo(() => {
 				BooleanRequest.create({ value: true }),
 			);
 		} catch (error) {
-			console.error(
+			asiDebug.error(
 				"Failed to update API configuration or complete welcome view:",
 				error,
 			);
@@ -37,14 +38,21 @@ const WelcomeView = memo(() => {
 					<div className="text-center">
 						<h2
 							className="m-0 text-3xl font-bold tracking-tight"
-							style={{ color: "#85F47C" }}
+							style={{ color: "var(--color-cursor-primary, var(--color-Asi))" }}
 						>
-							fetch code
+							{hostAppKind === "cursor"
+								? "Fetch Coder for Cursor"
+								: "Fetch Coder"}
 						</h2>
-						<p className="m-0 mt-1 text-xs text-muted-foreground">by asi1.ai</p>
+						<p className="m-0 mt-1 text-xs text-muted-foreground">
+							Powered by ASI:One — same API key as api.asi1.ai
+						</p>
 						<p className="m-0 mt-4 text-sm leading-relaxed text-muted-foreground">
-							Connect your API key to get started. Your AI partner for coding in this
-							workspace.
+							{hostAppKind === "cursor"
+								? "Connect your ASI:One API key. This sidebar is separate from the editor’s own chat; use Settings to tweak accents."
+								: hostAppKind === "vscode"
+									? "Connect your ASI:One API key. Works in Visual Studio Code and other VS Code–compatible hosts."
+									: "Connect your ASI:One API key. Set fetchCoder.hostApp in Settings if the wrong host is detected."}
 						</p>
 					</div>
 
@@ -72,12 +80,14 @@ const WelcomeView = memo(() => {
 							/>
 						</div>
 						<button
-							className="w-full rounded-md border-0 py-3 text-sm font-semibold text-[#1a1a1a] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+							className="w-full rounded-md border-0 py-3 text-sm font-semibold text-[#0a0a0a] transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-cursor-primary)] disabled:cursor-not-allowed disabled:opacity-60"
 							disabled={disableLetsGoButton}
 							onClick={handleSubmit}
 							type="button"
 							style={{
-								background: disableLetsGoButton ? "var(--color-muted)" : "#7CE074",
+								background: disableLetsGoButton
+									? "var(--color-muted)"
+									: "var(--color-fetch-lime, #7ce074)",
 							}}
 						>
 							Get Started →

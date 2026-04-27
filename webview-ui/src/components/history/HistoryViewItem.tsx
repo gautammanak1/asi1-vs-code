@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TaskServiceClient } from "@/services/grpc-client";
 import { formatSize } from "@/utils/format";
+import { asiDebug } from "@/utils/debug";
 
 type HistoryViewItemProps = {
 	item: HistoryItem;
@@ -41,7 +42,7 @@ const HistoryViewItem = ({
 
 	const handleShowTaskWithId = useCallback((id: string) => {
 		TaskServiceClient.showTaskWithId(StringRequest.create({ value: id })).catch(
-			(error) => console.error("Error showing task:", error),
+			(error) => asiDebug.error("Error showing task:", error),
 		);
 	}, []);
 
@@ -185,7 +186,7 @@ const HistoryViewItem = ({
 													TaskServiceClient.exportTaskWithId(
 														StringRequest.create({ value: item.id }),
 													).catch((err) =>
-														console.error("Failed to export task:", err),
+														asiDebug.error("Failed to export task:", err),
 													);
 												}}
 												variant="ghost"

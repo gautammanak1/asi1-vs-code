@@ -29,6 +29,7 @@ import HookRow from "./HookRow";
 import NewRuleRow from "./NewRuleRow";
 import RuleRow from "./RuleRow";
 import RulesToggleList from "./RulesToggleList";
+import { asiDebug } from "@/utils/debug";
 
 const AsiRulesToggleModal: React.FC = () => {
 	const {
@@ -121,7 +122,7 @@ const AsiRulesToggleModal: React.FC = () => {
 					}
 				})
 				.catch((error) => {
-					console.error("Failed to refresh rules:", error);
+					asiDebug.error("Failed to refresh rules:", error);
 				});
 		}
 	}, [
@@ -155,7 +156,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				})
 				.catch((error) => {
 					if (!abortController.signal.aborted) {
-						console.error("Failed to refresh hooks:", error);
+						asiDebug.error("Failed to refresh hooks:", error);
 					}
 				});
 		};
@@ -192,7 +193,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				})
 				.catch((error) => {
 					if (!isCancelled) {
-						console.error("Failed to refresh skills:", error);
+						asiDebug.error("Failed to refresh skills:", error);
 					}
 				});
 		};
@@ -274,7 +275,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error("Error toggling Asi rule:", error);
+				asiDebug.error("Error toggling Asi rule:", error);
 			});
 	};
 
@@ -292,7 +293,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error("Error toggling Cursor rule:", error);
+				asiDebug.error("Error toggling Cursor rule:", error);
 			});
 	};
 
@@ -309,7 +310,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error("Error toggling Windsurf rule:", error);
+				asiDebug.error("Error toggling Windsurf rule:", error);
 			});
 	};
 
@@ -326,7 +327,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error("Error toggling Agents rule:", error);
+				asiDebug.error("Error toggling Agents rule:", error);
 			});
 	};
 
@@ -349,7 +350,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				setWorkspaceHooks(response.hooksToggles?.workspaceHooks || []);
 			})
 			.catch((error) => {
-				console.error("Error toggling hook:", error);
+				asiDebug.error("Error toggling hook:", error);
 			});
 	};
 
@@ -375,7 +376,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((err: Error) => {
-				console.error("Failed to toggle workflow:", err);
+				asiDebug.error("Failed to toggle workflow:", err);
 			});
 	};
 
@@ -395,7 +396,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error("Error toggling remote rule:", error);
+				asiDebug.error("Error toggling remote rule:", error);
 			});
 	};
 
@@ -414,7 +415,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error("Error toggling remote workflow:", error);
+				asiDebug.error("Error toggling remote workflow:", error);
 			});
 	};
 
@@ -450,7 +451,7 @@ const AsiRulesToggleModal: React.FC = () => {
 				}
 			})
 			.catch((error) => {
-				console.error("Error toggling skill:", error);
+				asiDebug.error("Error toggling skill:", error);
 			});
 	};
 

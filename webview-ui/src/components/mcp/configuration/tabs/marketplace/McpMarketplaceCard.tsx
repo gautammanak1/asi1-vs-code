@@ -5,6 +5,7 @@ import styled from "styled-components";
 import { cn } from "@/lib/utils";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { McpServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface McpMarketplaceCardProps {
 	item: McpMarketplaceItem;
@@ -65,13 +66,13 @@ const McpMarketplaceCard = ({
 											StringRequest.create({ value: item.mcpId }),
 										);
 										if (response.error) {
-											console.error("MCP download failed:", response.error);
+											asiDebug.error("MCP download failed:", response.error);
 											setError(response.error);
 										} else {
 											setError(null);
 										}
 									} catch (error) {
-										console.error("Failed to download MCP:", error);
+										asiDebug.error("Failed to download MCP:", error);
 									} finally {
 										setIsDownloading(false);
 									}

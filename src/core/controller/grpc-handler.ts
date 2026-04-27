@@ -37,7 +37,12 @@ function withRecordingMiddleware(
 				Logger.warn("Failed to record gRPC response:", e);
 			}
 		}
-		return postMessage(response);
+		try {
+			return await postMessage(response);
+		} catch (e) {
+			Logger.warn("postMessage to webview failed after gRPC middleware:", e);
+			return undefined;
+		}
 	};
 }
 

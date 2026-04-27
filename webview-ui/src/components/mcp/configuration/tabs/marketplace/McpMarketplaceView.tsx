@@ -13,6 +13,7 @@ import { useExtensionState } from "@/context/ExtensionStateContext";
 import { McpServiceClient } from "@/services/grpc-client";
 import McpMarketplaceCard from "./McpMarketplaceCard";
 import McpSubmitCard from "./McpSubmitCard";
+import { asiDebug } from "@/utils/debug";
 
 const McpMarketplaceView = () => {
 	const {
@@ -99,7 +100,7 @@ const McpMarketplaceView = () => {
 					setMcpMarketplaceCatalog(response);
 				})
 				.catch((error) => {
-					console.error("Error refreshing MCP marketplace:", error);
+					asiDebug.error("Error refreshing MCP marketplace:", error);
 					setError("Failed to load marketplace data");
 					setIsLoading(false);
 					setIsRefreshing(false);

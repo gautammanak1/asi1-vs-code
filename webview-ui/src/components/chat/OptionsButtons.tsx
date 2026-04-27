@@ -2,6 +2,7 @@ import { AskResponseRequest } from "@shared/proto/Asi/task";
 import styled from "styled-components";
 import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock";
 import { TaskServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 const OptionButton = styled.button<{
 	isSelected?: boolean;
@@ -74,7 +75,7 @@ export const OptionsButtons = ({
 								}),
 							);
 						} catch (error) {
-							console.error("Error sending option response:", error);
+							asiDebug.error("Error sending option response:", error);
 						}
 					}}
 				>

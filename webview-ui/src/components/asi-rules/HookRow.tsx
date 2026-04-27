@@ -4,6 +4,7 @@ import { PenIcon, Trash2Icon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { FileServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface HookRowProps {
 	hookName: string;
@@ -29,7 +30,7 @@ const HookRow: React.FC<HookRowProps> = ({
 	const handleEditClick = () => {
 		FileServiceClient.openFile(
 			StringRequest.create({ value: absolutePath }),
-		).catch((err) => console.error("Failed to open file:", err));
+		).catch((err) => asiDebug.error("Failed to open file:", err));
 	};
 
 	const handleDeleteClick = () => {
@@ -45,7 +46,7 @@ const HookRow: React.FC<HookRowProps> = ({
 					onDelete(response.hooksToggles);
 				}
 			})
-			.catch((err) => console.error("Failed to delete hook:", err));
+			.catch((err) => asiDebug.error("Failed to delete hook:", err));
 	};
 
 	return (

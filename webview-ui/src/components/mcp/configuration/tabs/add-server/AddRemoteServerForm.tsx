@@ -12,6 +12,7 @@ import { useState } from "react";
 import { LINKS } from "@/constants";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { McpServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 type TransportType = "streamableHttp" | "sse";
 
@@ -158,7 +159,7 @@ const AddRemoteServerForm = ({
 					onClick={() => {
 						McpServiceClient.openMcpSettings(EmptyRequest.create({})).catch(
 							(error) => {
-								console.error("Error opening MCP settings:", error);
+								asiDebug.error("Error opening MCP settings:", error);
 							},
 						);
 					}}

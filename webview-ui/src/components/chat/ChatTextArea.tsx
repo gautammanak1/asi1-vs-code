@@ -60,6 +60,7 @@ import {
 import AsiRulesToggleModal from "../asi-rules/ClineRulesToggleModal";
 import { stopGlobalTts } from "@/services/globalTts";
 import ServersToggleModal from "./ServersToggleModal";
+import { asiDebug } from "@/utils/debug";
 
 const { MAX_IMAGES_AND_FILES_PER_MESSAGE } = CHAT_CONSTANTS;
 
@@ -78,7 +79,7 @@ const getImageDimensions = (
 			}
 		};
 		img.onerror = (err) => {
-			console.error("Failed to load image for dimension check:", err);
+			asiDebug.error("Failed to load image for dimension check:", err);
 			reject(new Error("Failed to load image to check dimensions."));
 		};
 		img.src = dataUrl;
@@ -329,7 +330,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						}
 					})
 					.catch((error) => {
-						console.error("Error searching commits:", error);
+						asiDebug.error("Error searching commits:", error);
 					});
 			}
 		}, [selectedType, searchQuery]);
@@ -425,7 +426,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									setSearchLoading(false);
 								})
 								.catch((error) => {
-									console.error("Error searching files:", error);
+									asiDebug.error("Error searching files:", error);
 									setFileSearchResults([]);
 									setSearchLoading(false);
 								});
@@ -921,7 +922,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 									setSearchLoading(false);
 								})
 								.catch((error) => {
-									console.error("Error searching files:", error);
+									asiDebug.error("Error searching files:", error);
 									setFileSearchResults([]);
 									setSearchLoading(false);
 								});
@@ -1016,7 +1017,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							const reader = new FileReader();
 							reader.onloadend = async () => {
 								if (reader.error) {
-									console.error("Error reading file:", reader.error);
+									asiDebug.error("Error reading file:", reader.error);
 									resolve(null);
 								} else {
 									const result = reader.result;
@@ -1025,7 +1026,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 											await getImageDimensions(result);
 											resolve(result);
 										} catch (error) {
-											console.warn((error as Error).message);
+											asiDebug.warn((error as Error).message);
 											showDimensionErrorMessage();
 											resolve(null);
 										}
@@ -1056,7 +1057,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							]);
 						}
 					} else {
-						console.warn("No valid images were processed");
+						asiDebug.warn("No valid images were processed");
 					}
 				}
 			},
@@ -1427,7 +1428,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					uris = JSON.parse(resourceUrlsData);
 					uris = uris.map((uri) => decodeURIComponent(uri));
 				} catch (error) {
-					console.error("Failed to parse resourceurls JSON:", error);
+					asiDebug.error("Failed to parse resourceurls JSON:", error);
 					uris = []; // Reset if parsing failed
 				}
 			}
@@ -1463,7 +1464,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 						}
 					})
 					.catch((error) => {
-						console.error("Error getting relative paths:", error);
+						asiDebug.error("Error getting relative paths:", error);
 					});
 				return;
 			}
@@ -1506,7 +1507,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 					]);
 				}
 			} else {
-				console.warn("No valid images were processed");
+				asiDebug.warn("No valid images were processed");
 			}
 		};
 
@@ -1543,7 +1544,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 							reader.onloadend = async () => {
 								// Make async
 								if (reader.error) {
-									console.error("Error reading file:", reader.error);
+									asiDebug.error("Error reading file:", reader.error);
 									resolve(null);
 								} else {
 									const result = reader.result;
@@ -1552,7 +1553,7 @@ const ChatTextArea = forwardRef<HTMLTextAreaElement, ChatTextAreaProps>(
 											await getImageDimensions(result); // Check dimensions
 											resolve(result);
 										} catch (error) {
-											console.warn((error as Error).message);
+											asiDebug.warn((error as Error).message);
 											showDimensionErrorMessage(); // Show error to user
 											resolve(null); // Don't add this image
 										}

@@ -16,6 +16,7 @@ import { DebouncedTextField } from "../common/DebouncedTextField";
 import Section from "../Section";
 import { settingsUi } from "../settingsUi";
 import { updateSetting } from "../utils/settingsHandlers";
+import { asiDebug } from "@/utils/debug";
 
 interface BrowserSettingsSectionProps {
 	renderSectionHeader: (tabId: string) => JSX.Element | null;
@@ -93,7 +94,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 				setIsBundled(result.isBundled);
 			})
 			.catch((error) => {
-				console.error("Error getting detected Chrome path:", error);
+				asiDebug.error("Error getting detected Chrome path:", error);
 			});
 	}, []);
 
@@ -107,7 +108,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 					setConnectionStatus(result.success);
 				})
 				.catch((error) => {
-					console.error("Error testing browser connection:", error);
+					asiDebug.error("Error testing browser connection:", error);
 					setConnectionStatus(false);
 				});
 		} else {
@@ -116,7 +117,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 					setConnectionStatus(result.success);
 				})
 				.catch((error) => {
-					console.error("Error discovering browser:", error);
+					asiDebug.error("Error discovering browser:", error);
 					setConnectionStatus(false);
 				});
 		}
@@ -166,7 +167,7 @@ export const BrowserSettingsSection: React.FC<BrowserSettingsSectionProps> = ({
 				setDebugMode(false);
 			})
 			.catch((error) => {
-				console.error("Error relaunching Chrome:", error);
+				asiDebug.error("Error relaunching Chrome:", error);
 				setRelaunchResult({
 					success: false,
 					message: `Error relaunching Chrome: ${error.message}`,

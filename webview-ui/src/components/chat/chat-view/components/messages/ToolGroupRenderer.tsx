@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { FileServiceClient } from "@/services/grpc-client";
 import {
+import { asiDebug } from "@/utils/debug";
 	getIconByToolName,
 	getToolsNotInCurrentActivities,
 	isLowStakesTool,
@@ -187,7 +188,7 @@ export const ToolGroupRenderer = memo(
 		const handleOpenFile = useCallback((filePath: string) => {
 			FileServiceClient.openFileRelativePath(
 				StringRequest.create({ value: filePath }),
-			).catch((err) => console.error("Failed to open file:", err));
+			).catch((err) => asiDebug.error("Failed to open file:", err));
 		}, []);
 
 		const handleItemToggle = useCallback((ts: number) => {

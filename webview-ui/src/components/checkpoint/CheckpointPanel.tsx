@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FileServiceClient } from "@/services/grpc-client";
 import { RevertConfirmDialog } from "./RevertConfirmDialog";
 import { revertCheckpointFiles } from "./revertCheckpointFiles";
+import { asiDebug } from "@/utils/debug";
 
 export type FetchCoderCheckpointFileRow = {
 	filePath: string;
@@ -95,7 +96,7 @@ const CheckpointPanel: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 			const parsed = JSON.parse(res.value || "[]") as FetchCoderCheckpointRow[];
 			setCheckpoints(Array.isArray(parsed) ? parsed : []);
 		} catch (e) {
-			console.error(e);
+			asiDebug.error(e);
 			setCheckpoints([]);
 		} finally {
 			setLoading(false);
@@ -103,7 +104,7 @@ const CheckpointPanel: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 	}, []);
 
 	useEffect(() => {
-		load().catch(console.error);
+		load().catch(asiDebug.error);
 	}, [load]);
 
 	const saveManual = useCallback(async () => {
@@ -229,7 +230,7 @@ const CheckpointPanel: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 				<button
 					type="button"
 					className="inline-flex items-center gap-1 rounded border border-[var(--vscode-panel-border)] bg-[var(--vscode-button-secondaryBackground)] px-2 py-1 text-xs text-[var(--vscode-button-secondaryForeground)] hover:bg-[var(--vscode-list-hoverBackground)]"
-					onClick={() => saveManual().catch(console.error)}
+					onClick={() => saveManual().catch(asiDebug.error)}
 				>
 					<SaveIcon className="size-3.5" />
 					Save checkpoint
@@ -243,7 +244,7 @@ const CheckpointPanel: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 								"Delete all Fetch Coder checkpoints for this workspace? This cannot be undone.",
 							)
 						) {
-							clearAll().catch(console.error);
+							clearAll().catch(asiDebug.error);
 						}
 					}}
 				>
@@ -330,7 +331,7 @@ const CheckpointPanel: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 										<button
 											type="button"
 											className="inline-flex items-center gap-1 rounded px-2 py-1 text-xs text-[var(--vscode-errorForeground)] hover:bg-[var(--vscode-list-hoverBackground)]"
-											onClick={() => deleteOne(cp.id).catch(console.error)}
+											onClick={() => deleteOne(cp.id).catch(asiDebug.error)}
 										>
 											<Trash2Icon className="size-3" />
 										</button>
@@ -356,7 +357,7 @@ const CheckpointPanel: React.FC<{ onDone: () => void }> = ({ onDone }) => {
 													<button
 														type="button"
 														className="font-mono text-left text-[var(--vscode-textLink-foreground)] hover:underline"
-														onClick={() => openDiff(cp.id, f.filePath).catch(console.error)}
+														onClick={() => openDiff(cp.id, f.filePath).catch(asiDebug.error)}
 													>
 														{f.filePath}
 													</button>

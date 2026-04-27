@@ -13,6 +13,7 @@ import ImagePreview from "./ImagePreview"
 import LinkPreview from "./LinkPreview"
 import McpDisplayModeDropdown from "./McpDisplayModeDropdown"
 import { buildDisplaySegments, DisplaySegment, processResponseUrls, truncateDataUris, UrlMatch } from "./utils/mcpRichUtil"
+import { asiDebug } from "@/utils/debug";
 
 // Maximum number of URLs to process in total, per response
 export const MAX_URLS = 50
@@ -109,7 +110,7 @@ const McpResponseDisplay: React.FC<McpResponseDisplayProps> = ({ responseText })
 			return
 		}
 
-		console.log("Processing MCP response for URL extraction")
+		asiDebug.info("Processing MCP response for URL extraction")
 		setIsLoading(true)
 		setError(null)
 
@@ -247,7 +248,7 @@ const McpResponseDisplay: React.FC<McpResponseDisplayProps> = ({ responseText })
 			</ResponseContainer>
 		)
 	} catch (_error) {
-		console.log("Error rendering MCP response - falling back to plain text") // Restored comment
+		asiDebug.info("Error rendering MCP response - falling back to plain text") // Restored comment
 		// Fallback for critical rendering errors
 		return (
 			<ResponseContainer>

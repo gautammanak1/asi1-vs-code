@@ -27,6 +27,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { asiDebug } from "@/utils/debug";
 import {
 	basetenDefaultModelId,
 	basetenModels,
@@ -398,6 +399,8 @@ export const ExtensionStateContextProvider: React.FC<{
 		hooksEnabled: false,
 		nativeToolCallSetting: false,
 		enableParallelToolCalling: false,
+		brandTheme: "cursor-accent",
+		hostAppKind: "unknown",
 	});
 	const [expandTaskHeader, setExpandTaskHeader] = useState(true);
 	const [didHydrateState, setDidHydrateState] = useState(false);
@@ -538,15 +541,15 @@ export const ExtensionStateContextProvider: React.FC<{
 								return newState;
 							});
 						} catch (error) {
-							console.error("Error parsing state JSON:", error);
+							asiDebug.error("Error parsing state JSON:", error);
 						}
 					}
 				},
 				onError: (error) => {
-					console.error("Error in state subscription:", error);
+					asiDebug.error("Error in state subscription:", error);
 				},
 				onComplete: () => {
-					console.log("State subscription completed");
+					asiDebug.info("State subscription completed");
 				},
 			},
 		);
@@ -560,10 +563,10 @@ export const ExtensionStateContextProvider: React.FC<{
 						navigateToMcp();
 					},
 					onError: (error) => {
-						console.error("Error in mcpButtonClicked subscription:", error);
+						asiDebug.error("Error in mcpButtonClicked subscription:", error);
 					},
 					onComplete: () => {
-						console.log("mcpButtonClicked subscription completed");
+						asiDebug.info("mcpButtonClicked subscription completed");
 					},
 				},
 			);
@@ -577,13 +580,13 @@ export const ExtensionStateContextProvider: React.FC<{
 						navigateToHistory();
 					},
 					onError: (error) => {
-						console.error(
+						asiDebug.error(
 							"Error in history button clicked subscription:",
 							error,
 						);
 					},
 					onComplete: () => {
-						console.log("History button clicked subscription completed");
+						asiDebug.info("History button clicked subscription completed");
 					},
 				},
 			);
@@ -597,7 +600,7 @@ export const ExtensionStateContextProvider: React.FC<{
 						navigateToChat();
 					},
 					onError: (error) => {
-						console.error("Error in chat button subscription:", error);
+						asiDebug.error("Error in chat button subscription:", error);
 					},
 					onComplete: () => {},
 				},
@@ -615,10 +618,10 @@ export const ExtensionStateContextProvider: React.FC<{
 					}
 				},
 				onError: (error) => {
-					console.error("Error in MCP servers subscription:", error);
+					asiDebug.error("Error in MCP servers subscription:", error);
 				},
 				onComplete: () => {
-					console.log("MCP servers subscription completed");
+					asiDebug.info("MCP servers subscription completed");
 				},
 			},
 		);
@@ -633,13 +636,13 @@ export const ExtensionStateContextProvider: React.FC<{
 						navigateToSettings();
 					},
 					onError: (error) => {
-						console.error(
+						asiDebug.error(
 							"Error in settings button clicked subscription:",
 							error,
 						);
 					},
 					onComplete: () => {
-						console.log("Settings button clicked subscription completed");
+						asiDebug.info("Settings button clicked subscription completed");
 					},
 				},
 			);
@@ -654,13 +657,13 @@ export const ExtensionStateContextProvider: React.FC<{
 						navigateToWorktrees();
 					},
 					onError: (error) => {
-						console.error(
+						asiDebug.error(
 							"Error in worktrees button clicked subscription:",
 							error,
 						);
 					},
 					onComplete: () => {
-						console.log("Worktrees button clicked subscription completed");
+						asiDebug.info("Worktrees button clicked subscription completed");
 					},
 				},
 			);
@@ -671,13 +674,13 @@ export const ExtensionStateContextProvider: React.FC<{
 					navigateToCheckpoints();
 				},
 				onError: (error) => {
-					console.error(
+					asiDebug.error(
 						"Error in checkpoints button clicked subscription:",
 						error,
 					);
 				},
 				onComplete: () => {
-					console.log("Checkpoints button clicked subscription completed");
+					asiDebug.info("Checkpoints button clicked subscription completed");
 				},
 			});
 
@@ -687,7 +690,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				onResponse: (protoMessage) => {
 					try {
 						if (!protoMessage.ts || protoMessage.ts <= 0) {
-							console.error(
+							asiDebug.error(
 								"Invalid timestamp in partial message:",
 								protoMessage,
 							);
@@ -721,7 +724,7 @@ export const ExtensionStateContextProvider: React.FC<{
 									return prevState;
 								});
 							} catch (error) {
-								console.error(
+								asiDebug.error(
 									"Failed to process partial message:",
 									error,
 									latest,
@@ -729,7 +732,7 @@ export const ExtensionStateContextProvider: React.FC<{
 							}
 						});
 					} catch (error) {
-						console.error(
+						asiDebug.error(
 							"Failed to process partial message:",
 							error,
 							protoMessage,
@@ -737,7 +740,7 @@ export const ExtensionStateContextProvider: React.FC<{
 					}
 				},
 				onError: (error) => {
-					console.error("Error in partialMessage subscription:", error);
+					asiDebug.error("Error in partialMessage subscription:", error);
 				},
 				onComplete: () => {},
 			});
@@ -751,13 +754,13 @@ export const ExtensionStateContextProvider: React.FC<{
 						setMcpMarketplaceCatalog(catalog);
 					},
 					onError: (error) => {
-						console.error(
+						asiDebug.error(
 							"Error in MCP marketplace catalog subscription:",
 							error,
 						);
 					},
 					onComplete: () => {
-						console.log("MCP marketplace catalog subscription completed");
+						asiDebug.info("MCP marketplace catalog subscription completed");
 					},
 				},
 			);
@@ -773,10 +776,10 @@ export const ExtensionStateContextProvider: React.FC<{
 					});
 				},
 				onError: (error) => {
-					console.error("Error in OpenRouter models subscription:", error);
+					asiDebug.error("Error in OpenRouter models subscription:", error);
 				},
 				onComplete: () => {
-					console.log("OpenRouter models subscription completed");
+					asiDebug.info("OpenRouter models subscription completed");
 				},
 			});
 
@@ -788,16 +791,16 @@ export const ExtensionStateContextProvider: React.FC<{
 					setLiteLlmModels(models);
 				},
 				onError: (error) => {
-					console.error("Error in LiteLLM models subscription:", error);
+					asiDebug.error("Error in LiteLLM models subscription:", error);
 				},
 				onComplete: () => {
-					console.log("LiteLLM models subscription completed");
+					asiDebug.info("LiteLLM models subscription completed");
 				},
 			});
 
 		// Initialize webview using gRPC
 		UiServiceClient.initializeWebview(EmptyRequest.create({})).catch((error) => {
-			console.error("Failed to initialize webview via gRPC:", error);
+			asiDebug.error("Failed to initialize webview via gRPC:", error);
 		});
 
 		// Set up account button clicked subscription
@@ -807,10 +810,10 @@ export const ExtensionStateContextProvider: React.FC<{
 					navigateToAccount();
 				},
 				onError: (error) => {
-					console.error("Error in account button clicked subscription:", error);
+					asiDebug.error("Error in account button clicked subscription:", error);
 				},
 				onComplete: () => {
-					console.log("Account button clicked subscription completed");
+					asiDebug.info("Account button clicked subscription completed");
 				},
 			});
 
@@ -820,7 +823,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				setAvailableTerminalProfiles(response.profiles);
 			})
 			.catch((error) => {
-				console.error("Failed to fetch available terminal profiles:", error);
+				asiDebug.error("Failed to fetch available terminal profiles:", error);
 			});
 
 		// Subscribe to relinquish control events
@@ -833,7 +836,7 @@ export const ExtensionStateContextProvider: React.FC<{
 					});
 				},
 				onError: (error) => {
-					console.error("Error in relinquishControl subscription:", error);
+					asiDebug.error("Error in relinquishControl subscription:", error);
 				},
 				onComplete: () => {},
 			});
@@ -918,7 +921,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				});
 			})
 			.catch((error: Error) =>
-				console.error("Failed to refresh OpenRouter models:", error),
+				asiDebug.error("Failed to refresh OpenRouter models:", error),
 			);
 	}, []);
 
@@ -931,7 +934,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				});
 			})
 			.catch((error: Error) =>
-				console.error("Failed to refresh Hicap models:", error),
+				asiDebug.error("Failed to refresh Hicap models:", error),
 			);
 	}, []);
 
@@ -942,7 +945,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				setLiteLlmModels(models);
 			})
 			.catch((error: Error) =>
-				console.error("Failed to refresh LiteLLM models:", error),
+				asiDebug.error("Failed to refresh LiteLLM models:", error),
 			);
 	}, []);
 
@@ -954,7 +957,7 @@ export const ExtensionStateContextProvider: React.FC<{
 					...fromProtobufModels(response.models),
 				});
 			})
-			.catch((err) => console.error("Failed to refresh Baseten models:", err));
+			.catch((err) => asiDebug.error("Failed to refresh Baseten models:", err));
 	}, []);
 
 	const refreshVercelAiGatewayModels = useCallback(() => {
@@ -964,7 +967,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				setVercelAiGatewayModels(models);
 			})
 			.catch((error: Error) =>
-				console.error("Failed to refresh Vercel AI Gateway models:", error),
+				asiDebug.error("Failed to refresh Vercel AI Gateway models:", error),
 			);
 	}, []);
 
@@ -1004,7 +1007,7 @@ export const ExtensionStateContextProvider: React.FC<{
 				);
 			})
 			.catch((error: Error) =>
-				console.error("Failed to refresh Asi models:", error),
+				asiDebug.error("Failed to refresh Asi models:", error),
 			);
 	}, []);
 
@@ -1022,6 +1025,21 @@ export const ExtensionStateContextProvider: React.FC<{
 		AsiModels,
 		refreshClineModels,
 	]);
+
+	/** Map branding + host to :root for CSS */
+	useEffect(() => {
+		const theme = state.brandTheme ?? "cursor-accent";
+		if (typeof document !== "undefined") {
+			document.documentElement.setAttribute("data-fetch-brand", theme);
+		}
+	}, [state.brandTheme]);
+
+	useEffect(() => {
+		const k = state.hostAppKind ?? "unknown";
+		if (typeof document !== "undefined") {
+			document.documentElement.setAttribute("data-host-app", k);
+		}
+	}, [state.hostAppKind]);
 
 	const contextValue: ExtensionStateContextType = {
 		...state,

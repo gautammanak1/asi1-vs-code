@@ -4,18 +4,18 @@ import { Secrets, SettingsKey } from "@shared/storage/state-keys"
 import { ApiProvider } from "../api"
 
 const ProviderKeyMap: Partial<Record<ApiProvider, string>> = {
-	Asi: "AsiModelId",
+	"asi:one": "AsiModelId",
 	openai: "OpenAiModelId",
 } as const
 
 export const ProviderToApiKeyMap: Partial<Record<ApiProvider, keyof Secrets | (keyof Secrets)[]>> = {
-	Asi: ["AsiApiKey", "AsiAccountId"],
+	"asi:one": ["AsiApiKey", "AsiAccountId"],
 	openai: "openAiApiKey",
 } as const
 
 const ProviderDefaultModelMap: Partial<Record<ApiProvider, string>> = {
-	Asi: "asi1-mini",
-	openai: "asi1-mini",
+	"asi:one": "asi1",
+	openai: "asi1",
 } as const
 
 /**

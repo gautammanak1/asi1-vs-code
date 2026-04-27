@@ -1,0 +1,14 @@
+/**
+ * Fetch Coder for Cursor — optional accent layer on top of --vscode-* tokens.
+ * Toggled via [data-fetch-brand="cursor-accent"] (set from extension `fetchCoder.brandTheme`).
+ */
+:root[data-fetch-brand="cursor-accent"] {
+	--color-Asi: #2e8fff;
+	--color-fetch-lime: #00d9ff;
+	--color-cursor-primary: #2e8fff;
+	--color-cursor-accent: #00d9ff;
+	--color-cursor-success: #10b981;
+	--color-cursor-warning: #f59e0b;
+	--color-cursor-error: #ef4444;
+	--color-cursor-muted: #6b7280;
+}

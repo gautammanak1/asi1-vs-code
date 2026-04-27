@@ -4,6 +4,7 @@
 /* Tailwind CSS */
 @import "tailwindcss";
 @import "./theme.css";
+@import "./cursor-accent.css";
 @import "./chat-vscode-shell.css";
 @plugin "tailwindcss-animate";
 @custom-variant dark (&:is(.dark *));
@@ -196,24 +197,24 @@
 }
 .glow-border:hover::after { opacity: 1; }
 
-/* ASI1.ai-inspired primary actions */
+/* Primary marketing / CTA — uses --color-Asi + --color-fetch-lime (overridden in cursor-accent.css) */
 .fc-btn-gradient {
-	background: linear-gradient(135deg, #0052ff 0%, #7ce074 120%);
+	background: linear-gradient(135deg, var(--color-Asi, #0052ff) 0%, var(--color-fetch-lime, #7ce074) 120%);
 	border: none;
 	border-radius: 10px;
-	box-shadow: 0 4px 20px rgba(0, 82, 255, 0.25);
+	box-shadow: 0 4px 20px color-mix(in srgb, var(--color-Asi, #0052ff) 25%, transparent);
 	transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
 }
 .fc-btn-gradient:hover {
 	filter: brightness(1.06);
-	box-shadow: 0 6px 24px rgba(124, 224, 116, 0.2);
+	box-shadow: 0 6px 24px color-mix(in srgb, var(--color-fetch-lime, #7ce074) 20%, transparent);
 }
 
-/* Chat bubbles — subtle chrome */
+/* Chat bubbles — subtle chrome; user side picks up --vscode-input; accent via brand tokens in cursor-accent */
 .fc-chat-bubble-user {
 	border-radius: 12px;
-	border: 1px solid color-mix(in srgb, var(--vscode-widget-border, #333) 55%, transparent);
-	background: color-mix(in srgb, var(--vscode-input-background) 92%, transparent);
+	border: 1px solid color-mix(in srgb, var(--color-cursor-primary, var(--vscode-widget-border, #333)) 35%, transparent);
+	background: color-mix(in srgb, var(--vscode-input-background) 88%, var(--color-cursor-primary, transparent) 8%);
 }
 .fc-chat-bubble-assistant {
 	border-radius: 12px;

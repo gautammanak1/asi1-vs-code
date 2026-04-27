@@ -120,6 +120,16 @@ export interface ExtensionState {
 	showFeatureTips?: boolean;
 	banners?: BannerCardData[];
 	welcomeBanners?: BannerCardData[];
+	/**
+	 * UI chrome: "host" = legacy ASI blue/lime; "cursor-accent" = Cursor-inspired primary/cyan.
+	 * Controlled by `fetchCoder.brandTheme` in workspace settings.
+	 */
+	brandTheme?: "host" | "cursor-accent";
+	/**
+	 * Detected / overridden host: VS Code family vs Cursor. See `fetchCoder.hostApp`.
+	 * For UI copy only; does not integrate with Cursor's native chat.
+	 */
+	hostAppKind?: "vscode" | "cursor" | "unknown";
 }
 
 export interface AsiMessage {

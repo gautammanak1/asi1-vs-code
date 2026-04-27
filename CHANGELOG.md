@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+---
+
+## [0.2.21] - 2026-04-28
+
+### Added (Cursor & VS Code)
+
+- **Product listing:** `displayName` **Fetch Coder for Cursor**; gallery banner color `#0D0D0D`; `cursor` keyword; walkthrough copy updated.
+- **Webview theming:** Optional **Cursor-style accents** via `fetchCoder.brandTheme` (`host` | `cursor-accent`, default `cursor-accent`) and `data-fetch-brand` on the document root; `cursor-accent.css` + theme token hooks.
+- **Settings:** `fetchCoder.hostApp` (`auto` | `vscode` | `cursor`) and extension state `hostAppKind` for help text; `data-host-app` on the document root; `src/hosts/detectHostAppKind.ts` + unit tests.
+- **Settings:** `fetchCoder.extraSystemPrompt` — optional text merged into the model system prompt (capped in code).
+- **Command:** `Asi.attachFileToChat` — open a file and insert path + truncated contents into the chat input.
+- **Keybindings:** `Cmd+Shift+A` / `Ctrl+Shift+A` as an alternate **focus chat** chord (alongside `Cmd+'` / `Ctrl+'`).
+
+### Documentation
+
+- README: **`asiAssistant.*`** settings keys vs `fetchCoder.*`, ASI:One **model picker** (`asi1-ultra` / `asi1` / `asi1-mini`), **install from source** via `npm run install:all`, accurate **keyboard shortcuts** (`contributes.keybindings`, including AI review **Enter** and **Revert last change**), **optional telemetry** (General toggle + editor level) and **Output → `Asi`**, Cursor/VS Code install note and **out-of-scope** items (native chat sync, `/` hooks, webview SSE), branding / `extraSystemPrompt`, **table of contents**, and **Store listings and releases** (VS Code Marketplace, Open VSX, Cursor, maintainer release checklist). Added **`docs/`** guides: **[INSTALLATION](docs/INSTALLATION.md)**, **[CONFIGURATION](docs/CONFIGURATION.md)**, **[API](docs/API.md)**, **[ARCHITECTURE](docs/ARCHITECTURE.md)**, **[SECURITY](docs/SECURITY.md)** with README navigation table.
+
+### API / Errors
+
+- **ASI:One:** Clearer 429 / rate-limit messaging when errors surface after retries; rate limits still use existing exponential backoff in the client.
+
+---
+
 ## [0.2.20] - 2026-04-16
 
 ### Changed

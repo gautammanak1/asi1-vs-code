@@ -4,6 +4,7 @@ import { convertProtoMcpServersToMcpServers } from "@shared/proto-conversions/mc
 import { VSCodeCheckbox } from "@vscode/webview-ui-toolkit/react";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { McpServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 type McpToolRowProps = {
 	tool: McpTool;
@@ -35,7 +36,7 @@ const McpToolRow = ({ tool, serverName }: McpToolRowProps) => {
 				setMcpServers(mcpServers);
 			})
 			.catch((error) => {
-				console.error("Error toggling tool auto-approve", error);
+				asiDebug.error("Error toggling tool auto-approve", error);
 			});
 	};
 	return (

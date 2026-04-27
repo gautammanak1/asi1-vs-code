@@ -6,6 +6,7 @@ import Thumbnails from "@/components/common/Thumbnails";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { CheckpointsServiceClient } from "@/services/grpc-client";
 import { highlightText } from "./task-header/Highlights";
+import { asiDebug } from "@/utils/debug";
 
 interface UserMessageProps {
 	text?: string;
@@ -74,7 +75,7 @@ const UserMessage: React.FC<UserMessageProps> = ({
 				sendMessageFromChatRow?.(editedText, images || [], files || []);
 			}, delay);
 		} catch (err) {
-			console.error("Checkpoint restore error:", err);
+			asiDebug.error("Checkpoint restore error:", err);
 		}
 	};
 

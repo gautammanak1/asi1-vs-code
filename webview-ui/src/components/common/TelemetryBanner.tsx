@@ -5,6 +5,7 @@ import {
 import { useCallback } from "react";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { StateServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 const telemetryRequest = TelemetrySettingRequest.create({
 	setting: TelemetrySettingEnum.ENABLED,
@@ -15,7 +16,7 @@ export const TelemetryBanner: React.FC = () => {
 
 	const handleClose = useCallback(() => {
 		StateServiceClient.updateTelemetrySetting(telemetryRequest).catch(
-			console.error,
+			asiDebug.error,
 		);
 	}, []);
 

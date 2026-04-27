@@ -12,6 +12,7 @@
 
 import { AsiMessage } from "@shared/ExtensionMessage"
 import { useEffect, useRef, useState } from "react"
+import { asiDebug } from "@/utils/debug";
 
 // Idle timeout in milliseconds before showing indicator
 const IDLE_TIMEOUT_MS = 3000
@@ -43,7 +44,7 @@ export function useIdleIndicator(scrollContainerRef: React.RefObject<HTMLDivElem
 			return
 		}
 
-		console.log("[IdleIndicator] Setting up MutationObserver")
+		asiDebug.info("[IdleIndicator] Setting up MutationObserver")
 
 		const resetIdleTimer = () => {
 			// Clear existing timer
@@ -63,13 +64,13 @@ export function useIdleIndicator(scrollContainerRef: React.RefObject<HTMLDivElem
 			const elapsed = Date.now() - timerStartTimeRef.current
 			const remaining = Math.max(0, IDLE_TIMEOUT_MS - elapsed)
 
-			console.log(
+			asiDebug.info(
 				`[IdleIndicator] DOM mutation detected, restarting timer. Elapsed: ${elapsed}ms, Remaining: ${remaining}ms`,
 			)
 
 			// Start new timer for remaining duration
 			idleTimerRef.current = setTimeout(() => {
-				console.log("[IdleIndicator] DOM idle for 3s, showing indicator")
+				asiDebug.info("[IdleIndicator] DOM idle for 3s, showing indicator")
 				setShowIdleIndicator(true)
 			}, remaining)
 		}
@@ -101,7 +102,7 @@ export function useIdleIndicator(scrollContainerRef: React.RefObject<HTMLDivElem
 		resetIdleTimer()
 
 		return () => {
-			console.log("[IdleIndicator] Cleaning up MutationObserver")
+			asiDebug.info("[IdleIndicator] Cleaning up MutationObserver")
 			observer.disconnect()
 			if (idleTimerRef.current) {
 				clearTimeout(idleTimerRef.current)

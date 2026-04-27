@@ -7,6 +7,7 @@
  */
 import { v4 as uuidv4 } from "uuid";
 import { PLATFORM_CONFIG } from "../config/platform.config";
+import { asiDebug } from "@/utils/debug";
 
 export interface Callbacks<TResponse> {
 	onResponse: (response: TResponse) => void;
@@ -44,7 +45,7 @@ export abstract class ProtoBusClient {
 					} else if (message.grpc_response.error) {
 						reject(new Error(message.grpc_response.error));
 					} else {
-						console.error(
+						asiDebug.error(
 							"Received ProtoBus message with no response or error ",
 							JSON.stringify(message),
 						);
@@ -96,7 +97,7 @@ export abstract class ProtoBusClient {
 					// Only remove the event listener on error
 					window.removeEventListener("message", handleResponse);
 				} else {
-					console.error(
+					asiDebug.error(
 						"Received ProtoBus message with no response or error ",
 						JSON.stringify(message),
 					);
@@ -130,7 +131,7 @@ export abstract class ProtoBusClient {
 					request_id: requestId,
 				},
 			});
-			console.log(`[DEBUG] Sent cancellation for request: ${requestId}`);
+			asiDebug.info(`[DEBUG] Sent cancellation for request: ${requestId}`);
 		};
 	}
 }

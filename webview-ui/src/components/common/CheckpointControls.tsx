@@ -7,6 +7,7 @@ import styled from "styled-components";
 import { CODE_BLOCK_BG_COLOR } from "@/components/common/CodeBlock";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { CheckpointsServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface CheckpointOverlayProps {
 	messageTs?: number;
@@ -52,7 +53,7 @@ export const CheckpointOverlay = ({ messageTs }: CheckpointOverlayProps) => {
 				}),
 			);
 		} catch (err) {
-			console.error("Checkpoint restore task error:", err);
+			asiDebug.error("Checkpoint restore task error:", err);
 			setRestoreTaskDisabled(false);
 		}
 	};
@@ -67,7 +68,7 @@ export const CheckpointOverlay = ({ messageTs }: CheckpointOverlayProps) => {
 				}),
 			);
 		} catch (err) {
-			console.error("Checkpoint restore workspace error:", err);
+			asiDebug.error("Checkpoint restore workspace error:", err);
 			setRestoreWorkspaceDisabled(false);
 		}
 	};
@@ -82,7 +83,7 @@ export const CheckpointOverlay = ({ messageTs }: CheckpointOverlayProps) => {
 				}),
 			);
 		} catch (err) {
-			console.error("Checkpoint restore both error:", err);
+			asiDebug.error("Checkpoint restore both error:", err);
 			setRestoreBothDisabled(false);
 		}
 	};
@@ -136,7 +137,7 @@ export const CheckpointOverlay = ({ messageTs }: CheckpointOverlayProps) => {
 							}),
 						);
 					} catch (err) {
-						console.error("CheckpointDiff error:", err);
+						asiDebug.error("CheckpointDiff error:", err);
 					} finally {
 						setCompareDisabled(false);
 					}

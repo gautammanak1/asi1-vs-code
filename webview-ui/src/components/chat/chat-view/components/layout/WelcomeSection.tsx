@@ -36,6 +36,7 @@ import {
 import { convertBannerData } from "@/utils/bannerUtils";
 import { getCurrentPlatform } from "@/utils/platformUtils";
 import { WelcomeSectionProps } from "../../types/chatTypes";
+import { asiDebug } from "@/utils/debug";
 
 /**
  * Welcome section shown when there's no active task
@@ -90,7 +91,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 	const handleWorktreeClick = useCallback(() => {
 		WorktreeServiceClient.trackWorktreeViewOpened(
 			TrackWorktreeViewOpenedRequest.create({ source: "home_page" }),
-		).catch(console.error);
+		).catch(asiDebug.error);
 		navigateToWorktrees();
 	}, [navigateToWorktrees]);
 
@@ -164,7 +165,7 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 			switch (action.action) {
 				case BannerActionType.Link:
 					if (action.arg) {
-						UiServiceClient.openUrl({ value: action.arg }).catch(console.error);
+						UiServiceClient.openUrl({ value: action.arg }).catch(asiDebug.error);
 					}
 					break;
 
@@ -205,12 +206,12 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 
 				case BannerActionType.InstallCli:
 					StateServiceClient.installClineCli({}).catch((error: Error) =>
-						console.error("Failed to initiate CLI installation:", error),
+						asiDebug.error("Failed to initiate CLI installation:", error),
 					);
 					break;
 
 				default:
-					console.warn("Unknown banner action:", action.action);
+					asiDebug.warn("Unknown banner action:", action.action);
 			}
 		},
 		[handleFieldsChange, navigateToSettings, navigateToSettingsModelPicker],
@@ -225,20 +226,20 @@ export const WelcomeSection: React.FC<WelcomeSectionProps> = ({
 		// been dismissed using the **banner ID**.
 		if (bannerId.startsWith("info-banner")) {
 			StateServiceClient.updateInfoBannerVersion({ value: 1 }).catch(
-				console.error,
+				asiDebug.error,
 			);
 		} else if (bannerId.startsWith("new-model")) {
 			StateServiceClient.updateModelBannerVersion({ value: 1 }).catch(
-				console.error,
+				asiDebug.error,
 			);
 		} else if (bannerId.startsWith("cli-")) {
 			StateServiceClient.updateCliBannerVersion({ value: 1 }).catch(
-				console.error,
+				asiDebug.error,
 			);
 		} else {
 			// Mark the banner as dismissed by its ID.
 			StateServiceClient.dismissBanner({ value: bannerId }).catch(
-				console.error,
+				asiDebug.error,
 			);
 		}
 	}, []);

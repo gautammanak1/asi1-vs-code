@@ -11,7 +11,7 @@ import { ApiStream } from "../transform/stream"
 import { getOpenAIToolParams, ToolCallProcessor } from "../transform/tool-call-processor"
 
 const ASI_ONE_BASE_URL = "https://api.asi1.ai/v1"
-const ASI_ONE_MODEL_DEFAULT = "asi1-mini"
+const ASI_ONE_MODEL_DEFAULT = "asi1"
 
 const UNSUPPORTED_ASI1_BODY_KEYS = new Set([
 	"logprobs",
@@ -50,6 +50,13 @@ function formatAsiCompletionError(err: unknown, modelId: string, baseUrl: string
 		return new Error(
 			`ASI:One rejected the request (400) with no error details. Check the model name and API key. Model used: ${modelId}. Endpoint: ${baseUrl}`,
 		)
+	}
+	if (status === 429) {
+		if (!detail || !detail.toLowerCase().includes("rate")) {
+			detail =
+				(detail ? `${detail} ` : "") +
+				"Rate limited — the extension will retry with backoff. "
+		}
 	}
 	if (!detail.trim()) {
 		return new Error(

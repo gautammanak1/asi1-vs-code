@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { FileServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 const OpenDiskConversationHistoryButton: React.FC<{
 	taskId?: string;
@@ -21,7 +22,7 @@ const OpenDiskConversationHistoryButton: React.FC<{
 		FileServiceClient.openDiskConversationHistory(
 			StringRequest.create({ value: taskId }),
 		).catch((err) => {
-			console.error(err);
+			asiDebug.error(err);
 		});
 	};
 

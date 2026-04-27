@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { cn } from "@/lib/utils";
 import { TaskServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface TaskFeedbackButtonsProps {
 	messageTs: number;
@@ -39,7 +40,7 @@ const TaskFeedbackButtons: React.FC<TaskFeedbackButtonsProps> = ({
 				setShouldShow(false);
 			}
 		} catch (e) {
-			console.error("Error checking feedback history:", e);
+			asiDebug.error("Error checking feedback history:", e);
 		}
 	}, [messageTs]);
 
@@ -70,10 +71,10 @@ const TaskFeedbackButtons: React.FC<TaskFeedbackButtonsProps> = ({
 				history[messageTs] = true;
 				localStorage.setItem("taskFeedbackHistory", JSON.stringify(history));
 			} catch (e) {
-				console.error("Error updating feedback history:", e);
+				asiDebug.error("Error updating feedback history:", e);
 			}
 		} catch (error) {
-			console.error("Error sending task feedback:", error);
+			asiDebug.error("Error sending task feedback:", error);
 		}
 	};
 

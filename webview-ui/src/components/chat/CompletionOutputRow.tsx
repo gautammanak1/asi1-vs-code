@@ -9,6 +9,7 @@ import { CopyButton } from "../common/CopyButton";
 import SuccessButton from "../common/SuccessButton";
 import { QuoteButtonState } from "./ChatRow";
 import QuoteButton from "./QuoteButton";
+import { asiDebug } from "@/utils/debug";
 
 interface CompletionOutputRowProps {
 	text: string;
@@ -110,7 +111,7 @@ const CompletionOutputActionRow = memo(
 								value: messageTs,
 							}),
 						).catch((err) =>
-							console.error(
+							asiDebug.error(
 								"Failed to show task completion view changes:",
 								err,
 							),
@@ -134,7 +135,7 @@ const CompletionOutputActionRow = memo(
 								metadata: {},
 								messageTs,
 							}).catch((err) => {
-								console.error("Failed to explain changes:", err);
+								asiDebug.error("Failed to explain changes:", err);
 								setExplainChangesDisabled(false);
 							});
 						}}

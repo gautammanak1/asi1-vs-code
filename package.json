@@ -1,11 +1,11 @@
 {
 	"name": "fetch-coder",
-	"displayName": "Fetch Coder",
-	"description": "Fetch Coder is an autonomous AI coding agent integrated into VS Code, powered by asi1.ai. It works like having a senior engineer sitting beside you—understanding your codebase, writing code, debugging issues, running commands, and iterating until the job is done.",
-	"version": "0.2.20",
+	"displayName": "Fetch Coder for Cursor",
+	"description": "Autonomous AI coding agent for Cursor and VS Code, powered by ASI:One — chat, plan/act, run commands, and edit your repo from the sidebar.",
+	"version": "0.2.21",
 	"icon": "assets/icons/icon.png",
 	"galleryBanner": {
-		"color": "#1e1e1e",
+		"color": "#0D0D0D",
 		"theme": "dark"
 	},
 	"workspaces": [
@@ -38,6 +38,7 @@
 	"keywords": [
 		"fetch",
 		"asi1",
+		"cursor",
 		"asi-one",
 		"mcp",
 		"coding",
@@ -55,6 +56,7 @@
 		"onCommand:Asi.focusChatInput",
 		"onCommand:Asi.plusButtonClicked",
 		"onCommand:Asi.addToChat",
+		"onCommand:Asi.attachFileToChat",
 		"onCommand:Asi.insertApiKey"
 	],
 	"main": "./dist/extension.js",
@@ -62,8 +64,8 @@
 		"walkthroughs": [
 			{
 				"id": "FetchCoderWalkthrough",
-				"title": "Meet Fetch Coder, your ASI:One coding partner",
-				"description": "Fetch Coder helps you build with ASI:One. Here are five ways to put it to work:",
+				"title": "Meet Fetch Coder (Cursor & VS Code)",
+				"description": "Fetch Coder is your ASI:One coding partner. Here are quick ways to use it in Cursor or VS Code:",
 				"steps": [
 					{
 						"id": "welcome",
@@ -125,7 +127,7 @@
 				{
 					"type": "webview",
 					"id": "fetch-coder.SidebarProvider",
-					"name": "fetch code"
+					"name": "Fetch Coder"
 				},
 				{
 					"id": "fetch-coder.ActivityLauncher",
@@ -169,6 +171,11 @@
 			{
 				"command": "Asi.addToChat",
 				"title": "Add to Fetch Coder",
+				"category": "Fetch Coder"
+			},
+			{
+				"command": "Asi.attachFileToChat",
+				"title": "Attach File to Fetch Coder Chat",
 				"category": "Fetch Coder"
 			},
 			{
@@ -320,6 +327,14 @@
 				"when": "!editorHasSelection"
 			},
 			{
+				"command": "Asi.focusChatInput",
+				"key": "cmd+shift+a",
+				"mac": "cmd+shift+a",
+				"win": "ctrl+shift+a",
+				"linux": "ctrl+shift+a",
+				"when": "!editorHasSelection"
+			},
+			{
 				"command": "Asi.revertLast",
 				"key": "cmd+shift+z",
 				"mac": "cmd+shift+z",
@@ -402,7 +417,7 @@
 			]
 		},
 		"configuration": {
-			"title": "Fetch Coder",
+			"title": "Fetch Coder for Cursor",
 			"properties": {
 				"asiAssistant.apiKey": {
 					"type": "string",
@@ -460,6 +475,35 @@
 					"minimum": 1000,
 					"description": "Maximum characters of file text to include when file context is enabled.",
 					"order": 202
+				},
+				"fetchCoder.hostApp": {
+					"type": "string",
+					"enum": [
+						"auto",
+						"vscode",
+						"cursor"
+					],
+					"default": "auto",
+					"description": "Which editor host to assume for help text: auto uses the running app (e.g. Cursor vs Visual Studio Code). Override only if detection is wrong.",
+					"order": 197
+				},
+				"fetchCoder.brandTheme": {
+					"type": "string",
+					"enum": [
+						"host",
+						"cursor-accent"
+					],
+					"default": "cursor-accent",
+					"description": "Sidebar UI accents: 'host' uses classic ASI blue/lime; 'cursor-accent' uses Cursor-style blue/cyan (editor chrome still follows your theme).",
+					"order": 199
+				},
+				"fetchCoder.extraSystemPrompt": {
+					"type": "string",
+					"default": "",
+					"editPresentation": "multiline",
+					"maxLength": 8000,
+					"description": "Optional text prepended to the model system prompt on every request (in addition to built-in rules).",
+					"order": 198
 				},
 				"fetchCoder.auth0.enabled": {
 					"type": "boolean",

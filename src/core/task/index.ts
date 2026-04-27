@@ -94,6 +94,7 @@ import fs from "fs/promises";
 import Mutex from "p-mutex";
 import pWaitFor from "p-wait-for";
 import * as path from "path";
+import * as vscode from "vscode";
 import { ulid } from "ulid";
 import type { SystemPromptContext } from "@/core/prompts/system-prompt";
 import { getSystemPrompt } from "@/core/prompts/system-prompt";
@@ -2332,7 +2333,20 @@ export class Task {
 			);
 		}
 
-		const { systemPrompt, tools } = await getSystemPrompt(promptContext);
+		const { systemPrompt: baseSystemPrompt, tools } = await getSystemPrompt(promptContext);
+		let systemPrompt = baseSystemPrompt;
+		const extraUserPrompt = vscode.workspace
+			.getConfiguration("fetchCoder")
+			.get<string>("extraSystemPrompt")
+			?.trim();
+		if (extraUserPrompt) {
+			const cap = 8000;
+			const extra =
+				extraUserPrompt.length > cap
+					? `${extraUserPrompt.slice(0, cap)}\n[truncated]`
+					: extraUserPrompt;
+			systemPrompt = `${systemPrompt}\n\n# User instructions (fetchCoder.extraSystemPrompt)\n${extra}`;
+		}
 		this.useNativeToolCalls = !!tools?.length;
 		await this.writePromptMetadataArtifacts({ systemPrompt, providerInfo });
 

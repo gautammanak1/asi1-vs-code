@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { McpServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 const ServersToggleModal: React.FC = () => {
 	const { mcpServers, navigateToMcp, setMcpServers } = useExtensionState();
@@ -35,7 +36,7 @@ const ServersToggleModal: React.FC = () => {
 					}
 				})
 				.catch((error) => {
-					console.error("Failed to fetch MCP servers:", error);
+					asiDebug.error("Failed to fetch MCP servers:", error);
 				});
 		}
 	}, [isVisible, setMcpServers]);

@@ -10,6 +10,7 @@ import Section from "../Section"
 import { settingsUi } from "../settingsUi"
 import TerminalOutputLineLimitSlider from "../TerminalOutputLineLimitSlider"
 import { updateSetting } from "../utils/settingsHandlers"
+import { asiDebug } from "@/utils/debug";
 
 interface TerminalSettingsSectionProps {
 	renderSectionHeader: (tabId: string) => JSX.Element | null
@@ -54,7 +55,7 @@ export const TerminalSettingsSection: React.FC<TerminalSettingsSectionProps> = (
 				}
 			})
 			.catch((error) => {
-				console.error("Failed to update terminal connection timeout:", error)
+				asiDebug.error("Failed to update terminal connection timeout:", error)
 			})
 	}
 

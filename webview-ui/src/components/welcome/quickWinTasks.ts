@@ -46,9 +46,9 @@ Required pattern (do not invent alternate APIs):
 		buttonText: ">",
 	},
 	{
-		id: "nextjs_app",
-		title: "Build a Web App",
-		description: "Create a modern Next.js app with Tailwind CSS styling",
+					id: "nextjs_app",
+					title: "Build a web app",
+					description: "Create a Next.js app with Tailwind — great from Cursor or VS Code",
 		icon: "WebAppIcon",
 		actionCommand: "Asi/createNextJsApp",
 		prompt: "Create a beautiful Next.js web application with Tailwind CSS. Set up the basic project structure with a clean landing page, responsive navigation, and a simple interactive feature. Make it modern and visually appealing.",

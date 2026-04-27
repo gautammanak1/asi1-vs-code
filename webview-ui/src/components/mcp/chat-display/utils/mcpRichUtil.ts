@@ -1,5 +1,6 @@
 import { StringRequest } from "@shared/proto/Asi/common";
 import { WebServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 // Represents a URL found in the text with its position and metadata
 export interface UrlMatch {
@@ -58,11 +59,11 @@ export const safeCreateUrl = (url: string): URL | null => {
 			try {
 				return new URL(`https://${url}`);
 			} catch (_e) {
-				console.log(`Invalid URL: ${url}`);
+				asiDebug.info(`Invalid URL: ${url}`);
 				return null;
 			}
 		}
-		console.log(`Invalid URL: ${url}`);
+		asiDebug.info(`Invalid URL: ${url}`);
 		return null;
 	}
 };
@@ -139,7 +140,7 @@ export const normalizeRelativeUrl = (
 			return `${baseUrlObj.protocol}//${baseUrlObj.host}${basePath}${relativeUrl}`;
 		}
 	} catch (error) {
-		console.log(`Error normalizing relative URL: ${error}`);
+		asiDebug.info(`Error normalizing relative URL: ${error}`);
 		return relativeUrl; // Return original on error
 	}
 };
@@ -157,7 +158,7 @@ export const formatUrlForOpening = (url: string): string => {
 		return urlObj.href;
 	}
 
-	console.log(`Invalid URL format: ${url}`);
+	asiDebug.info(`Invalid URL format: ${url}`);
 	// Return a safe fallback that won't crash
 	return "about:blank";
 };
@@ -174,12 +175,12 @@ export const checkIfImageUrl = async (url: string): Promise<boolean> => {
 	// Convert HTTP to HTTPS for security in the network request only
 	if (secureUrl.startsWith("http://")) {
 		secureUrl = secureUrl.replace("http://", "https://");
-		console.log(`Using HTTPS version for image check: ${secureUrl}`);
+		asiDebug.info(`Using HTTPS version for image check: ${secureUrl}`);
 	}
 
 	// Validate URL before proceeding
 	if (!isUrl(url)) {
-		console.log("Invalid URL format:", url);
+		asiDebug.info("Invalid URL format:", url);
 		return false;
 	}
 
@@ -189,7 +190,7 @@ export const checkIfImageUrl = async (url: string): Promise<boolean> => {
 			// Use the gRPC client with timeout
 			const timeoutPromise = new Promise<boolean>((resolve) => {
 				setTimeout(() => {
-					console.log("Hit timeout waiting for checkIsImageUrl");
+					asiDebug.info("Hit timeout waiting for checkIsImageUrl");
 					resolve(false);
 				}, 3000);
 			});
@@ -200,14 +201,14 @@ export const checkIfImageUrl = async (url: string): Promise<boolean> => {
 			)
 				.then((result) => result.isImage)
 				.catch((error) => {
-					console.error("Error checking if URL is an image via gRPC:", error);
+					asiDebug.error("Error checking if URL is an image via gRPC:", error);
 					return false;
 				});
 
 			// Race between the service call and the timeout
 			return Promise.race([servicePromise, timeoutPromise]);
 		} catch (_error) {
-			console.log("Error checking if URL is an image:", url);
+			asiDebug.info("Error checking if URL is an image:", url);
 			// Return false to indicate it's not an image
 			return false;
 		}
@@ -216,7 +217,7 @@ export const checkIfImageUrl = async (url: string): Promise<boolean> => {
 	// Don't fall back to extension check for other URLs
 	// Only data URLs (handled above) are guaranteed to be images
 	// For all other URLs, we need proper content type verification
-	console.log(`URL protocol not supported for image check: ${url}`);
+	asiDebug.info(`URL protocol not supported for image check: ${url}`);
 	return false;
 };
 
@@ -240,13 +241,13 @@ export const extractUrlsFromText = (
 
 		// Skip invalid URLs
 		if (!isUrl(url)) {
-			console.log("Skipping invalid URL:", url);
+			asiDebug.info("Skipping invalid URL:", url);
 			continue;
 		}
 
 		// Skip localhost URLs to prevent security issues
 		if (isLocalhostUrl(url)) {
-			console.log("Skipping localhost URL:", url);
+			asiDebug.info("Skipping localhost URL:", url);
 			continue;
 		}
 
@@ -261,7 +262,7 @@ export const extractUrlsFromText = (
 		urlCount++;
 	}
 
-	console.log(`Found ${matches.length} URLs in text`);
+	asiDebug.info(`Found ${matches.length} URLs in text`);
 	return matches.sort((a, b) => a.index - b.index);
 };
 
@@ -278,7 +279,7 @@ export const processUrlTypes = async (
 	onProgress: (updatedMatches: UrlMatch[]) => void,
 	cancellationToken: { cancelled: boolean },
 ): Promise<void> => {
-	console.log(`Starting sequential URL processing for ${matches.length} URLs`);
+	asiDebug.info(`Starting sequential URL processing for ${matches.length} URLs`);
 
 	for (let i = 0; i < matches.length; i++) {
 		// Skip already processed URLs
@@ -288,12 +289,12 @@ export const processUrlTypes = async (
 
 		// Check if processing has been canceled
 		if (cancellationToken.cancelled) {
-			console.log("URL processing canceled");
+			asiDebug.info("URL processing canceled");
 			return;
 		}
 
 		const match = matches[i];
-		console.log(`Processing URL ${i + 1} of ${matches.length}: ${match.url}`);
+		asiDebug.info(`Processing URL ${i + 1} of ${matches.length}: ${match.url}`);
 
 		try {
 			// Check if URL is an image
@@ -311,7 +312,7 @@ export const processUrlTypes = async (
 			// Notify progress with a new array to ensure React detects changes
 			onProgress([...matches]);
 		} catch (err) {
-			console.log(`URL check error: ${match.url}`, err);
+			asiDebug.info(`URL check error: ${match.url}`, err);
 			match.isProcessed = true;
 
 			// Update state even on error
@@ -326,7 +327,7 @@ export const processUrlTypes = async (
 		}
 	}
 
-	console.log(
+	asiDebug.info(
 		`URL processing complete. Found ${matches.filter((m) => m.isImage).length} image URLs`,
 	);
 };
@@ -372,7 +373,7 @@ export const processResponseUrls = (
 	// Return cleanup function
 	return () => {
 		cancellationToken.cancelled = true;
-		console.log("Cleaning up URL processing");
+		asiDebug.info("Cleaning up URL processing");
 	};
 };
 

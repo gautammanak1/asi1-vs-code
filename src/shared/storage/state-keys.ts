@@ -1,11 +1,11 @@
 import { AutoApprovalSettings, DEFAULT_AUTO_APPROVAL_SETTINGS } from "@shared/AutoApprovalSettings"
 import {
-    ApiProvider,
-    DEFAULT_API_PROVIDER,
-    LiteLLMModelInfo,
-    ModelInfo,
-    type OcaModelInfo,
-    OpenAiCompatibleModelInfo,
+	ApiProvider,
+	DEFAULT_API_PROVIDER,
+	LiteLLMModelInfo,
+	ModelInfo,
+	type OcaModelInfo,
+	OpenAiCompatibleModelInfo,
 } from "@shared/api"
 import { BrowserSettings, DEFAULT_BROWSER_SETTINGS } from "@shared/BrowserSettings"
 import { AsiRulesToggles } from "@shared/asi-rules"
@@ -17,8 +17,8 @@ import { GlobalInstructionsFile } from "@shared/remote-config/schema"
 import { Mode } from "@shared/storage/types"
 import { TelemetrySetting } from "@shared/TelemetrySetting"
 import { UserInfo } from "@shared/UserInfo"
-type LanguageModelChatSelector = { vendor?: string; family?: string; version?: string; id?: string }
 import { BlobStoreSettings } from "./ClineBlobStorage"
+type LanguageModelChatSelector = { vendor?: string; family?: string; version?: string; id?: string }
 
 // ============================================================================
 // SINGLE SOURCE OF TRUTH FOR STORAGE KEYS
@@ -156,7 +156,7 @@ const API_HANDLER_SETTINGS_FIELDS = {
 	planModeOpenRouterModelInfo: { default: undefined as ModelInfo | undefined },
 	planModeAsiModelId: { default: undefined as string | undefined },
 	planModeAsiModelInfo: { default: undefined as ModelInfo | undefined },
-	planModeOpenAiModelId: { default: "asi1-mini" as string | undefined },
+	planModeOpenAiModelId: { default: "asi1" as string | undefined },
 	planModeOpenAiModelInfo: { default: undefined as OpenAiCompatibleModelInfo | undefined },
 	planModeOllamaModelId: { default: undefined as string | undefined },
 	planModeLmStudioModelId: { default: undefined as string | undefined },
@@ -200,7 +200,7 @@ const API_HANDLER_SETTINGS_FIELDS = {
 	actModeOpenRouterModelInfo: { default: undefined as ModelInfo | undefined },
 	actModeAsiModelId: { default: undefined as string | undefined },
 	actModeAsiModelInfo: { default: undefined as ModelInfo | undefined },
-	actModeOpenAiModelId: { default: "asi1-mini" as string | undefined },
+	actModeOpenAiModelId: { default: "asi1" as string | undefined },
 	actModeOpenAiModelInfo: { default: undefined as OpenAiCompatibleModelInfo | undefined },
 	actModeOllamaModelId: { default: undefined as string | undefined },
 	actModeLmStudioModelId: { default: undefined as string | undefined },

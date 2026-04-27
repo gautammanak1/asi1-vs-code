@@ -90,6 +90,12 @@ export default {
 				description: "var(--vscode-descriptionForeground)",
 				success: "var(--vscode-charts-green)",
 				warning: "var(--vscode-charts-yellow)",
+				/** Optional Cursor-style accents (see cursor-accent.css; map to --color-cursor-*) */
+				cursorPrimary: "var(--color-cursor-primary, var(--color-Asi, #2e8fff))",
+				cursorAccent: "var(--color-cursor-accent, #00d9ff)",
+				cursorSuccess: "var(--color-cursor-success, #10b981)",
+				cursorWarning: "var(--color-cursor-warning, #f59e0b)",
+				cursorError: "var(--color-cursor-error, #ef4444)",
 			},
 			fontSize: {
 				xl: "calc(2 * var(--vscode-font-size))",

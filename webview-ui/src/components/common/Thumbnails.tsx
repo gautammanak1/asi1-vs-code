@@ -3,6 +3,7 @@ import { StringRequest } from "@shared/proto/Asi/common";
 import React, { memo, useLayoutEffect, useRef, useState } from "react";
 import { useWindowSize } from "react-use";
 import { FileServiceClient } from "@/services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface ThumbnailsProps {
 	images: string[];
@@ -52,13 +53,13 @@ const Thumbnails = ({
 
 	const handleImageClick = (image: string) => {
 		FileServiceClient.openImage(StringRequest.create({ value: image })).catch(
-			(err) => console.error("Failed to open image:", err),
+			(err) => asiDebug.error("Failed to open image:", err),
 		);
 	};
 
 	const handleFileClick = (filePath: string) => {
 		FileServiceClient.openFile(StringRequest.create({ value: filePath })).catch(
-			(err) => console.error("Failed to open file:", err),
+			(err) => asiDebug.error("Failed to open file:", err),
 		);
 	};
 

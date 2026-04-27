@@ -38,6 +38,7 @@ import GeneralSettingsSection from "./sections/GeneralSettingsSection";
 import VoiceSettingsSection from "./sections/VoiceSettingsSection";
 import { RemoteConfigSection } from "./sections/RemoteConfigSection";
 import TerminalSettingsSection from "./sections/TerminalSettingsSection";
+import { asiDebug } from "@/utils/debug";
 
 const IS_DEV = process.env.IS_DEV;
 
@@ -232,7 +233,7 @@ const SettingsView = ({ onDone, targetSection }: SettingsViewProps) => {
 				ResetStateRequest.create({ global: resetGlobalState }),
 			);
 		} catch (error) {
-			console.error("Failed to reset state:", error);
+			asiDebug.error("Failed to reset state:", error);
 		}
 	}, []);
 

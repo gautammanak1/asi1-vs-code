@@ -3,6 +3,7 @@ import { VSCodeButton } from "@vscode/webview-ui-toolkit/react";
 import { useEffect, useRef, useState } from "react";
 import { useExtensionState } from "@/context/ExtensionStateContext";
 import { BrowserServiceClient } from "../../services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 interface ConnectionInfo {
 	isConnected: boolean;
@@ -35,7 +36,7 @@ export const BrowserSettingsMenu = () => {
 					host: info.host,
 				});
 			} catch (error) {
-				console.error("Error fetching browser connection info:", error);
+				asiDebug.error("Error fetching browser connection info:", error);
 			}
 		})();
 
@@ -86,7 +87,7 @@ export const BrowserSettingsMenu = () => {
 						host: info.host,
 					});
 				} catch (error) {
-					console.error("Error fetching browser connection info:", error);
+					asiDebug.error("Error fetching browser connection info:", error);
 				}
 			};
 
@@ -130,7 +131,7 @@ export const BrowserSettingsMenu = () => {
 					host: info.host,
 				});
 			} catch (error) {
-				console.error("Error fetching browser connection info:", error);
+				asiDebug.error("Error fetching browser connection info:", error);
 			}
 		};
 

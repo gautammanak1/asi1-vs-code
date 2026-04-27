@@ -24,6 +24,7 @@ import { FileServiceClient, StateServiceClient } from "@/services/grpc-client";
 import { WithCopyButton } from "./CopyButton";
 import UnsafeImage from "./UnsafeImage";
 import "./codeblock-parser.css";
+import { asiDebug } from "@/utils/debug";
 
 /** Drop consecutive lexer blocks with identical trimmed content (duplicate paragraphs). */
 function dedupeConsecutiveMarkdownBlocks(blocks: string[]): string[] {
@@ -518,7 +519,7 @@ const InlineCodeWithFileCheck: React.FC<
 				}
 			})
 			.catch((err) => {
-				console.debug(`Failed to check file existence for ${filePath}:`, err);
+				asiDebug.info(`Failed to check file existence for ${filePath}:`, err);
 				if (!cancelled) {
 					setIsFilePath(false);
 				}

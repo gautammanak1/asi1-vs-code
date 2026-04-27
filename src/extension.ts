@@ -23,6 +23,7 @@ import { createStorageContext } from "@/shared/storage/storage-context"
 import { readTextFromClipboard, writeTextToClipboard } from "@/utils/env"
 import { initialize, tearDown } from "./common"
 import { addToAsi } from "./core/controller/commands/addToCline"
+import { attachFileToChat } from "./core/controller/commands/attachFileToChat"
 import { explainWithAsi } from "./core/controller/commands/explainWithCline"
 import { fixWithAsi } from "./core/controller/commands/fixWithCline"
 import { improveWithAsi } from "./core/controller/commands/improveWithCline"
@@ -71,12 +72,18 @@ import { telemetryService } from "./services/telemetry"
 import { SharedUriHandler, TASK_URI_PATH } from "./services/uri/SharedUriHandler"
 import { ShowMessageType } from "./shared/proto/host/window"
 import { fileExistsAtPath } from "./utils/fs"
+import { activateAsiDebugLog, asiDebug } from "./utils/debug"
 
 // This method is called when the VS Code extension is activated.
 // NOTE: This is VS Code specific - services that should be registered
 // for all-platform should be registered in common.ts.
 export async function activate(context: vscode.ExtensionContext) {
 	const activationStartTime = performance.now()
+
+	activateAsiDebugLog(context)
+
+	const unregisterProcessDiagnostics = attachProcessUnhandledHandlers()
+	context.subscriptions.push(new vscode.Disposable(unregisterProcessDiagnostics))
 
 	// 1. Set up HostProvider for VSCode — must run before any service registration
 	setupHostProvider(context)
@@ -117,6 +124,29 @@ export async function activate(context: vscode.ExtensionContext) {
 
 	const webview = await activationDone
 	return createAsiAPI(webview.controller)
+}
+
+/**
+ * Heavy activation work (storage, webview, commands). Runs concurrently with early command handlers
+ * that await the same promise.
+ */
+function attachProcessUnhandledHandlers(): () => void {
+	const onUncaught = (err: Error) => {
+		Logger.error("[Asi] uncaughtException", err)
+		asiDebug.error("uncaughtException", err?.stack ?? err?.message ?? String(err))
+	}
+	const onUnhandled = (reason: unknown) => {
+		Logger.error("[Asi] unhandledRejection", reason)
+		const msg =
+			reason instanceof Error ? reason.stack ?? reason.message : typeof reason === "string" ? reason : JSON.stringify(reason)
+		asiDebug.error("unhandledRejection", msg)
+	}
+	process.on("uncaughtException", onUncaught)
+	process.on("unhandledRejection", onUnhandled)
+	return () => {
+		process.off("uncaughtException", onUncaught)
+		process.off("unhandledRejection", onUnhandled)
+	}
 }
 
 /**
@@ -220,6 +250,11 @@ async function activateFetchCoderExtensionBody(
 				return
 			}
 			await addToAsi(context.controller, context.commandContext)
+		}),
+	)
+	context.subscriptions.push(
+		vscode.commands.registerCommand(commands.AttachFileToChat, async () => {
+			await attachFileToChat()
 		}),
 	)
 	context.subscriptions.push(

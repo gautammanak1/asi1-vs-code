@@ -47,7 +47,7 @@ export function normalizeApiConfiguration(
 	const base = openAiModelInfo || openAiModelInfoSaneDefaults;
 	const contextWindow = sanitizeContextWindowTokens(base.contextWindow, 128_000);
 	return {
-		selectedModelId: openAiModelId || "asi1-mini",
+		selectedModelId: openAiModelId || "asi1",
 		selectedModelInfo: {
 			...base,
 			contextWindow,

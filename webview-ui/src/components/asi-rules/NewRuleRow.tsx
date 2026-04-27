@@ -5,6 +5,7 @@ import { useClickAway } from "react-use"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { FileServiceClient } from "@/services/grpc-client"
+import { asiDebug } from "@/utils/debug";
 
 interface NewRuleRowProps {
 	isGlobal: boolean
@@ -74,7 +75,7 @@ const NewRuleRow: React.FC<NewRuleRowProps> = ({ isGlobal, ruleType, existingHoo
 				}),
 			)
 		} catch (err) {
-			console.error("Error creating hook:", err)
+			asiDebug.error("Error creating hook:", err)
 		}
 	}
 
@@ -129,7 +130,7 @@ const NewRuleRow: React.FC<NewRuleRowProps> = ({ isGlobal, ruleType, existingHoo
 					}),
 				)
 			} catch (err) {
-				console.error("Error creating rule file:", err)
+				asiDebug.error("Error creating rule file:", err)
 			}
 
 			setFilename("")

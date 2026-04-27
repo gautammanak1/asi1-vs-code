@@ -13,6 +13,7 @@ import WorktreesView from "./components/worktrees/WorktreesView";
 import { useExtensionState } from "./context/ExtensionStateContext";
 import { Providers } from "./Providers";
 import { UiServiceClient } from "./services/grpc-client";
+import { asiDebug } from "@/utils/debug";
 
 const AppContent = () => {
 	const {
@@ -48,7 +49,7 @@ const AppContent = () => {
 				setShouldShowAnnouncement(response.value);
 			})
 			.catch((error) => {
-				console.error("Failed to acknowledge announcement:", error);
+				asiDebug.error("Failed to acknowledge announcement:", error);
 			});
 	}, [setShouldShowAnnouncement, setShowAnnouncement]);
 

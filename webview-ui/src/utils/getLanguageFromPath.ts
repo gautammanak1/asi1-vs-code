@@ -1,4 +1,4 @@
-const extensionToLanguage: { [key: string]: string } = {
+: { [key: string]: string } = {
 	// Web technologies
 	html: "html",
 	htm: "html",

@@ -12,6 +12,7 @@ import { Navbar } from "../menu/Navbar";
 import AutoApproveBar from "./auto-approve-menu/AutoApproveBar";
 // Import utilities and hooks from the new structure
 import {
+import { asiDebug } from "@/utils/debug";
 	ActionButtons,
 	CHAT_CONSTANTS,
 	ChatLayout,
@@ -57,6 +58,7 @@ const ChatView = ({
 		currentFocusChainChecklist,
 		focusChainSettings,
 		hooksEnabled,
+		hostAppKind,
 	} = useExtensionState();
 	const isProdHostedApp = userInfo?.apiBaseUrl === "https://fetch.ai";
 	const shouldShowQuickWins =
@@ -171,11 +173,11 @@ const ChatView = ({
 							FileServiceClient.copyToClipboard(
 								StringRequest.create({ value: textToCopy }),
 							).catch((err) => {
-								console.error("Error copying to clipboard:", err);
+								asiDebug.error("Error copying to clipboard:", err);
 							});
 							e.preventDefault();
 						} catch (error) {
-							console.error("Error copying to clipboard:", error);
+							asiDebug.error("Error copying to clipboard:", error);
 						}
 					}
 				}
@@ -231,7 +233,7 @@ const ChatView = ({
 				}
 			}
 		} catch (error) {
-			console.error("Error selecting images & files:", error);
+			asiDebug.error("Error selecting images & files:", error);
 		}
 	}, []);
 
@@ -251,10 +253,10 @@ const ChatView = ({
 					}
 				},
 				onError: (error) => {
-					console.error("Error in showWebview subscription:", error);
+					asiDebug.error("Error in showWebview subscription:", error);
 				},
 				onComplete: () => {
-					console.log("showWebview subscription completed");
+					asiDebug.info("showWebview subscription completed");
 				},
 			},
 		);
@@ -288,10 +290,10 @@ const ChatView = ({
 					}
 				},
 				onError: (error) => {
-					console.error("Error in addToInput subscription:", error);
+					asiDebug.error("Error in addToInput subscription:", error);
 				},
 				onComplete: () => {
-					console.log("addToInput subscription completed");
+					asiDebug.info("addToInput subscription completed");
 				},
 			},
 		);
@@ -359,9 +361,13 @@ const ChatView = ({
 	);
 
 	const placeholderText = useMemo(() => {
-		const text = task ? "Type a message..." : "Type your task here...";
-		return text;
-	}, [task]);
+		if (hostAppKind === "cursor") {
+			return task
+				? "Type a message… (this sidebar, ASI:One — not the editor Cmd+L chat)"
+				: "Describe your task for this sidebar (ASI:One)…";
+		}
+		return task ? "Type a message..." : "Type your task here...";
+	}, [task, hostAppKind]);
 
 	const followUpSnippet = useMemo(() => {
 		for (let i = modifiedMessages.length - 1; i >= 0; i--) {

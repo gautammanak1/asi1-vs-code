@@ -4,6 +4,7 @@ import { memo, useMemo, useState } from "react";
 import { TaskServiceClient } from "@/services/grpc-client";
 import { CHAT_ROW_EXPANDED_BG_COLOR } from "../common/CodeBlock";
 import { HOOK_OUTPUT_STRING } from "./constants";
+import { asiDebug } from "@/utils/debug";
 
 const normalColor = "var(--vscode-foreground)";
 const errorColor = "var(--vscode-errorForeground)";
@@ -255,7 +256,7 @@ const HookMessage = memo(({ message, CommandOutput }: HookMessageProps) => {
 									e.stopPropagation();
 									// Cancel the task - cancelling a hook always cancels the entire task
 									TaskServiceClient.cancelTask(EmptyRequest.create({})).catch(
-										(err) => console.error("Failed to cancel task:", err),
+										(err) => asiDebug.error("Failed to cancel task:", err),
 									);
 								}}
 								onMouseEnter={(e) => {
